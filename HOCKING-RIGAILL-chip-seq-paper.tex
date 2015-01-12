@@ -1,0 +1,366 @@
+\documentclass{article}
+\usepackage{times}
+\usepackage{tikz}
+\usepackage{verbatim}
+\usepackage{hyperref} 
+\usepackage{graphicx}
+\usepackage{natbib}
+\usepackage{amsmath,amssymb}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\sign}{sign}
+\DeclareMathOperator*{\Lik}{Lik}
+\DeclareMathOperator*{\Peaks}{Peaks}
+\DeclareMathOperator*{\HotSpots}{HotSpots}
+\newcommand{\Cost}{\text{Cost}}
+\DeclareMathOperator*{\Diag}{Diag}
+\DeclareMathOperator*{\TPR}{TPR}
+\DeclareMathOperator*{\Segments}{Segments}
+\DeclareMathOperator*{\FPR}{FPR}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\maximize}{maximize}
+\DeclareMathOperator*{\minimize}{minimize}
+\newcommand{\ZZ}{\mathbb Z}
+\newcommand{\NN}{\mathbb N}
+\newcommand{\RR}{\mathbb R}
+
+\usepackage{icml2015}
+
+\icmltitlerunning{Learning penalties for peak detection in count data}
+
+\begin{document}
+
+\twocolumn[
+\icmltitle{Learning penalties for peak detection in count data}
+
+% It is OKAY to include author information, even for blind
+% submissions: the style file will automatically remove it for you
+% unless you've provided the [accepted] option to the icml2015
+% package.
+\icmlauthor{Guillem Rigaill}{rigaill@evry.inra.fr}
+\icmladdress{INRA, Evry, France}
+\icmlauthor{Toby Dylan Hocking}{toby.hocking@mail.mcgill.ca}
+\icmlauthor{Guillaume Bourque}{guil.bourque@mcgill.ca}
+\icmladdress{McGill genome center, Montreal, Quebec, Canada}
+
+% You may provide any keywords that you 
+% find helpful for describing your paper; these are used to populate 
+% the "keywords" metadata in the PDF but will not be shown in the document
+\icmlkeywords{segmentation, count data, penalty functions}
+
+\vskip 0.3in
+]
+
+\begin{abstract}
+  Peak detection is a central problem in ChIP-seq data analysis, and
+  current algorithms for this task are unsupervised and mostly
+  effective for a single data type (e.g. histone H3K4me3 profiles with
+  sharp peaks). We propose PeakSeg, a supervised peak detection
+  algorithm based on constrained optimal segmentation, which is easy
+  to tune since it has only one free parameter: the optimal number of
+  peaks. We propose to tune it using annotated regions in a supervised
+  penalty function learning problem, which we show results in
+  state-of-the-art peak detection for both sharp H3K4me3 and broad
+  H3K36me3 data types. 
+\end{abstract}
+
+\section{Introduction to supervised ChIP-seq peak detection}
+
+Chromatin immunoprecipitation sequencing (ChIP-seq) is a genome-wide
+assay to profile histone modifications and transcription factor
+binding sites, with many experimental and computational steps
+\citep{practical}. Briefly, each experiment yields a set of sequence
+reads which are aligned to a reference genome, and then the data are
+interpreted by counting the number of aligned reads at each genomic
+position. In this paper we propose a new method for peak calling these
+data, which is a binary classification problem for each genomic
+position. The positive class is enriched (peaks) and the negative
+class is background noise.
+
+More concretely, a ChIP-seq profile on a single
+chromosome with $d$ base pairs is a vector $\mathbf y=
+\left[
+  \begin{array}{ccc}
+    y_1 & \cdots & y_d
+  \end{array}
+\right]\in\ZZ_+^d$ of counts of aligned sequence reads. A peak
+detection algorithm can be described as a function $c:\ZZ_+^d
+\rightarrow \{0, 1\}^d$ which returns 0 for background noise and 1 for
+a peak. In contrast to the supervised method proposed in this paper,
+most previous algorithms are unsupervised since they define a peak
+detector $c$ using only the profile data $\mathbf y$.
+
+In supervised peak detection \citep{hocking2014visual}, there
+are $n$ annotated samples, and each sample $i\in\{1, \dots, n\}$ has a
+profile $\mathbf y_i\in\ZZ_+^d$ and a set of annotated regions $R_i$
+which defines a non-convex annotation error function
+\begin{equation}
+  \label{eq:error}
+  E[c(\mathbf y_i),  R_i] =
+  \text{FP}[c(\mathbf y_i), R_i] +
+  \text{FN}[c(\mathbf y_i), R_i].
+\end{equation}
+The annotation error counts the number of false positive (FP) and
+false negative (FN) regions, so it takes values in the non-negative
+integers. The goal is to find a peak caller with minimal error on some
+test profiles:
+\begin{equation}
+  \label{eq:min_error}
+  \minimize_c \sum_{i\in\text{test}} E[c(\mathbf y_i),  R_i].
+\end{equation}
+
+\section{Related work}
+
+In the benchmark data set of \citet{hocking2014visual}, there are two
+different histone mark types: H3K4me3 (sharp peaks) and H3K36me3
+(broadly enriched regions). The best peak detection algorithm for
+these H3K4me3 data was macs \citep{MACS}, and the best for H3K36me3
+was HMCan \citep{HMCan}. Both of these algorithms are unsupervised,
+but were calibrated using the annotated region labels to choose the
+best scalar significance threshold hyperparameter via grid search.
+
+The ChIP-seq segmentation model we propose is a constrained version of
+the model proposed by \citet{cleynen2013segmentation}. Specifically,
+they proposed to search all possible change-points to find the optimal
+segmentation, but we propose to constrain the possible change-points to
+the subset of models that can be interpreted as peaks.
+
+\section{Unsupervised PeakSeg: segmenting one ChIP-seq profile}
+
+\begin{figure*}[b!]
+  \centering
+  \includegraphics[width=\textwidth]{figure-Segmentor-PeakSeg}
+  %\input{figure-Segmentor-PeakSeg}
+  \vskip -0.5cm
+  \caption{Example profile $\mathbf y$ (black), with green horizontal
+    lines for the segmentation mean $\mathbf m$, and green vertical
+    lines to emphasize change-points. For this particular profile
+    $\mathbf y$, the models are equivalent $\mathbf{\hat m}^s(\mathbf
+    y) = \mathbf{\tilde m}^s(\mathbf y)$ for $s\in\{1, 3\}$ segments
+    but not for $s\in\{5, 7\}$. For the constrained models, the 2nd,
+    4th, ...  are interpreted as peaks (\ref{eq:peaks}), whose
+    accuracy can be quantified using the annotations
+    (\ref{eq:error}).}
+  \label{fig:profiles}
+\end{figure*}
+
+After fixing a maximum number of segments $1 \leq s_{\text{max}}\leq d$,
+the unconstrained maximum likelihood segmentation problem is defined
+for any $s\in\{1, 2, \dots, s_{\max}\}$ as
+\begin{equation}
+  \label{argmin:unconstrained}
+  \begin{aligned}
+    \mathbf{\hat m}^s(\mathbf y)  =\ 
+    &\argmin_{\mathbf m\in\RR^{d}} && 
+    \rho
+    (\mathbf m, \mathbf y) \\
+    \\
+    &\text{such that} && \Segments(\mathbf m)=s,
+  \end{aligned}
+\end{equation}
+where $\rho(\mathbf m, \mathbf y)= \sum_{j=1}^d m_j - y_j \log m_j$ is
+the loss function corresponding to maximum likelihood inference of a
+Poisson distribution with mean parameter $m_j$. The model complexity
+$\Segments(\mathbf m)=1+\sum_{j=2}^d I(m_j \neq m_{j-1})$ is the
+number of segments, where $I$ is the indicator function. Although it
+is a non-convex optimization problem, the sequence of segmentations
+$\mathbf{\hat m}^1(\mathbf y), \dots, \mathbf{\hat
+  m}^{s_{\text{max}}}(\mathbf y)$ can be computed in $O(s_{\text{max}}
+d^2)$ time using dynamic programming (DP) algorithms \citep{bellman},
+or in $O(s_{\text{max}} d \log d)$ time using pruned DP
+\citep{pruned-dp, Segmentor}.
+
+We refer to (\ref{argmin:unconstrained}) as the unconstrained problem
+since $\mathbf{\hat m}^s(\mathbf y)$ is the most likely segmentation
+of all possible models with $s$ segments. Several unconstrained models
+are shown on the left of Figure~\ref{fig:profiles}, and for example
+the 2nd segment of the model with $s=3$ segments appears to capture
+the peak in the data. 
+% In general, we would like to use the 2nd, 4th,
+% ... segments as peaks, and the 1st, 3rd, ... segments as
+% background. 
+To construct a peak detector $c$, first define the sign of the change
+before base $j\in\{2, \dots, d\}$ as
+\begin{equation}
+  \label{eq:sign}
+  S_j(\mathbf m) = \sign( m_{j} - m_{j-1} ),
+\end{equation}
+with $S_1(\mathbf m)=0$ by convention. Furthermore we define the number
+of peaks at base $j\in\{1, \dots, d\}$ as
+\begin{equation}
+  \label{eq:peaks}
+  P_j(\mathbf m) = \sum_{k=1}^j S_k(\mathbf m).
+\end{equation}
+In general for the unconstrained model $P_j(\mathbf m)\in\ZZ$, and for
+example in Figure~\ref{fig:profiles} there is a position $j$ for which
+$P_j\left[ \mathbf{\hat m}^5(\mathbf y) \right]=2$ (since the mean
+changes up, up, down, down). We would like to constrain the number of
+peaks $P_j(\mathbf m)\in\{0, 1\}$ so that we can use $c(\mathbf y) =
+\mathbf P\left[ \mathbf{\tilde m}^s(\mathbf y) \right]$ as a peak
+detector, where $\mathbf P[\mathbf m] = \left[\begin{array}{ccc}
+    P_1(\mathbf m) & \cdots & P_d(\mathbf m)
+\end{array}\right]\in\{0, 1\}^d$. That results 
+in the constrained problem
+\begin{equation}
+  \label{argmin:constrained}
+  \begin{aligned}
+    \mathbf{\tilde m}^s(\mathbf y)  =\ 
+    &\argmin_{\mathbf m\in\RR^{d}} && 
+    %\sum_{j=1}^d \log\Lik
+    \rho
+    (\mathbf m, \mathbf y) \\
+    \\
+    &\text{such that} && \Segments(\mathbf m)=s,\\
+    &&& P_j(\mathbf m) \in\{0, 1\} \text{ for all } j\in\{1, \dots, d\}.
+  \end{aligned}
+\end{equation}
+Another way to interpret the constrained problem
+(\ref{argmin:constrained}) is that the sequence of changes in the
+segment means $\mathbf m$ must begin with a positive change and then
+alternate: up, down, up, down, ... (and not up, up, down). Thus the
+even numbered segments (2nd, 4th, etc) may be interpreted as peaks,
+and the odd numbered segments (1st, 3rd, etc) may be interpreted as
+background. Figure~\ref{fig:profiles} shows a profile where the
+constraint is necessary to detect peaks for models with $s\in\{5, 7\}$
+segments. We propose to use dynamic programming to compute the
+sequence of maximum likelihood models $\mathbf{\tilde m}^1(\mathbf y),
+\dots, \mathbf{\tilde m}^{s_{\text{max}}}(\mathbf y)$ satisfying this
+up-down constraint\footnote{An R package implementing the 
+  dynamic programming is available at
+  \url{https://github.com/tdhock/PeakSegDP}}. The algorithm is in
+$O(s_{\text{max}} d^2)$ time, where $d$ is the number of data points,
+using the compression scheme proposed by \citet{Segmentor}.
+
+\section{Supervised PeakSeg: learning a penalty function using several ChIP-seq profiles}
+\label{sec:supervised}
+
+After computing the constrained maximum likelihood segmentations for
+each sample $i\in\{1,\dots, n\}$, the only question that remains is:
+how many segments? To predict a sample-specific number of segments, we
+propose to use the annotated regions to learn a penalty function
+\citep{HOCKING-penalties}. Briefly, we define the optimal number of
+segments 
+\begin{equation}
+  s^*(\lambda, \mathbf y) = 
+  \argmin_{s\in\{1,3,\dots, s_{\text{max}}\}}
+  \rho\left[
+    \mathbf{\tilde m}^s(\mathbf y),
+    \mathbf y
+  \right]
+  + \lambda s,
+\end{equation}
+$\lambda\in\RR_+$ is a positive
+penalty value. We define sample-specific penalty values $\log
+\lambda_i = f(\mathbf x_i) = \beta + \mathbf w^\intercal \mathbf x_i$,
+which is an affine function with parameters $\beta\in\RR,\mathbf
+w\in\RR^m$ that will be learned. We used an $m=2$-dimensional feature vector
+$\mathbf x_i = \left[\begin{array}{cc} \log\max \mathbf y_i & \log d_i
+\end{array}\right]$ where $d_i$ is the number of base pairs for 
+sample/chromosome $i$. The learning algorithm amounts to minimizing a
+smooth convex loss $\ell_i:\RR\rightarrow\RR_+$ which depends on the
+annotated region data $R_i$:
+\begin{equation}
+  \label{eq:relax}
+  \hat f = \argmin_f \sum_{i=1}^n
+  \ell_i\left[ f(\mathbf x_i) \right].
+\end{equation}
+Since $\ell_i$ is smooth and convex, this problem can be easily solved
+using gradient-based algorithms. We used the accelerated gradient
+method of the FISTA algorithm \citep{fista}.
+
+To make a prediction on a
+test sample with profile $\mathbf y$ and features $\mathbf x$, we
+compute the predicted penalty $\hat \lambda = \exp \hat f(\mathbf x)$,
+the predicted number of segments $\hat s = s^*(\hat \lambda, \mathbf
+y)$, and finally the predicted peaks $\mathbf P\left[ \mathbf{\tilde
+    m}^{\hat s}(\mathbf y) \right]$.
+
+\section{Results: state-of-the-art peak detection for two data types}
+
+We downloaded 7 benchmark data sets, which included a
+total of 12,826 manually annotated regions
+\footnote{\url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}}.
+Since these genomic windows are relatively small, we set the maximum
+number of segments $s_{\text{max}}=19$, and for each profile $\mathbf
+y$ we computed $\mathbf{\tilde m}^1(\mathbf y), \dots, \mathbf{\tilde
+  m}^{19}(\mathbf y)$ (\ref{argmin:constrained}). For the largest
+profile we considered ($d=263,169$ weighted data points after
+compression), the DP algorithm computed the 19 constrained optimal
+segmentations in about 155 minutes.
+
+We compared the proposed PeakSeg algorithm to the two previous
+state-of-the-art peak detectors on this benchmark, macs and
+\mbox{hmcan.broad}. For each data set, we randomly divided the
+annotated windows into half train and half test. We trained the macs
+and hmcan.broad algorithms by choosing the significance threshold with
+minimal annotation error on the train set. We trained PeakSeg by
+learning a penalty function $\hat f$ on the train set
+(\ref{eq:relax}).
+
+We show the percent test error for each algorithm and each data set in
+Figure~\ref{fig:test-error}. As previously described
+\citep{hocking2014visual}, macs had lower test error than
+\mbox{hmcan.broad} for H3K4me3 data, and \mbox{hmcan.broad} had lower
+test error than macs for H3K36me3 data. It is clear that our proposed
+PeakSeg algorithm had lower test error than both macs and hmcan.broad
+algorithms, for both data types.
+
+% \begin{center}
+%   \input{table-dp-peaks-regression}
+% \end{center}
+
+\section{Discussion, conclusions, and future work}
+
+\begin{figure*}[t!]
+  \centering
+  \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots}
+  \vskip -0.5cm
+  \caption{Test error of three algorithms on seven annotated region
+    data sets (each point shows one of six randomly selected
+    train/test splits). Data set names show histone mark type
+    (e.g. H3K36me3), annotator (AM), and cell types (immune). PeakSeg
+    had lower test error than macs and \mbox{hmcan.broad} for both
+    H3K36me3 and H3K4me3 data.}
+  \label{fig:test-error}
+\end{figure*}
+
+We proposed to use the solution of a constrained optimal segmentation
+problem (\ref{argmin:constrained}) as a ChIP-seq peak detector. For
+$d$ data points and $s_{\text{max}}$ segments, we proposed to use
+dynamic programming to compute the solutions in $O(s_{\text{max}} d^2)$
+time. Furthermore, we proposed to use annotated region data as
+supervision in a penalty learning problem (\ref{eq:relax}). This
+approach yields state-of-the-art test error rates for peak detection
+in a benchmark that includes both H3K4me3 and H3K36me3 data
+sets.
+
+Although it has been previously proposed to train a peak detector
+using a set of positive control peak regions \citep{DFilter}, PeakSeg
+is the first algorithm that can be trained with both positive and
+negative control regions. PeakSeg is also the first algorithm to
+exhibit state-of-the-art accuracy on both sharp H3K4me3 and broad
+H3K36me3 ChIP-seq profiles in the benchmark of
+\citet{hocking2014visual}. In the future, even better accuracy may be
+obtained by engineering better features $\mathbf x_i$ for the penalty
+learning problem (\ref{eq:relax}), perhaps based on Poisson
+segmentation model selection theory \citep{cleynen2013segmentation}.
+
+The current implementation of PeakSeg using dynamic programming has
+one major limitation. The $O(s_{\text{max}} d^2)$ time complexity has
+limited its application to subsets of chromosomes of up to $d=263,169$
+data points. In comparison, the largest chromosome in hg19 (chr1) has
+$d=249,250,621$ base pairs. To apply PeakSeg to larger data sets, we
+are investigating a constrained version of pruned dynamic programming
+\citep{pruned-dp, Segmentor}, which has $O(s_{\text{max}} d\log d)$
+time complexity.
+
+Finally, we are interested in segmenting multiple samples $i$ at the
+same time, since peaks are often observed in the same genomic location
+across several samples of the same cell type. This joint peak
+detection problem may lead to more accurate peak calls, but it is a
+considerably more difficult segmentation problem.
+
+\bibliographystyle{icml2015}
+
+\bibliography{refs}
+
+\end{document}
