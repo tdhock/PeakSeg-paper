@@ -30,6 +30,8 @@ dp.peaks.intervals.RData: dp.peaks.intervals.R dp.peaks.optimal.RData
 	R --no-save < $<
 dp.peaks.regression.RData: dp.peaks.regression.R dp.peaks.intervals.RData dp.peaks.sets.RData
 	R --no-save < $<
+dp.peaks.features.RData: dp.peaks.features.R dp.timings.RData
+	R --no-save < $<
 
 ## For an interactive data viz comparing PeakSegDP against 2 baseline
 ## models on the benchmark data set.

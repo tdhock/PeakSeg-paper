@@ -46,7 +46,7 @@ for(set.name in names(dp.peaks.sets)){
         data.frame(set.name, set.i,
                    algorithm, param.name,
                    tp=colSums(test.tp),
-                   fp=colSums(test.fp)) %.%
+                   fp=colSums(test.fp)) %>%
         mutate(TPR=tp/test.possible.tp,
                FPR=fp/test.possible.fp)
       tp.fp.chosen <- tp.fp[picked, ]
