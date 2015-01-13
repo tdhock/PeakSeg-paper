@@ -52,3 +52,9 @@ PeakSeg4samples.RData: PeakSeg4samples.R dp.peaks.error.RData
 	R --no-save < $<
 figure-dp-peaks-train-2.png: figure-dp-peaks-train.R dp.peaks.train.RData
 	R --no-save < $<
+
+## regularized model for ICML paper.
+regularized.RData: regularized.R dp.peaks.intervals.RData dp.peaks.sets.RData
+	R --no-save < $<
+figure-regularized.pdf: figure-regularized.R regularized.RData
+	R --no-save < $<

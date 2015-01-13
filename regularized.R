@@ -12,19 +12,6 @@ load("dp.peaks.matrices.RData")
 
 source("interval-regression.R")
 
-g <- as.matrix(expand.grid(log.max.coverage=seq(2, 8, l=100),
-                           log.total.weight=seq(6, 15, l=100)))
-dp.peaks.grid.list <- list()
-dp.peaks.polygon.list <- list()
-dp.peaks.segment.list <- list()
-dp.peaks.regression <- NULL
-dp.peaks.prediction.list <- list()
-dp.peaks.roc <- list()
-dp.peaks.roc.chosen <- list()
-getPolygons <- function(df){
-  indices <- with(df, chull(log.max.coverage, log.total.weight))
-  df[indices, ]
-}
 set.name <- "H3K4me3_PGP_immune"
 chunk.list <- dp.peaks.intervals[[set.name]]
 train.sets <- dp.peaks.sets[[set.name]]
@@ -157,12 +144,12 @@ for(seed in 1:4){
 
   best.coefs <- coef.tall %>%
     filter(regularization == selected$regularization)
-  w.list[[seed]] <- data.table(seed, best.coefs)
+  e.list[[seed]] <- data.table(seed, join.stats)
 
   nonzero.coefs <- best.coefs %>%
     filter(value != 0)
 
-  e.list[[seed]] <- data.table(seed, coef.tall)
+  w.list[[seed]] <- data.table(seed, coef.tall)
 
   lasso <-
     ggplot()+
@@ -184,117 +171,9 @@ for(seed in 1:4){
   lasso.dl <- direct.label(lasso, "lasso.selected")
   print(lasso.dl)
 }
-## All of this normalization code is already inside
-## regularized.interval.regression.
-apply(train.mat, 2, range)
-train.names <- colnames(train.mat)
-train.mean <- colMeans(train.mat)
-train.sd <- feature.sd[keep]
-train.mean.mat <-
-  matrix(train.mean, nrow(train.mat), ncol(train.mat), byrow=TRUE)
-train.sd.mat <-
-  matrix(train.sd, nrow(train.mat), ncol(train.mat), byrow=TRUE)
-train.norm <- (train.mat - train.mean.mat)/train.sd.mat
-stopifnot(abs(colMeans(train.norm)) < 1e-5)
-stopifnot(abs(1-apply(train.norm, 2, sd)) < 1e-5)
 
-fit <- regression.funs$square(train.features, train.intervals)
-dp.peaks.grid.list[[testSet]] <-
-  data.frame(set.name, set.i,
-             testSet,
-             g, log.lambda=fit$predict(g))
-dp.peaks.prediction.list[[paste(testSet, "train")]] <-
-  data.frame(set.name, set.i,
-             test.chunk=NA,
-             sample.id=NA,
-             testSet, set="train",
-             train.features,
-             log.lambda=fit$train.predict,
-             peaks=NA,
-             test.errors=0)
-## Now use the model on the test chunks.
-test.chunks <- names(chunk.list)[!names(chunk.list) %in% train.chunks]
-test.diffs <- test.complex <- list()
-for(test.chunk in test.chunks){
-  error.list <- dp.peaks.matrices[[set.name]][[test.chunk]]
-  fp.list <- dp.peaks.matrices.fp[[set.name]][[test.chunk]]
-  tp.list <- dp.peaks.matrices.tp[[set.name]][[test.chunk]]
-  data.list <- chunk.list[[test.chunk]]
-  log.lambda.hat <- fit$predict(data.list$features)
-  optimal.list <- dp.peaks.optimal[[set.name]][[test.chunk]]
-  this.test <- data.frame(set.name, set.i,
-                          test.chunk,
-                          sample.id=names(optimal.list),
-                          testSet, set="test",
-                          data.list$features,
-                          log.lambda=log.lambda.hat,
-                          peaks=NA,
-                          test.errors=NA,
-                          row.names=NULL)
-  for(sample.i in seq_along(optimal.list)){
-    optimal.df <- optimal.list[[sample.i]]
-    sample.id <- names(optimal.list)[[sample.i]]
-    fp <- fp.list$PeakSeg[sample.id, ]
-    tp <- tp.list$PeakSeg[sample.id, ]
-    l <- log.lambda.hat[sample.i, ]
-    optimal.df$min.thresh <- optimal.df$min.log.lambda-l
-    optimal.df$max.thresh <- optimal.df$max.log.lambda-l
-    optimal.df$fp <- fp[as.character(optimal.df$model.complexity)]
-    optimal.df$tp <- tp[as.character(optimal.df$model.complexity)]
-    most.complex <- optimal.df[1,] %.%
-      select(fp, tp) %.%
-        mutate(possible.tp=tp.list$possible.tp[[sample.id]],
-               possible.fp=fp.list$possible.fp[[sample.id]])
-    optimal.diffs <- with(optimal.df, {
-      data.frame(thresh=min.thresh[-1], diff.fp=diff(fp), diff.tp=diff(tp))
-    })
-    pred.row <-
-      subset(optimal.df, min.log.lambda < l & l < max.log.lambda)
-    ## actually it is OK and it makes sense to have non-monotonic
-    ## ROC curves, since peaks may disappear as model complexity increases.
-    ##stopifnot(optimal.diffs$diff.fp <= 0) 
-    ##stopifnot(optimal.diffs$diff.tp <= 0)
-    test.diffs[[paste(test.chunk, sample.id)]] <-
-      filter(optimal.diffs, diff.fp != 0 | diff.tp != 0)
-    test.complex[[paste(test.chunk, sample.id)]] <- most.complex
-    stopifnot(nrow(pred.row)==1)
-    peaks <- this.test$peaks[[sample.i]] <-
-      as.character(pred.row$model.complexity)
-    errors <- this.test$test.errors[[sample.i]] <-
-      error.list$PeakSeg[sample.i, peaks]
-    regions <- error.list$regions[sample.i]
-    dp.peaks.regression <- rbind(dp.peaks.regression, {
-      data.frame(set.name, set.i, test.chunk,
-                 sample.id,
-                 peaks, errors, regions)
-    })
-  }
-  if(nrow(this.test) == 2){
-    one.seg <- this.test[1,]
-    one.seg$log.max.coverage.end <- this.test[2, "log.max.coverage"]
-    one.seg$log.total.weight.end <- this.test[2, "log.total.weight"]
-    dp.peaks.segment.list[[paste(testSet, test.chunk)]] <-
-      one.seg
-  }else if(nrow(this.test) > 2){
-    dp.peaks.polygon.list[[paste(testSet, test.chunk)]] <-
-      getPolygons(this.test)
-  }else{
-    stop(nrow(this.test), "rows")
-  }
-  dp.peaks.prediction.list[[paste(testSet, test.chunk)]] <-
-    this.test
-}#test.chunk
+regularized <-
+  list(weights=do.call(rbind, w.list),
+       errors=do.call(rbind, e.list))
 
-dp.peaks.prediction <- do.call(rbind, dp.peaks.prediction.list)
-dp.peaks.grid <- do.call(rbind, dp.peaks.grid.list)
-dp.peaks.polygon <- do.call(rbind, dp.peaks.polygon.list)
-dp.peaks.segment <- do.call(rbind, dp.peaks.segment.list)
-
-save(dp.peaks.regression,
-     dp.peaks.roc,
-     dp.peaks.roc.chosen,
-     dp.peaks.prediction,
-     dp.peaks.grid,
-     dp.peaks.polygon,
-     dp.peaks.segment,
-     file="dp.peaks.regression.RData")
+save(regularized, file="regularized.RData")
