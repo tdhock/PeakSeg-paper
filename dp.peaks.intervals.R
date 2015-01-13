@@ -56,7 +56,9 @@ for(set.name in names(dp.peaks.matrices)){
     all.equal.show(chunk.mat[, "log.weighted.quartile.100%"],
                    chunk.features[, "log.max.coverage"])
     dp.peaks.intervals[[set.name]][[chunk.name]] <-
-      list(features=chunk.features, intervals=chunk.intervals)
+      list(features=chunk.features,
+           all.features=chunk.mat,
+           intervals=chunk.intervals)
   }
 }
 
