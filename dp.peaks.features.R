@@ -6,7 +6,7 @@ files <- Sys.glob("data/*/*/dp.model.RData")
 ## Parse the first occurance of pattern from each of several strings
 ## using (named) capturing regular expressions, returning a matrix
 ## (with column names).
-str_match_perl <- function(string,pattern){
+str_match_perl <- function(string, pattern){
   stopifnot(is.character(string))
   stopifnot(is.character(pattern))
   stopifnot(length(pattern)==1)
@@ -47,6 +47,7 @@ for(file.i in seq_along(files)){
            dimnames=list(sample.id=sample.ids, feature=NULL))
   for(sample.id in sample.ids){
     mod <- dp.model[[sample.id]]
+    count.df <- count.list[[sample.id]]
     peaks.num <- 0:9
     p.err <- if(nrow(mod$error) == 1){
       rep(mod$error$error, 10)
@@ -54,9 +55,9 @@ for(file.i in seq_along(files)){
       poisson.err <- rep(NA, 10)
       names(poisson.err) <- peaks.num
       poisson.err[as.character(mod$error$peaks)] <- mod$error$error
-      plot(peaks.num, poisson.err)
+      ##plot(peaks.num, poisson.err)
       p.approx <- approx(peaks.num, poisson.err, peaks.num)
-      with(p.approx, lines(x, y, col="red", pch=20))
+      ##with(p.approx, lines(x, y, col="red", pch=20))
       p.approx$y
     }
     bases <- with(count.df, chromEnd-chromStart)

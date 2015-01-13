@@ -1,14 +1,16 @@
-works_with_R("3.1.1",
+works_with_R("3.1.2",
              "tdhock/PeakSegDP@5bcee97f494dcbc01a69e0fe178863564e9985bc")
 
 load("dp.peaks.optimal.RData")
 load("dp.peaks.matrices.RData")
+load("dp.peaks.features.RData")
 
 dp.peaks.intervals <- list()
 for(set.name in names(dp.peaks.matrices)){
   matrices <- dp.peaks.matrices[[set.name]]
   optimal <- dp.peaks.optimal[[set.name]]
   for(chunk.name in names(optimal)){
+    chunk.mat <- dp.peaks.features[[chunk.name]]
     optimal.list <- optimal[[chunk.name]]
     error.mat <- matrices[[chunk.name]]$PeakSeg
     chunk.intervals <- NULL
@@ -40,6 +42,19 @@ for(set.name in names(dp.peaks.matrices)){
       chunk.intervals <- rbind(chunk.intervals, one.interval)
       chunk.features <- rbind(chunk.features, one.feature)
     }
+    all.equal.show <- function(x, y){
+      x <- as.numeric(x)
+      y <- as.numeric(y)
+      stopifnot(all.equal(x, y))
+      rbind(x, y)
+    }
+    ## This verifies that the new feature computation in
+    ## dp.peaks.features is the same as the old feature computation in
+    ## this script.
+    all.equal.show(chunk.mat[, "log.bases"],
+                   chunk.features[, "log.total.weight"])
+    all.equal.show(chunk.mat[, "log.weighted.quartile.100%"],
+                   chunk.features[, "log.max.coverage"])
     dp.peaks.intervals[[set.name]][[chunk.name]] <-
       list(features=chunk.features, intervals=chunk.intervals)
   }
