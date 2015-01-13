@@ -18,8 +18,20 @@ nonzero.coefs <- best.weights %>%
 
 feature.ranks <- best.weights %>%
   group_by(feature) %>%
-  summarise(nonzero=sum(value != 0)) %>%
-  arrange(-nonzero)
+  summarise(nonzero=sum(value != 0),
+            mean=mean(value),
+            sd=sd(value)) %>%
+  arrange(-nonzero, -abs(mean))
+
+best.stats <- best.weights %>%
+  mutate(feature.fac=factor(feature, feature.ranks$feature))
+
+dots <- 
+ggplot()+
+  ggtitle("features ranked by number of nonzero splits, mean weight")+
+  xlab("weight")+
+  ylab("feature")+
+  geom_point(aes(value, feature.fac), data=best.stats, pch=1)
 
 data.frame(feature.ranks)
 
@@ -35,7 +47,13 @@ lasso <-
           data=regularized$errors, method="lines2")+
   theme_bw()+
   theme(panel.margin=grid::unit(0, "cm"))+
-  facet_grid(what ~ seed, scales="free")
+  facet_grid(what ~ seed, scales="free", labeller=function(var, val){
+    if(var=="seed"){
+      paste("split", val)
+    }else{
+      paste(val)
+    }
+  })
 
 lasso.selected <- list(function(df, ...){
   subset(df, groups %in% nonzero.coefs$feature)
@@ -46,4 +64,5 @@ lasso.dl <-
 
 pdf("figure-regularized.pdf", w=12)
 print(lasso.dl)
+print(dots)
 dev.off()
