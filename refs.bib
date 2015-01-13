@@ -1,0 +1,696 @@
+@article{DFilter,
+  title={Uniform, optimal signal processing of mapped deep-sequencing data},
+  author={Kumar, Vibhor and Muratani, Masafumi and Rayan, Nirmala Arul and Kraus, Petra and Lufkin, Thomas and Ng, Huck Hui and Prabhakar, Shyam},
+  journal={Nature biotechnology},
+  volume={31},
+  number={7},
+  pages={615--622},
+  year={2013},
+  publisher={Nature Publishing Group}
+}
+
+
+@article{hocking2014visual,
+  title={{Visual annotations and a supervised learning approach for evaluating and calibrating ChIP-seq peak detectors}},
+  author={Hocking, Toby Dylan and Goerner-Potvin, Patricia and Morin, Andreanne and Shao, Xiaojian and Bourque, Guillaume},
+  journal={arXiv:1409.6209},
+  year={2014}
+}
+
+@article{bellman,
+ author = {Bellman, Richard},
+ title = {On the Approximation of Curves by Line Segments Using Dynamic Programming},
+ journal = {Commun. ACM},
+ issue_date = {June 1961},
+ volume = {4},
+ number = {6},
+ month = jun,
+ year = {1961},
+ pages = {284--},
+ acmid = {366611},
+ publisher = {ACM},
+ address = {New York, NY, USA},
+} 
+
+@Article{LambertW,
+  author = 	 { RM Corless and GH Gonnet and  DEG Hare and  DJ Jeffrey
+                  and  DE Knuth},
+  title = 	 {{On the Lambert W Function}},
+  journal = 	 {Advances in Computational Mathematics},
+  year = 	 1996,
+  volume = 	 5,
+  pages = 	 {329--359}}
+
+@article{cleynen2013segmentation,
+	author = {{Cleynen, Alice} and {Lebarbier, Emilie}},
+	title = {{Segmentation of the Poisson and negative binomial rate models:
+          a penalized estimator}},
+	journal = {ESAIM: PS},
+	year = 2014,
+	volume = 18,
+	pages = "750-769",
+}
+
+@article{Segmentor,
+  title={{Segmentor3IsBack: an R package for the fast and exact segmentation of Seq-data.}},
+  author={Cleynen, Alice and Koskas, Michel and Lebarbier, Emilie and Rigaill, Guillem and Robin, St{\'e}phane},
+  journal={Algorithms for Molecular Biology},
+  volume={9},
+  pages={6},
+  year={2014}
+}
+
+@unpublished{pruned-dp,
+author = {Guillem Rigaill},
+title = {Pruned dynamic programming for optimal multiple change-point
+                  detection},
+year = 2010,
+eprint = {arXiv:1004.0887},
+note = {arXiv:1004.0887}
+}
+
+@article{guillem-joint,
+author = {Picard, Franck and Lebarbier, Emilie and Hoebeke, Mark and Rigaill, Guillem and Thiam, Baba and Robin, St\'ephane}, 
+title = {{Joint segmentation, calling, and normalization of multiple CGH profiles}}, 
+year = {2011}, 
+note = {\url{http://biostatistics.oxfordjournals.org/content/early/2011/01/05/biostatistics.kxq076.abstract}}, 
+journal = {Biostatistics},
+pages = {413--428},
+volume = 12,
+number = 3
+}
+
+@article{differential-histone-modification,
+author = {Xu, Han and Wei, Chia-Lin and Lin, Feng and Sung, Wing-Kin}, 
+title = {An HMM approach to genome-wide identification of differential histone modification sites from ChIP-seq data},
+volume = {24}, 
+number = {20}, 
+pages = {2344-2349}, 
+year = {2008}, 
+abstract ={Motivation: Epigenetic modifications are one of the critical factors to regulate gene expression and genome function. Among different epigenetic modifications, the differential histone modification sites (DHMSs) are of great interest to study the dynamic nature of epigenetic and gene expression regulations among various cell types, stages or environmental responses. To capture the histone modifications at whole genome scale, ChIP-seq technology is becoming a robust and comprehensive approach. Thus the DHMSs are potentially identifiable by comparing two ChIP-seq libraries. However, little has been addressed on this issue in literature.Results: Aiming at identifying DHMSs, we propose an approach called ChIPDiff for the genome-wide comparison of histone modification sites identified by ChIP-seq. Based on the observations of ChIP fragment counts, the proposed approach employs a hidden Markov model (HMM) to infer the states of histone modification changes at each genomic location. We evaluated the performance of ChIPDiff by comparing the H3K27me3 modification sites between mouse embryonic stem cell (ESC) and neural progenitor cell (NPC). We demonstrated that the H3K27me3 DHMSs identified by our approach are of high sensitivity, specificity and technical reproducibility. ChIPDiff was further applied to uncover the differential H3K4me3 and H3K36me3 sites between different cell states. Interesting biological discoveries were achieved from such comparison in our study.Availability: http://cmb.gis.a-star.edu.sg/ChIPSeq/tools.htmContact: asflin@ntu.edu.sg; sungk@gis.a-star.edu.sgSupplementary information: Supplementary methods and data are available at Bioinformatics online.}, 
+URL = {http://bioinformatics.oxfordjournals.org/content/24/20/2344.abstract}, 
+eprint = {http://bioinformatics.oxfordjournals.org/content/24/20/2344.full.pdf+html}, 
+journal = {Bioinformatics} 
+}
+
+
+@article{known-binding-sites,
+author = {Chen, Kuan-Bei and Zhang, Yu}, 
+title = {A varying threshold method for ChIP peak-calling using multiple sources of information},
+volume = {26}, 
+number = {18}, 
+pages = {i504-i510}, 
+year = {2010}, 
+doi = {10.1093/bioinformatics/btq379}, 
+abstract ={Motivation: Gene regulation commonly involves interaction among DNA, proteins and biochemical conditions. Using chromatin immunoprecipitation (ChIP) technologies, protein–DNA interactions are routinely detected in the genome scale. Computational methods that detect weak protein-binding signals and simultaneously maintain a high specificity yet remain to be challenging. An attractive approach is to incorporate biologically relevant data, such as protein co-occupancy, to improve the power of protein-binding detection. We call the additional data related with the target protein binding as supporting tracks.Results: We propose a novel but rigorous statistical method to identify protein occupancy in ChIP data using multiple supporting tracks (PASS2). We demonstrate that utilizing biologically related information can significantly increase the discovery of true protein-binding sites, while still maintaining a desired level of false positive calls. Applying the method to GATA1 restoration in mouse erythroid cell line, we detected many new GATA1-binding sites using GATA1 co-occupancy data.Availability: http://stat.psu.edu/∼yuzhang/pass2.tarContact: yuzhang@stat.psu.edu}, 
+URL = {http://bioinformatics.oxfordjournals.org/content/26/18/i504.abstract}, 
+eprint = {http://bioinformatics.oxfordjournals.org/content/26/18/i504.full.pdf+html}, 
+journal = {Bioinformatics} 
+}
+
+@article{spark,
+  title={Spark: a navigational paradigm for genomic data exploration},
+  author={Nielsen, Cydney B and Younesy, Hamid and O'Geen, Henriette and Xu, Xiaoqin and Jackson, Andrew R and Milosavljevic, Aleksandar and Wang, Ting and Costello, Joseph F and Hirst, Martin and Farnham, Peggy J and others},
+  journal={Genome research},
+  volume={22},
+  number={11},
+  pages={2262--2269},
+  year={2012},
+  publisher={Cold Spring Harbor Lab}
+}
+
+
+@article{SICER,
+author = {Zang, Chongzhi and Schones, Dustin E. and Zeng, Chen and Cui, Kairong and Zhao, Keji and Peng, Weiqun}, 
+title = {A clustering approach for identification of enriched domains from histone modification ChIP-Seq data},
+volume = {25}, 
+number = {15}, 
+pages = {1952-1958}, 
+year = {2009}, 
+abstract ={Motivation: Chromatin states are the key to gene regulation and cell identity. Chromatin immunoprecipitation (ChIP) coupled with high-throughput sequencing (ChIP-Seq) is increasingly being used to map epigenetic states across genomes of diverse species. Chromatin modification profiles are frequently noisy and diffuse, spanning regions ranging from several nucleosomes to large domains of multiple genes. Much of the early work on the identification of ChIP-enriched regions for ChIP-Seq data has focused on identifying localized regions, such as transcription factor binding sites. Bioinformatic tools to identify diffuse domains of ChIP-enriched regions have been lacking.Results: Based on the biological observation that histone modifications tend to cluster to form domains, we present a method that identifies spatial clusters of signals unlikely to appear by chance. This method pools together enrichment information from neighboring nucleosomes to increase sensitivity and specificity. By using genomic-scale analysis, as well as the examination of loci with validated epigenetic states, we demonstrate that this method outperforms existing methods in the identification of ChIP-enriched signals for histone modification profiles. We demonstrate the application of this unbiased method in important issues in ChIP-Seq data analysis, such as data normalization for quantitative comparison of levels of epigenetic modifications across cell types and growth conditions.Availability: http://home.gwu.edu/∼wpeng/Software.htmContact: wpeng@gwu.eduSupplementary information: Supplementary data are available at Bioinformatics online.}, 
+URL = {http://bioinformatics.oxfordjournals.org/content/25/15/1952.abstract}, 
+eprint = {http://bioinformatics.oxfordjournals.org/content/25/15/1952.full.pdf+html}, 
+journal = {Bioinformatics} 
+}
+
+@article{CCAT,
+author = {Xu, Han and Handoko, Lusy and Wei, Xueliang and Ye, Chaopeng and Sheng, Jianpeng and Wei, Chia-Lin and Lin, Feng and Sung, Wing-Kin}, 
+title = {A signal–noise model for significance analysis of ChIP-seq with negative control},
+volume = {26}, 
+number = {9}, 
+pages = {1199-1204}, 
+year = {2010}, 
+abstract ={Motivation:ChIP-seq is becoming the main approach to the genome-wide study of protein–DNA interactions and histone modifications. Existing informatics tools perform well to extract strong ChIP-enriched sites. However, two questions remain to be answered: (i) to which extent is a ChIP-seq experiment able to reveal the weak ChIP-enriched sites? (ii) are the weak sites biologically meaningful? To answer these questions, it is necessary to identify the weak ChIP signals from background noise.Results: We propose a linear signal–noise model, in which a noise rate was introduced to represent the fraction of noise in a ChIP library. We developed an iterative algorithm to estimate the noise rate using a control library, and derived a library-swapping strategy for the false discovery rate estimation. These approaches were integrated in a general-purpose framework, named CCAT (Control-based ChIP-seq Analysis Tool), for the significance analysis of ChIP-seq. Applications to H3K4me3 and H3K36me3 datasets showed that CCAT predicted significantly more ChIP-enriched sites that the previous methods did. With the high sensitivity of CCAT prediction, we revealed distinct chromatin features associated to the strong and weak H3K4me3 sites.Availability: http://cmb.gis.a-star.edu.sg/ChIPSeq/tools.htmContact: sungk@gis.a-star.edu.sg; asflin@ntu.edu.sgSupplementary Information:Supplementary data are available at Bioinformatics online.}, 
+URL = {http://bioinformatics.oxfordjournals.org/content/26/9/1199.abstract}, 
+eprint = {http://bioinformatics.oxfordjournals.org/content/26/9/1199.full.pdf+html}, 
+journal = {Bioinformatics} 
+}
+
+
+@article{homer,
+  title={Simple Combinations of Lineage-Determining Transcription Factors Prime< i> cis</i>-Regulatory Elements Required for Macrophage and B Cell Identities},
+  author={Heinz, Sven and Benner, Christopher and Spann, Nathanael and Bertolino, Eric and Lin, Yin C and Laslo, Peter and Cheng, Jason X and Murre, Cornelis and Singh, Harinder and Glass, Christopher K},
+  journal={Molecular cell},
+  volume={38},
+  number={4},
+  pages={576--589},
+  year={2010},
+  publisher={Elsevier}
+}
+
+@article {chase,
+author = {Younesy, H. and Nielsen, C.B. and Möller, T. and Alder, O. and Cullum, R. and Lorincz, M.C. and Karimi, M.M. and Jones, S.J.M.},
+title = {An Interactive Analysis and Exploration Tool for Epigenomic Data},
+journal = {Computer Graphics Forum},
+volume = {32},
+number = {3pt1},
+publisher = {Blackwell Publishing Ltd},
+issn = {1467-8659},
+pages = {91--100},
+keywords = {H.5.m [Information Systems]: Information Interfaces and Presentation—Miscellaneous, I.3.8 [Computing Methodologies]: Computer Graphics—Applications},
+year = {2013},
+}
+
+
+@article{findpeaks,
+author = {Fejes, Anthony P. and Robertson, Gordon and Bilenky, Mikhail and Varhol, Richard and Bainbridge, Matthew and Jones, Steven J. M.}, 
+title = {FindPeaks 3.1: a tool for identifying areas of enrichment from massively parallel short-read sequencing technology},
+volume = {24}, 
+number = {15}, 
+pages = {1729-1730}, 
+year = {2008}, 
+abstract ={Summary: Next-generation sequencing can provide insight into protein–DNA association events on a genome-wide scale, and is being applied in an increasing number of applications in genomics and meta-genomics research. However, few software applications are available for interpreting these experiments. We present here an efficient application for use with chromatin-immunoprecipitation (ChIP-Seq) experimental data that includes novel functionality for identifying areas of gene enrichment and transcription factor binding site locations, as well as for estimating DNA fragment size distributions in enriched areas. The FindPeaks application can generate UCSC compatible custom ‘WIG’ track files from aligned-read files for short-read sequencing technology. The software application can be executed on any platform capable of running a Java Runtime Environment. Memory requirements are proportional to the number of sequencing reads analyzed; typically 4 GB permits processing of up to 40 million reads.Availability: The FindPeaks 3.1 package and manual, containing algorithm descriptions, usage instructions and examples, are available at http://www.bcgsc.ca/platform/bioinfo/software/findpeaks Source files for FindPeaks 3.1 are available for academic use.Contact: afejes@bcgsc.ca}, 
+URL = {http://bioinformatics.oxfordjournals.org/content/24/15/1729.abstract}, 
+eprint = {http://bioinformatics.oxfordjournals.org/content/24/15/1729.full.pdf+html}, 
+journal = {Bioinformatics} 
+}
+
+@article{probabalistic-partitioning,
+author = {Nair, Nishanth Ulhas and Kumar, Sunil and Moret, Bernard M.E. and Bucher, Philipp}, 
+title = {Probabilistic partitioning methods to find significant patterns in ChIP-Seq data},
+year = {2014}, 
+abstract ={Motivation: We have witnessed an enormous increase in ChIP-Seq data for histone modifications in the past few years. Discovering significant patterns in these data is an important problem for understanding biological mechanisms.Results: We propose probabilistic partitioning methods to discover significant patterns in ChIP-Seq data. Our methods take into account signal magnitude, shape, strand orientation and shifts. We compare our methods with some current methods and demonstrate significant improvements, especially with sparse data. Besides pattern discovery and classification, probabilistic partitioning can serve other purposes in ChIP-Seq data analysis. Specifically, we exemplify its merits in the context of peak finding and partitioning of nucleosome positioning patterns in human promoters.Availability and implementation: The software and code are available in the supplementary material.Contact: Philipp.Bucher@isb-sib.chSupplementary information: Supplementary data are available at Bioinformatics online.}, 
+URL = {http://bioinformatics.oxfordjournals.org/content/early/2014/06/10/bioinformatics.btu318.abstract}, 
+eprint = {http://bioinformatics.oxfordjournals.org/content/early/2014/06/10/bioinformatics.btu318.full.pdf+html}, 
+journal = {Bioinformatics} 
+}
+
+@Article{susan-illusion,
+  author = 	 {Vanderplas, S. and Hofmann, H.},
+  title = 	 {Signs of the sine illusion: Why we need to care.},
+  journal = 	 {Journal of Computational and Graphical Statistics},
+  year = 	 {in press},
+  OPTkey = 	 {},
+  OPTvolume = 	 {},
+  OPTnumber = 	 {},
+  OPTpages = 	 {},
+  OPTmonth = 	 {},
+  OPTnote = 	 {},
+  OPTannote = 	 {}
+}
+
+@article{RSEG,
+author = {Song, Qiang and Smith, Andrew D.}, 
+title = {Identifying dispersed epigenomic domains from ChIP-Seq data},
+volume = {27}, 
+number = {6}, 
+pages = {870-871}, 
+year = {2011}, 
+abstract ={Motivation: Post-translational modifications to histones have several well known associations with regulation of gene expression. While some modifications appear concentrated narrowly, covering promoters or enhancers, others are dispersed as epigenomic domains. These domains mark contiguous regions sharing an epigenomic property, such as actively transcribed or poised genes, or heterochromatically silenced regions. While high-throughput methods like ChIP-Seq have led to a flood of high-quality data about these epigenomic domains, there remain important analysis problems that are not adequately solved by current analysis tools.Results: We present the RSEG method for identifying epigenomic domains from ChIP-Seq data for histone modifications. In contrast with other methods emphasizing the locations of ‘peaks’ in read density profiles, our method identifies the boundaries of domains. RSEG is also able to incorporate a control sample and find genomic regions with differential histone modifications between two samples.Availability: RSEG, including source code and documentation, is freely available at http://smithlab.cmb.usc.edu/histone/rseg/.Contact: andrewds@usc.eduSupplementary information: Supplementary data are available at Bioinformatics online.}, 
+URL = {http://bioinformatics.oxfordjournals.org/content/27/6/870.abstract}, 
+eprint = {http://bioinformatics.oxfordjournals.org/content/27/6/870.full.pdf+html}, 
+journal = {Bioinformatics} 
+}
+
+@article{practical,
+  title={{Practical guidelines for the comprehensive analysis of ChIP-seq data}},
+  author={Bailey, Timothy and Krajewski, Pawel and Ladunga, Istvan and Lefebvre, Celine and Li, Qunhua and Liu, Tao and Madrigal, Pedro and Taslim, Cenny and Zhang, Jie},
+  journal={PLoS computational biology},
+  volume={9},
+  number={11},
+  pages={e1003326},
+  year={2013},
+  publisher={Public Library of Science}
+}
+
+@article{HMCan,
+author = {Ashoor, Haitham and H\'erault, Aur\'elie and Kamoun, Aur\'elie and Radvanyi, François and Bajic, Vladimir B. and Barillot, Emmanuel and Boeva, Valentina}, 
+title = {{HMCan: a method for detecting chromatin modifications in cancer samples using ChIP-seq data}},
+volume = {29}, 
+number = {23}, 
+pages = {2979-2986}, 
+year = {2013}, 
+abstract ={Motivation: Cancer cells are often characterized by epigenetic changes, which include aberrant histone modifications. In particular, local or regional epigenetic silencing is a common mechanism in cancer for silencing expression of tumor suppressor genes. Though several tools have been created to enable detection of histone marks in ChIP-seq data from normal samples, it is unclear whether these tools can be efficiently applied to ChIP-seq data generated from cancer samples. Indeed, cancer genomes are often characterized by frequent copy number alterations: gains and losses of large regions of chromosomal material. Copy number alterations may create a substantial statistical bias in the evaluation of histone mark signal enrichment and result in underdetection of the signal in the regions of loss and overdetection of the signal in the regions of gain.Results: We present HMCan (Histone modifications in cancer), a tool specially designed to analyze histone modification ChIP-seq data produced from cancer genomes. HMCan corrects for the GC-content and copy number bias and then applies Hidden Markov Models to detect the signal from the corrected data. On simulated data, HMCan outperformed several commonly used tools developed to analyze histone modification data produced from genomes without copy number alterations. HMCan also showed superior results on a ChIP-seq dataset generated for the repressive histone mark H3K27me3 in a bladder cancer cell line. HMCan predictions matched well with experimental data (qPCR validated regions) and included, for example, the previously detected H3K27me3 mark in the promoter of the DLEC1 gene, missed by other tools we tested.Availability: Source code and binaries can be downloaded at http://www.cbrc.kaust.edu.sa/hmcan/, implemented in C++.Contact: haitham.ashoor@kaust.edu.saSupplementary information: Supplementary data are available at Bioinformatics online.}, 
+eprint = {http://bioinformatics.oxfordjournals.org/content/29/23/2979.full.pdf+html}, 
+journal = {Bioinformatics} 
+}
+
+
+@Article{chromatin-states,
+  author = 	 {Jason Ernst and Manolis Kellis},
+  title = 	 {Discovery and characterization of chromatin states for systematic annotation of the human genome},
+  journal = 	 {Nature Biotechnology},
+  year = 	 2010,
+  volume = 	 28,
+  pages = 	 {817--825}}
+
+@Article{glmnet,
+    title = {Regularization Paths for Generalized Linear Models via
+      Coordinate Descent},
+    author = {Jerome Friedman and Trevor Hastie and Robert Tibshirani},
+    journal = {Journal of Statistical Software},
+    year = {2010},
+    volume = {33},
+    number = {1},
+    pages = {1--22},
+    url = {http://www.jstatsoft.org/v33/i01/},
+  }
+
+@Book{esl,
+  author = 	 {Trevor Hastie and Robert Tibshirani and Jerome Friedman},
+  title = 	 {The elements of statistical learning},
+  publisher = 	 {Springer},
+  year = 	 2009,
+  series = 	 {Springer Series in Statistics},
+  address = 	 {Springer Science+Business Media, LLC, 233 Spring Street, New York NY 10013, USA},
+  edition = 	 {Second}}
+
+@InProceedings{non-linear-metric-learning,
+  author = 	 {D Kedem and S Tyree and KQ Weinberger and F Sha and G Lanckriet},
+  title = 	 {Non-linear Metric Learning},
+  booktitle = {NIPS},
+  year = 	 2012}
+
+@Article{HOCKING-breakpoints,
+  author = 	 {Toby Dylan Hocking and Gudrun Schleiermacher and
+                  Isabelle Janoueix-Lerosey and
+                  Valentina Boeva and Julie Cappo and 
+                  Oliver Delattre and
+                  Francis Bach and Jean-Philippe Vert},
+  title = 	 {Learning smoothing models of copy number profiles
+                  using breakpoint annotations},
+  journal = 	 {BMC Bioinformatics},
+  year = 	 2013,
+  volume = 	 14,
+  number = 	 164,
+  month = 	 {May}}
+
+@article{MACS,
+  title={{Model-based analysis of ChIP-Seq (MACS)}},
+  author={Zhang, Yong and Liu, Tao and Meyer, Clifford A and Eeckhoute, J{\'e}r{\^o}me and Johnson, David S and Bernstein, Bradley E and Nusbaum, Chad and Myers, Richard M and Brown, Myles and Li, Wei and others},
+  journal={Genome Biol},
+  volume={9},
+  number={9},
+  pages={R137},
+  year={2008}
+}
+
+@Article{chipseq-comparison,
+  author = 	 {EG Wilibanks and MT Facciotti},
+  title = 	 {Evaluation of Algorithm Performance in ChIP-Seq Peak
+                  Detection},
+  journal = 	 {PLoS ONE},
+  year = 	 2010,
+  volume = 	 5,
+  number = 	 7}
+
+@Article{jmosaics,
+AUTHOR = {Zeng, Xin and Sanalkumar, Rajendran and Bresnick, Emery and Li, Hongda and Chang, Qiang and Keles, Sunduz},
+TITLE = {jMOSAiCS: joint analysis of multiple ChIP-seq datasets},
+JOURNAL = {Genome Biology},
+VOLUME = {14},
+YEAR = {2013},
+NUMBER = {4},
+PAGES = {R38},
+URL = {http://genomebiology.com/2013/14/4/R38},
+PubMedID = {23844871},
+ISSN = {1465-6906},
+ABSTRACT = {The ChIP-seq technique enables genome-wide mapping of in vivo protein-DNA interactions and chromatin states. Current analytical approaches for ChIP-seq analysis are largely geared towards single-sample investigations, and have limited applicability in comparative settings that aim to identify combinatorial patterns of enrichment across multiple datasets. We describe a novel probabilistic method, jMOSAiCS, for jointly analyzing multiple ChIP-seq datasets. We demonstrate its usefulness with a wide range of data-driven computational experiments and with a case study of histone modifications on GATA1-occupied segments during erythroid differentiation. jMOSAiCS is open source software and can be downloaded from Bioconductor [1].},
+}
+
+@Article{15461798,
+AUTHOR = {Gentleman, R and Carey, V and Bates, D and Bolstad, B and Dettling, M and Dudoit, S and Ellis, B and Gautier, L and Ge, Y and Gentry, J and Hornik, K and Hothorn, T and Huber, W and Iacus, S and Irizarry, R and Leisch, F and Li, C and Maechler, M and Rossini, A and Sawitzki, G and Smith, C and Smyth, G and Tierney, L and Yang, J and Zhang, J},
+TITLE = {Bioconductor: open software development for computational biology and bioinformatics.},
+JOURNAL = {Genome Biology},
+VOLUME = {5},
+YEAR = {2004},
+PAGES = {R80+},
+URL = {http://www.bioconductor.org/packages/devel/bioc/html/jmosaics.html},
+PubMedID = {15461798},
+}
+
+@Article{20299548,
+AUTHOR = {Kasowski, M and Grubert, F and Heffelfinger, C and Hariharan, M and Asabere, A and Waszak, SM and Habegger, L and Rozowsky, J and Shi, M and Urban, AE and Hong, MY and Karczewski, KJ and Huber, W and Weissman, SM and Gerstein, MB and Korbel, JO and Snyder, M},
+TITLE = {Variation in transcription factor binding among humans.},
+JOURNAL = {Science},
+VOLUME = {328},
+YEAR = {2010},
+PAGES = {232-235},
+PubMedID = {20299548},
+}
+
+@Article{20237471,
+AUTHOR = {Zheng, W and Zhao, H and Mancera, E and Steinmetz, LM and Snyder, M},
+TITLE = {Genetic analysis of variation in transcription factor binding in yeast.},
+JOURNAL = {Nature},
+VOLUME = {464},
+YEAR = {2010},
+PAGES = {1187-1191},
+PubMedID = {20237471},
+}
+
+@Article{21177976,
+AUTHOR = {Gerstein, MB and Lu, ZJ and Van Nostrand, EL and Cheng, C and Arshinoff, BI and Liu, T and Yip, KY and Robilotto, R and Rechtsteiner, A and Ikegami, K and Alves, P and Chateigner, A and Perry, M and Morris, M and Auerbach, RK and Feng, X and Leng, J and Vielle, A and Niu, W and Rhrissorrakrai, K and Agarwal, A and Alexander, RP and Barber, G and Brdlik, CM and Brennan, J and Brouillet, JJ and Carr, A and Cheung, MS and Clawson, H and Contrino, S},
+TITLE = {Integrative analysis of the Caenorhabditis elegans genome by the modENCODE project.},
+JOURNAL = {Science},
+VOLUME = {330},
+YEAR = {2010},
+PAGES = {1775-1787},
+PubMedID = {21177976},
+}
+
+@Article{17512414,
+AUTHOR = {Barski, A and Cuddapah, S and Cui, K and Roh, TY and Schones, DE and Wang, Z and Wei, G and Chepelev, I and Zhao, K},
+TITLE = {High-resolution profiling of histone methylations in the human genome.},
+JOURNAL = {Cell},
+VOLUME = {129},
+YEAR = {2007},
+PAGES = {823-837},
+PubMedID = {17512414},
+}
+
+@Article{21795386,
+AUTHOR = {Wu, W and Cheng, Y and Keller, CA and Ernst, J and Kumar, SA and Mishra, T and Morrissey, C and Dorman, CM and Chen, KB and Drautz, D and Giardine, B and Shibata, Y and Song, L and Pimkin, M and Crawford, GE and Furey, TS and Kellis, M and Miller, W and Taylor, J and Schuster, SC and Zhang, Y and Chiaromonte, F and Blobel, GA and Weiss, MJ and Hardison, RC},
+TITLE = {Dynamics of the epigenetic landscape during erythroid differentiation after GATA1 restoration.},
+JOURNAL = {Genome Research},
+VOLUME = {21},
+YEAR = {2011},
+PAGES = {1659-1671},
+PubMedID = {21795386},
+}
+
+@Article{20628599,
+AUTHOR = {Wilbanks, EG and Facciotti, MT},
+TITLE = {Evaluation of algorithm performance in ChIP-seq peak detection.},
+JOURNAL = {PLoS ONE},
+VOLUME = {5},
+YEAR = {2010},
+PAGES = {e11471},
+PubMedID = {20628599},
+}
+
+@Article{20657582,
+AUTHOR = {Ernst, J and Kellis, M},
+TITLE = {Discovery and characterization of chromatin states for systematic annotation of the human genome.},
+JOURNAL = {Nature Biotechnology},
+VOLUME = {28},
+YEAR = {2010},
+PAGES = {817-25},
+PubMedID = {20657582},
+}
+
+@Article{23183763,
+AUTHOR = {Ferguson, JP and Cho, JH and Zhao, H},
+TITLE = {A new approach for the joint analysis of multiple ChIP-seq libraries with application to histone modification.},
+JOURNAL = {Statistical Applications in Genetics and Molecular Biology},
+VOLUME = {11},
+YEAR = {2012},
+PAGES = {Article 1},
+PubMedID = {23183763},
+}
+
+@Article{21177645,
+AUTHOR = {Ye, T and Krebs, AR and Choukrallah, MA and Keime, C and Plewniak, F and Davidson, I and Tora, L},
+TITLE = {seqMINER: an integrated ChIP-seq data interpretation platform.},
+JOURNAL = {Nucleic acids research},
+VOLUME = {39},
+YEAR = {2011},
+PAGES = {e35-e35},
+PubMedID = {21177645},
+}
+
+@Article{20208068,
+AUTHOR = {Johannes, F and Wardenaar, R and Colome-Tatche, M and Mousson, F and de Graaf, P and Mokry, M and Guryev, V and Timmers, HTM and Cuppen, E and Jansen, RC},
+TITLE = {Comparing genome-wide chromatin profiles using ChIP-chip or ChIP-seq.},
+JOURNAL = {Bioinformatics},
+VOLUME = {26},
+YEAR = {2010},
+PAGES = {1000-1006},
+PubMedID = {20208068},
+}
+
+@Article{21325299,
+AUTHOR = {Song, Q and Smith, AD},
+TITLE = {Identifying dispersed epigenomic domains from ChIP-Seq data.},
+JOURNAL = {Bioinformatics},
+VOLUME = {27},
+YEAR = {2011},
+PAGES = {870-871},
+PubMedID = {21325299},
+}
+
+@Article{21471015,
+AUTHOR = {Taslim, C and Huang, T and Lin, S},
+TITLE = {DIME: R-package for identifying differential ChIP-seq based on an ensemble of mixture models.},
+JOURNAL = {Bioinformatics},
+VOLUME = {27},
+YEAR = {2011},
+PAGES = {1569-1570},
+PubMedID = {21471015},
+}
+
+@Article{22426492,
+AUTHOR = {Hoffman, MM and Buske, OJ and Wang, J and Weng, Z and Bilmes, JA and Noble, WS},
+TITLE = {Unsupervised pattern discovery in human chromatin structure through genomic segmentation.},
+JOURNAL = {Nature Methods},
+VOLUME = {9},
+YEAR = {2012},
+PAGES = {473-476},
+PubMedID = {22426492},
+}
+
+@Article{gb-2013-14-4-r38,
+AUTHOR = {Mikkelsen, TS and Ku, M and Jaffe, DB and Issac, B and Lieberman, E and Giannoukos, G and Alvarez, P and Brockman, W and Kim, TK and Koche, RP and Lee, W and Mendenhall, E and O'Donovan, A and Presser, A and Russ, C and Xie, X and Meissner, A and Wernig, M and Jaenisch, R and Nusbaum, C and Lander, ES and Bernstein, BE},
+TITLE = {Genome-wide maps of chromatin state in pluripotent and lineage-committed cells.},
+JOURNAL = {Nature},
+VOLUME = {448},
+YEAR = {2007},
+PAGES = {653-560},
+}
+
+@Article{17588931,
+AUTHOR = {Johnson, DS and Mortazavi, A and Myers, RM and Wold, B},
+TITLE = {Genome-wide mapping of in vivo protein-DNA interactions.},
+JOURNAL = {Science},
+VOLUME = {316},
+YEAR = {2007},
+PAGES = {1749-1502},
+PubMedID = {17588931},
+}
+
+@Article{19666523,
+AUTHOR = {Seo, YK and Chong, HK and Infante, AM and In, SS and Xie, X and Osborne, TF},
+TITLE = {Genome-wide analysis of SREBP-1 binding in mouse liver chromatin reveals a preference for promoter proximal binding to a new motif.},
+JOURNAL = {PNAS},
+VOLUME = {106},
+YEAR = {2009},
+PAGES = {13765-13769},
+PubMedID = {19666523},
+}
+
+@Article{JAMIE,
+AUTHOR = {Wu, H and Ji, H},
+TITLE = {JAMIE: joint analysis of multiple ChIP-chip experiments.},
+JOURNAL = {Bioinformatics},
+VOLUME = {26},
+YEAR = {2010},
+PAGES = {1864-1870},
+PubMedID = {20551135},
+}
+
+@Article{mosaics,
+AUTHOR = {Kuan, PF and Chung, D and Pan, G and Thomson, J and Stewart, R and Kele, S},
+TITLE = {A statistical framework for the analysis of ChIP-Seq data.},
+JOURNAL = {Journal of the American Statistical Association},
+VOLUME = {106},
+YEAR = {2011},
+PAGES = {891-903},
+NOTE = {software available on Galaxy http://toolshed.g2.bx.psu.edu/ and also on Bioconductor http://bioconductor.org/packages/2.8/bioc/html/mosaics.html},
+}
+
+@Article{gb-2013-14-4-r38,
+AUTHOR = {Schwarz, G},
+TITLE = {Estimating the dimension of a model.},
+JOURNAL = {The Annals of Statistics},
+VOLUME = {6},
+YEAR = {1978},
+PAGES = {461-464},
+}
+
+@Article{peakseq,
+AUTHOR = {Rozowsky, J and Euskirchen, G and Auerbach, R and Zhang, D and Gibson, T and Bjornson, R and Carriero, N and Snyder, M and Gerstein, M},
+TITLE = {PeakSeq enables systematic scoring of ChIP-Seq experiments relative to controls.},
+JOURNAL = {Nature Biotechnology},
+VOLUME = {27},
+YEAR = {2009},
+PAGES = {66-75},
+PubMedID = {19122651},
+}
+
+@Article{22323520,
+AUTHOR = {Benjamini, Y and Speed, TP},
+TITLE = {Summarizing and correcting the GC content bias in high-throughput sequencing.},
+JOURNAL = {Nucleic Acids Research},
+VOLUME = {40},
+YEAR = {2012},
+PAGES = {e72},
+PubMedID = {22323520},
+}
+
+@article{chip-seq-bench,
+author = {Szalkowski, Adam M. and Schmid, Christoph D.}, 
+title = {Rapid innovation in ChIP-seq peak-calling algorithms is outdistancing benchmarking efforts},
+volume = {12}, 
+number = {6}, 
+pages = {626-633}, 
+year = {2011}, 
+abstract ={The current understanding of the regulation of transcription does not keep the pace with the spectacular advances in the determination of genomic sequences. Chromatin immunoprecipitation followed by massively parallel sequencing (ChIP-seq) promises to give better insight into transcription regulation by locating sites of protein–DNA interactions. Such loci of putative interactions can be inferred from the genome-wide distributions of ChIP-seq data by peak-calling software. The analysis of ChIP-seq data critically depends on this step and a multitude of these peak-callers have been deployed in the recent years. A recent study reported severe variation among peak-calling results. Yet, peak-calling still lacks systematic quantitative benchmarking. Here, we summarize benchmarking efforts and explain potential drawbacks of each benchmarking method.}, 
+URL = {http://bib.oxfordjournals.org/content/12/6/626.abstract}, 
+eprint = {http://bib.oxfordjournals.org/content/12/6/626.full.pdf+html}, 
+journal = {Briefings in Bioinformatics} 
+}
+
+@Article{gb-2013-14-4-r38,
+AUTHOR = {Rousseeuw, PJ},
+TITLE = {Silhouettes: a graphical aid to the interpretation and validation of cluster analysis.},
+JOURNAL = {Computational and Applied Mathematics},
+VOLUME = {20},
+YEAR = {1987},
+PAGES = {53-65},
+}
+
+@Article{19941826,
+AUTHOR = {Fujiwara, T and O'Green, H and Keles, S and Blahnik, K and Linneman, AK and Kang, YA and Choi, K and Farnham, PJ and Bresnick, EH},
+TITLE = {Discovering hematopoietic mechanisms through genomewide analysis of GATA factor chromatin occupancy.},
+JOURNAL = {Molecular Cell},
+VOLUME = {36},
+YEAR = {2009},
+PAGES = {667-681},
+PubMedID = {19941826},
+}
+
+@Article{21652639,
+AUTHOR = {Young, MD and Willson, TA and Wakefield, MJ and Trounson, E and Hilton, DJ and Blewitt, ME and Oshlack, A and Majewski, IJ},
+TITLE = {ChIP-seq analysis reveals distinct H3K27me3 profiles that correlate with transcriptional activity.},
+JOURNAL = {Nucleic Acids Research},
+VOLUME = {39},
+YEAR = {2011},
+PAGES = {7415-7427},
+PubMedID = {21652639},
+}
+
+@Article{17053063,
+AUTHOR = {Chan, WY and Follows, GA and Lacaud, G and Pimanda, JE and Landry, JRR and Kinston, S and Knezevic, K and Piltz, S and Donaldson, IJ and Gambardella, L and Sablitzky, F and Green, AR and Kouskoff, V and Gottgens, B},
+TITLE = {The paralogous hematopoietic regulators Lyl1 and Scl are coregulated by Ets and GATA factors, but Lyl1 cannot rescue the early Scl-/- phenotype.},
+JOURNAL = {Blood},
+VOLUME = {109},
+YEAR = {2007},
+PAGES = {1908-1916},
+PubMedID = {17053063},
+}
+
+@Article{14966269,
+AUTHOR = {Gottgens, B and Broccardo, C and Sanchez, MJ and Deveaux, S and Murphy, G and Gothert, J and Kotsopoulou, E and Kinston, S and Delaney, L and Piltz, S and Barton, L and Knezevic, K and Erber, W and Begley, C and Frampton, J and Green, A},
+TITLE = {The scl +18/19 stem cell enhancer is not required for hematopoiesis: identification of a 5' bifunctional hematopoietic-endothelial enhancer bound by Fli-1 and Elf-1.},
+JOURNAL = {Molecular and Cellular Biology},
+VOLUME = {24},
+YEAR = {2004},
+PAGES = {1870-1883},
+PubMedID = {14966269},
+}
+
+@Article{21746931,
+AUTHOR = {Zhao, B and Zou, J and Wang, H and Johannsen, E and Peng, CW and Quackenbush, J and Mar, JC and Morton, CCC and Freedman, ML and Blacklow, SC and Aster, JC and Bernstein, BE and Kieff, E},
+TITLE = {Epstein-Barr virus exploits intrinsic B-lymphocyte transcription programs to achieve immortal cell growth.},
+JOURNAL = {Proceedings of the National Academy of Sciences of the United States of America},
+VOLUME = {108},
+YEAR = {2011},
+PAGES = {14902-14907},
+PubMedID = {21746931},
+}
+
+@Article{MMCHIP,
+AUTHOR = {Chen, Y and Meyer, CA and Liu, T and Li, W and Liu, JS and Liu, XS},
+TITLE = {MM-ChIP enables integrative analysis of cross-platform and between-laboratory ChIP-chip or ChIP-seq data.},
+JOURNAL = {Genome Biology},
+VOLUME = {12},
+YEAR = {2011},
+PAGES = {R11},
+PubMedID = {21284836},
+}
+
+@Article{hierarchical-joint,
+AUTHOR = {Choi, H and Nesvizhskii, AI and Ghosh, D and Qin, ZS},
+TITLE = {Hierarchical hidden Markov model with application to joint analysis of ChIP-chip and ChIP-seq data.},
+JOURNAL = {Bioinformatics},
+VOLUME = {25},
+YEAR = {2009},
+PAGES = {1715-1721},
+PubMedID = {19447789},
+}
+
+@Article{gb-2013-14-4-r38,
+AUTHOR = {Friedman, N and Geiger, D and Goldszmidt, M},
+TITLE = {Bayesian network classifiers.},
+JOURNAL = {Machine Learning},
+VOLUME = {29},
+YEAR = {1997},
+PAGES = {131-163},
+}
+
+@Article{gb-2013-14-4-r38,
+AUTHOR = {Dempster, AP and Laird, NM and Rubin, DB},
+TITLE = {Maximum likelihood from incomplete data via the EM algorithm.},
+JOURNAL = {Journal of the Royal Statistical Society: Series B},
+VOLUME = {39},
+YEAR = {1977},
+PAGES = {1-38},
+}
+
+@Article{15054023,
+AUTHOR = {Newton, MA and Noueiry, A and Sarkar, D and Ahlquist, P},
+TITLE = {Detecting differential gene expression with a semiparametric hierarchical mixture model.},
+JOURNAL = {Biostatistics},
+VOLUME = {5},
+YEAR = {2004},
+PAGES = {155-176},
+PubMedID = {15054023},
+}
+
+@Article{15173613,
+AUTHOR = {Im, H and Grass, JA and Johnson, KD and Boyer, ME and Wu, J and Bresnick, EH},
+TITLE = {Measurement of protein-DNA interactions in vivo by chromatin immunoprecipitation.},
+JOURNAL = {Methods in Molecular Biology},
+VOLUME = {284},
+YEAR = {2004},
+PAGES = {129-146},
+PubMedID = {15173613},
+}
+
+@Article{fista,
+  author = 	 {A. Beck and M. Teboulle},
+  title = 	 {A Fast Iterative Shrinkage-Thresholding Algorithm
+                  for Linear Inverse Problems},
+  journal = 	 {SIAM J. Imaging Sciences},
+  year = 	 2009,
+  volume = 	 2,
+  number = 	 1,
+  pages = 	 {183--202}}
+
+@inproceedings{HOCKING-penalties,
+  title={Learning sparse penalties for change-point detection using max margin interval regression},
+  author={Hocking, Toby and Rigaill, Guillem and Vert, Jean-Philippe and Bach, Francis},
+  booktitle={Proc. 30th ICML},
+  pages={172--180},
+  year={2013}
+}

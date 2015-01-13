@@ -137,7 +137,7 @@ the subset of models that can be interpreted as peaks.
     $\mathbf y$, the models are equivalent $\mathbf{\hat m}^s(\mathbf
     y) = \mathbf{\tilde m}^s(\mathbf y)$ for $s\in\{1, 3\}$ segments
     but not for $s\in\{5, 7\}$. For the constrained models, the 2nd,
-    4th, ...  are interpreted as peaks (\ref{eq:peaks}), whose
+    4th, ...  segments are interpreted as peaks (\ref{eq:peaks}), whose
     accuracy can be quantified using the annotations
     (\ref{eq:error}).}
   \label{fig:profiles}
@@ -248,7 +248,7 @@ segments
   \right]
   + \lambda s,
 \end{equation}
-$\lambda\in\RR_+$ is a positive
+where $\lambda\in\RR_+$ is a positive
 penalty value. We define sample-specific penalty values $\log
 \lambda_i = f(\mathbf x_i) = \beta + \mathbf w^\intercal \mathbf x_i$,
 which is an affine function with parameters $\beta\in\RR,\mathbf
