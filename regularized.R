@@ -1,7 +1,7 @@
 works_with_R("3.1.2",
              "tdhock/ggplot2@aac38b6c48c016c88123208d497d896864e74bd7",
              reshape2="1.2.2",
-             data.table="1.9.4",
+             "Rdatatable/data.table@31cf650e6fe54fe76b73086e71ad4815bc7eeb8c",
              directlabels="2014.6.13",
              dplyr="0.4.0")
 
@@ -99,17 +99,15 @@ for(seed in 1:4){
       setkey(penalty.one, penalty, penalty2)
       ## Why do we need this filter? Shouldn't foverlaps do this
       ## automatically?
-      overlap.one <- foverlaps(penalty.one, optimal.one) %>%
-        filter(min.log.lambda < penalty & penalty < max.log.lambda) %>%
-          select(regularization, min.log.lambda, penalty, max.log.lambda) %>%
-            arrange(regularization)
+      overlap.one <- foverlaps(penalty.one, optimal.one, nomatch=0) %>%
+        select(regularization, min.log.lambda, penalty, max.log.lambda) %>%
+        arrange(regularization)
       n.regularization <- length(fit$gamma.seq)
       stopifnot(nrow(overlap.one) == n.regularization)
-      overlap.dt <- foverlaps(penalty.dt, optimal.dt) %>%
-        filter(min.log.lambda < penalty & penalty < max.log.lambda)
+      overlap.dt <- foverlaps(penalty.dt, optimal.dt, nomatch=0)
       overlap.counts <- overlap.dt %>%
         group_by(sample.id) %>%
-          summarise(count=n())
+        summarise(count=n())
       stopifnot(overlap.counts$count == n.regularization)
       err.mat <- dp.peaks.matrices[[set.name]][[chunk.name]]$PeakSeg
       names(dimnames(err.mat))[2] <- "model.complexity"
