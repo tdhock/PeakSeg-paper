@@ -42,9 +42,9 @@ lasso <-
   xlab("model complexity (L1 norm of weights)")+
   geom_line(aes(arclength, value, group=feature, color=feature),
             data=regularized.one$weights)+
-  geom_line(aes(arclength, errors, group=set, linetype=set),
+  geom_line(aes(arclength, percent, group=set, linetype=set),
             data=regularized.one$errors, show_guide=FALSE)+
-  geom_dl(aes(arclength, errors, label=set),
+  geom_dl(aes(arclength, percent, label=set),
           data=regularized.one$errors, method="lines2")+
   theme_bw()+
   theme(panel.margin=grid::unit(0, "cm"))+

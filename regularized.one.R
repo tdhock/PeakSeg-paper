@@ -274,7 +274,8 @@ for(chunk.name in set.chunks$test){
     regions <- dp.peaks.matrices[[set.name]][[chunk.name]]$regions
     names(dimnames(err.mat))[2] <- "model.complexity"
     err.dt <- data.table(melt(err.mat, value.name="errors"))
-    join.dt <- inner_join(err.dt, overlap.dt, c("sample.id", "model.complexity"))
+    join.dt <-
+      inner_join(err.dt, overlap.dt, c("sample.id", "model.complexity"))
     join.dt$regions <- regions[as.character(join.dt$sample.id)]
     stopifnot(nrow(join.dt) == nrow(overlap.dt))
     error.list[[paste(model.name, chunk.name)]] <-
