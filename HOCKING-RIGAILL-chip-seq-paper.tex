@@ -334,6 +334,18 @@ algorithms, for both data types.
   \label{fig:regularized-all}
 \end{figure*}
 
+\begin{figure*}[t!]
+  \centering
+  \includegraphics[width=\textwidth]{figure-regularized-feature-importance}
+  \vskip -0.5cm
+  \caption{Importance of features in L1.reg models. There were several
+    features in H3K4me3 data sets which were selected in all 6
+    train/test splits (note that unweighted.quartile.100\% is the same
+    as the maximum of the data). For other data sets it is not clear
+    which features are most important.}
+  \label{fig:regularized-feature-importance}
+\end{figure*}
+
 We proposed to use the solution of a constrained optimal segmentation
 problem (\ref{argmin:constrained}) as a ChIP-seq peak detector. For
 $d$ data points and $s_{\text{max}}$ segments, we proposed to use

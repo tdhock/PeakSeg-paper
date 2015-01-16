@@ -95,6 +95,33 @@ ggplot()+
 coef.l1 <- coef.dt %>%
   filter(model.name == "L1.reg",
          feature != "intercept")
+set.stats <- coef.l1 %>%
+  group_by(set.name, feature) %>%
+  summarise(nonzero=sum(weight != 0),
+            mean=mean(weight),
+            sd=sd(weight)) %>%
+  filter(nonzero > 0)
+
+feature.importance <- 
+ggplot()+
+  theme_bw()+
+  theme(panel.margin=grid::unit(0, "cm"))+
+  facet_grid(set.name ~., labeller=function(var, val){
+    gsub("_", "\n", val)
+  })+
+  ylab("mean feature weight over 6 train/test splits")+
+  geom_point(aes(nonzero, mean),
+             data=set.stats, color="red")+
+  geom_text(aes(nonzero, mean, label=feature),
+            data=set.stats, hjust=1, vjust=1)+
+  scale_x_continuous(paste("number of train/test splits for which",
+                           "feature had a non-zero weight in L1.reg model"),
+                     breaks=1:6,
+                     limits=c(-2, 6))
+pdf("figure-regularized-feature-importance.pdf")
+print(feature.importance)
+dev.off()
+
 coef.stats <- coef.l1 %>%
   group_by(feature) %>%
   summarise(nonzero=sum(weight != 0),
