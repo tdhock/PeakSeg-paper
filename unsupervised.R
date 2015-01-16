@@ -4,63 +4,97 @@ set.seed(1)
 N <- 250 
 x <- rpois(10*N, rep(c(8,1,5,3,16,33,2,12,7,1),each=N))
 Kmax <- 40
-res <- Segmentor(data=x, model=3, Kmax=Kmax)
+res <- Segmentor(data=x, model=1, Kmax=Kmax)
 Cr <- SelectModel(res, penalty='oracle', keep=TRUE)
 plot(Cr$criterion, type="l")
 best.k <- which.min(Cr$criterion)
 points(best.k, Cr$criterion[best.k])
-
-break.mat <- res@breaks
-n <- break.mat[1, 1]
-sizenr <- function(k) {
-  sum(log(diff(c(1, break.mat[k, 1:k]))))
-}
-saut <- function(Lv, pen, Kseq, seuil = sqrt(n)/log(n), biggest = TRUE) {
-  J = -Lv
-  Kmax = length(J)
-  k = 1
-  kv = c()
-  dv = c()
-  pv = c()
-  dmax = 1
-  while (k < Kmax) {
-    pk = (J[(k + 1):Kmax] - J[k])/(pen[k] - pen[(k + 
-                                                 1):Kmax])
-    pm = max(pk)
-    dm = which.max(pk)
-    dv = c(dv, dm)
-    kv = c(kv, k)
-    pv = c(pv, pm)
-    if (dm > dmax) {
-      dmax = dm
-      kmax = k
-      pmax = pm
+mu <- mean(x)
+my.lik.1seg <- -sum(dpois(x, mu, log=TRUE))
+stopifnot(all.equal(res@likelihood[1], my.lik.1seg))
+## Segmentor likelihood computation is the same as dpois!
+  
+alice.oracle <- function
+### An adapted version of Alice's Segmentor3IsBack::SelectModel code
+### for penalty="oracle" -- this function can be used with any model
+### (not just Segmentor S4 classes).
+(end.mat,
+### Kmax x Kmax lower diagonal matrix. Row K has the last base indices
+### of the model with K segments.
+ Lik
+### Numeric vector of Kmax -sum(dpois(x, mu, log=TRUE)) values.
+ ){
+  stopifnot(length(Lik) == nrow(end.mat))
+  stopifnot(length(Lik) == ncol(end.mat))
+  n <- end.mat[1, 1]
+  sizenr <- function(k) {
+    sum(log(diff(c(1, end.mat[k, 1:k]))))
+    ## the number of base pairs is used in the penalty computation
+    ## ... this will change with our weighted problem!
+  }
+  saut <- function(Lv, pen, Kseq, seuil = sqrt(n)/log(n), biggest = TRUE) {
+    J = -Lv
+    Kmax = length(J)
+    k = 1
+    kv = c()
+    dv = c()
+    pv = c()
+    dmax = 1
+    while (k < Kmax) {
+      pk = (J[(k + 1):Kmax] - J[k])/(pen[k] - pen[(k + 
+                                                   1):Kmax])
+      pm = max(pk)
+      dm = which.max(pk)
+      dv = c(dv, dm)
+      kv = c(kv, k)
+      pv = c(pv, pm)
+      if (dm > dmax) {
+        dmax = dm
+        kmax = k
+        pmax = pm
+      }
+      k = k + dm
     }
-    k = k + dm
+    if (biggest) {
+      pv = c(pv, 0)
+      kv = c(kv, Kmax)
+      dv = diff(kv)
+      dmax = max(dv)
+      rt = max(dv)
+      rt = which(dv == rt)
+      pmax = pv[rt[length(rt)]]
+      alpha = 2 * pmax
+      km = kv[alpha >= pv]
+      Kh = Kseq[km[1]]
+      return(c(Kh, alpha))
+    }
+    else {
+      paux <- pv[which(kv <= seuil)]
+      alpha <- 2 * min(paux)
+      km = kv[alpha >= pv]
+      Kh = Kseq[km[1]]
+      return(c(Kh, alpha))
+    }
   }
-  if (biggest) {
-    pv = c(pv, 0)
-    kv = c(kv, Kmax)
-    dv = diff(kv)
-    dmax = max(dv)
-    rt = max(dv)
-    rt = which(dv == rt)
-    pmax = pv[rt[length(rt)]]
-    alpha = 2 * pmax
-    km = kv[alpha >= pv]
-    Kh = Kseq[km[1]]
-    return(c(Kh, alpha))
-  }
-  else {
-    paux <- pv[which(kv <= seuil)]
-    alpha <- 2 * min(paux)
-    km = kv[alpha >= pv]
-    Kh = Kseq[km[1]]
-    return(c(Kh, alpha))
-  }
-}
 
-Lik <- res@likelihood
+  ## oracle penalty code.
+  Kseq <- 1:Kmax
+  pen <- Kseq * (1 + 4 * sqrt(1.1 + log(n/Kseq))) * 
+    (1 + 4 * sqrt(1.1 + log(n/Kseq)))
+  from.saut <- saut(-Lik[Kseq], pen, Kseq, 
+                    n/log(n), biggest = FALSE)
+  list(crit=Lik + from.saut[2] * pen,
+       segments=from.saut[1])
+}
+crit.info <- alice.oracle(res@breaks, res@likelihood)
+## My computation is the same as Alice's.
+stopifnot(all.equal(as.numeric(crit.info$crit), as.numeric(Cr$criterion)))
+
+uncompressed <-
+  data.frame(count=x,
+             chromStart=0:(length(x)-1),
+             chromEnd=1:length(x))
+pdp <- PeakSegOptimal(uncompressed, 40L)
 
 if (penalty == "mBIC") 
   K <- which.min(crit <- Lik + 0.5 * sapply(1:Kmax, 
@@ -86,14 +120,3 @@ if (penalty == "oracle") {
   }
 }
 
-## oracle penalty code.
-Kseq <- 1:Kmax
-pen <- Kseq * (1 + 4 * sqrt(1.1 + log(n/Kseq))) * 
-  (1 + 4 * sqrt(1.1 + log(n/Kseq)))
-from.saut <- saut(-Lik[Kseq], pen, Kseq, 
-          n/log(n), biggest = FALSE)
-crit <- Lik + from.saut[2] * pen
-K <- from.saut[1]
-
-## My computation is the same as Alice's.
-stopifnot(all.equal(as.numeric(crit), as.numeric(Cr$criterion)))
