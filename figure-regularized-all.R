@@ -101,6 +101,16 @@ set.stats <- coef.l1 %>%
             mean=mean(weight),
             sd=sd(weight)) %>%
   filter(nonzero > 0)
+set.counts <- coef.l1 %>%
+  group_by(set.name, testSet) %>%
+  summarise(nonzero=sum(weight != 0),
+            features=n())
+set.count.stats <- set.counts %>%
+  group_by(set.name) %>%
+  summarise(min=min(nonzero),
+            mean=mean(nonzero),
+            median=median(nonzero),
+            max=max(nonzero))
 
 feature.importance <- 
 ggplot()+
