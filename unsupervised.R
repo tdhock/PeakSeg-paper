@@ -26,11 +26,6 @@ alice.oracle <- function
  Lik
 ### Numeric vector of Kmax -sum(dpois(x, mu, log=TRUE)) values.
  ){
-  sizenr <- function(k) {
-    sum(log(diff(c(1, end.mat[k, 1:k]))))
-    ## the number of base pairs is used in the penalty computation
-    ## ... this will change with our weighted problem!
-  }
   saut <- function(Lv, pen, Kseq, seuil = sqrt(n)/log(n), biggest = TRUE) {
     J = -Lv
     Kmax = length(J)
@@ -77,8 +72,8 @@ alice.oracle <- function
 
   ## oracle penalty code.
   Kseq <- 1:Kmax
-  pen <- Kseq * (1 + 4 * sqrt(1.1 + log(n/Kseq))) * 
-    (1 + 4 * sqrt(1.1 + log(n/Kseq)))
+  in.square <- 1 + 4 * sqrt(1.1 + log(n/Kseq))
+  pen <- Kseq * in.square * in.square
   from.saut <- saut(-Lik[Kseq], pen, Kseq, 
                     n/log(n), biggest = FALSE)
   list(crit=Lik + from.saut[2] * pen,
