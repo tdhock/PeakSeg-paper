@@ -1,4 +1,6 @@
-works_with_R("3.1.2", Segmentor3IsBack="1.8")
+works_with_R("3.1.2",
+             PeakSeg="2014.12.2",
+             Segmentor3IsBack="1.8")
 
 set.seed(1)
 N <- 250 
@@ -90,11 +92,40 @@ crit.info <- alice.oracle(res@breaks, res@likelihood)
 ## My computation is the same as Alice's.
 stopifnot(all.equal(as.numeric(crit.info$crit), as.numeric(Cr$criterion)))
 
-uncompressed <-
-  data.frame(count=x,
-             chromStart=0:(length(x)-1),
-             chromEnd=1:length(x))
-pdp <- PeakSegOptimal(uncompressed, 40L)
+## Guillem's Unconstrained DP returns the same breaks as Alice's
+## unconstrained Pruned DP.
+w <- rep(1, length(x))
+un.fit <- uPoissonSeg_(x, w, 40)
+un.ends <- getPath(un.fit)
+stopifnot(all.equal(as.integer(un.ends[40, ]),
+                    as.integer(res@breaks[40, ])))
+PoissonLik <- function(count, bases, end.mat){
+  Kmax <- nrow(end.mat)
+  lik <- rep(NA, Kmax)
+  for(segments in 1:Kmax){
+    seg.lik <- rep(NA, segments)
+    ends <- end.mat[segments, 1:segments]
+    breaks <- ends[-length(ends)]
+    starts <- c(1, breaks+1)
+    for(segment.i in 1:segments){
+      first <- starts[segment.i]
+      last <- ends[segment.i]
+      seg.data <- count[first:last]
+      seg.mean <- mean(seg.data)
+      seg.lik[segment.i] <- -sum(dpois(seg.data, seg.mean, log=TRUE))
+    }
+    lik[segments] <- sum(seg.lik)
+  }
+  lik
+}
+
+## My likelihood is the same as Alice's Segmentor computation.
+un.lik <- PoissonLik(x, w, un.ends)
+stopifnot(all.equal(as.numeric(un.lik),
+                    as.numeric(res@likelihood)))
+
+x.rle <- rle(x)
+comp.fit <- uPoissonSeg_(x.rle$values, x.rle$lengths, 40)
 
 if (penalty == "mBIC") 
   K <- which.min(crit <- Lik + 0.5 * sapply(1:Kmax, 
