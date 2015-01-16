@@ -314,14 +314,24 @@ algorithms, for both data types.
   \centering
   \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots}
   \vskip -0.5cm
-  \caption{Test error of three algorithms on seven annotated region
-    data sets (each black circle shows one of six randomly selected
+  \caption{Test error of algorithms on seven annotated region data
+    sets (each black circle shows one of six randomly selected
     train/test splits, and the grey circle is the mean test
     error). Data set names show histone mark type (e.g. H3K36me3),
-    annotator (AM), and cell types (immune). PeakSeg had lower test
-    error than macs and \mbox{hmcan.broad} for both H3K36me3 and
-    H3K4me3 data.}
+    annotator (AM), and cell types (immune). The multi-parameter
+    supervised penalty learning methods had the lowest test error for
+    all data sets.}
   \label{fig:test-error}
+\end{figure*}
+
+\begin{figure*}[t!]
+  \centering
+  \includegraphics[width=\textwidth]{figure-regularized-all}
+  \vskip -0.5cm
+  \caption{Normalized weights of the 2-feature log.bases.log.max model
+    compared to the 41-feature L1.reg model. In some data sets the
+    L1.reg model sets these feature weights to 0.}
+  \label{fig:regularized-all}
 \end{figure*}
 
 We proposed to use the solution of a constrained optimal segmentation

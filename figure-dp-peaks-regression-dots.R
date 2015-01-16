@@ -25,13 +25,13 @@ both.cols <- c("set.name", "set.i", "algorithm", "errors", "regions")
 ann <- function(df, parameters, supervision){
   data.table(df,
              parameters=factor(parameters,
-                    c("several parameters", "1 parameter")),
+                    c(">1 parameters", "1 parameter", "0 parameters")),
              supervision)
 }
 both <-
   rbind(##regression.set.i[, both.cols],
         ann(data.frame(reg)[, both.cols],
-            "several parameters", "supervised"),
+            ">1 parameters", "supervised"),
         ann(dp.peaks.baseline[, both.cols], "1 parameter", "supervised")
         ) %>%
   group_by() %>%
@@ -125,6 +125,6 @@ ggplot()+
   theme_bw()+
   theme(panel.margin=grid::unit(0, "cm"))+
   scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
-pdf("figure-dp-peaks-regression-dots.pdf", h=3)
+pdf("figure-dp-peaks-regression-dots.pdf", h=3.5, w=7.5)
 print(dots)
 dev.off()

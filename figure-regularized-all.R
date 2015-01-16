@@ -52,20 +52,28 @@ coef.wide <- dcast(coef.two, set.name + testSet + model.name ~ feature) %>%
   inner_join(all.stats)
 
 br <- seq(-2, 2, by=0.5)
+two.features.scatter <- 
 ggplot()+
+  guides(color=guide_legend(direction="horizontal", ))+
   geom_hline(yintercept=0, color="grey")+
   geom_vline(xintercept=0, color="grey")+
-  geom_text(aes(`log.unweighted.quartile.100%`, log.bases,
-                label=nonzero,
+  ## geom_text(aes(`log.unweighted.quartile.100%`, log.bases,
+  ##               label=nonzero,
+  ##               color=model.name),
+  ##            data=coef.wide, pch=1)+
+  geom_point(aes(`log.unweighted.quartile.100%`, log.bases,
                 color=model.name),
              data=coef.wide, pch=1)+
-  scale_x_continuous("normalized weight of log(max(count)) feature",
+  scale_x_continuous("log(max(count)) normalized weight",
                      breaks=br)+
-  scale_y_continuous("normalized weight log(bases) feature", breaks=br)+
+  scale_y_continuous("log(bases) normalized weight", breaks=br)+
   theme_bw()+
   coord_equal()+
-  theme(panel.margin=grid::unit(0, "cm"))+
-  facet_grid(. ~ set.name)
+  theme(panel.margin=grid::unit(0, "cm"),
+        legend.position="top")+
+  facet_grid(. ~ set.name, labeller=function(var, val){
+    gsub("_", "\n", val)
+  })
 
 nonzero <- coef.dt %>%
   filter(weight != 0)
@@ -103,6 +111,6 @@ ggplot()+
   facet_grid(. ~ set.name)+
   geom_point(aes(weight, feature), data=coef.l1.nonzero, pch=1)
 
-pdf("figure-regularized-all.pdf", w=12)
-print(nonzero.plot)
+pdf("figure-regularized-all.pdf", h=4, w=7)
+print(two.features.scatter)
 dev.off()
