@@ -8,6 +8,7 @@ x <- rpois(10*N, rep(c(8,1,5,3,16,33,2,12,7,1),each=N))
 Kmax <- 40
 res <- Segmentor(data=x, model=1, Kmax=Kmax)
 Cr <- SelectModel(res, penalty='oracle', keep=TRUE)
+Cr.mBIC <- SelectModel(res, penalty='mBIC', keep=TRUE)
 plot(Cr$criterion, type="l")
 best.k <- which.min(Cr$criterion)
 points(best.k, Cr$criterion[best.k])
@@ -43,8 +44,7 @@ alice.oracle <- function
     pv = c()
     dmax = 1
     while (k < Kmax) {
-      pk = (J[(k + 1):Kmax] - J[k])/(pen[k] - pen[(k + 
-                                                   1):Kmax])
+      pk = (J[(k + 1):Kmax] - J[k])/(pen[k] - pen[(k + 1):Kmax])
       pm = max(pk)
       dm = which.max(pk)
       dv = c(dv, dm)
@@ -88,9 +88,85 @@ alice.oracle <- function
   list(crit=Lik + from.saut[2] * pen,
        segments=from.saut[1])
 }
+alice.mBIC <- function
+### An adapted version of Alice's Segmentor3IsBack::SelectModel code
+### for penalty="oracle" -- this function can be used with any model
+### (not just Segmentor S4 classes).
+(end.mat,
+### Kmax x Kmax lower diagonal matrix. Row K has the last base indices
+### of the model with K segments.
+ Lik
+### Numeric vector of Kmax -sum(dpois(x, mu, log=TRUE)) values.
+ ){
+  stopifnot(length(Lik) == nrow(end.mat))
+  stopifnot(length(Lik) == ncol(end.mat))
+  n <- end.mat[1, 1]
+  sizenr <- function(k) {
+    sum(log(diff(c(1, end.mat[k, 1:k]))))
+    ## the number of base pairs is used in the penalty computation
+    ## ... this will change with our weighted problem!
+  }
+  saut <- function(Lv, pen, Kseq, seuil = sqrt(n)/log(n), biggest = TRUE) {
+    J = -Lv
+    Kmax = length(J)
+    k = 1
+    kv = c()
+    dv = c()
+    pv = c()
+    dmax = 1
+    while (k < Kmax) {
+      pk = (J[(k + 1):Kmax] - J[k])/(pen[k] - pen[(k + 1):Kmax])
+      pm = max(pk)
+      dm = which.max(pk)
+      dv = c(dv, dm)
+      kv = c(kv, k)
+      pv = c(pv, pm)
+      if (dm > dmax) {
+        dmax = dm
+        kmax = k
+        pmax = pm
+      }
+      k = k + dm
+    }
+    if (biggest) {
+      pv = c(pv, 0)
+      kv = c(kv, Kmax)
+      dv = diff(kv)
+      dmax = max(dv)
+      rt = max(dv)
+      rt = which(dv == rt)
+      pmax = pv[rt[length(rt)]]
+      alpha = 2 * pmax
+      km = kv[alpha >= pv]
+      Kh = Kseq[km[1]]
+      return(c(Kh, alpha))
+    }
+    else {
+      paux <- pv[which(kv <= seuil)]
+      alpha <- 2 * min(paux)
+      km = kv[alpha >= pv]
+      Kh = Kseq[km[1]]
+      return(c(Kh, alpha))
+    }
+  }
+
+  ## mBIC penalty code.
+  entropy.term <- sapply(1:Kmax, sizenr)
+  crit <- Lik + 0.5 * entropy.term + (1:Kmax - 0.5) * log(n)
+  K <- which.min(crit)
+  list(crit=crit,
+       segments=K)
+}
+
+## My copy of Alice's oracle criterion computation is the same as
+## Alice's code in Segmentor3IsBack.
 crit.info <- alice.oracle(res@breaks, res@likelihood)
-## My computation is the same as Alice's.
 stopifnot(all.equal(as.numeric(crit.info$crit), as.numeric(Cr$criterion)))
+
+## My copy of Alice's mBIC criterion computation is the same as
+## Alice's code in Segmentor3IsBack.
+mBIC.info <- alice.mBIC(res@breaks, res@likelihood)
+stopifnot(all.equal(as.numeric(mBIC.info$crit), as.numeric(Cr.mBIC$criterion)))
 
 ## Guillem's Unconstrained DP returns the same breaks as Alice's
 ## unconstrained Pruned DP.
@@ -111,8 +187,10 @@ PoissonLik <- function(count, bases, end.mat){
       first <- starts[segment.i]
       last <- ends[segment.i]
       seg.data <- count[first:last]
-      seg.mean <- mean(seg.data)
-      seg.lik[segment.i] <- -sum(dpois(seg.data, seg.mean, log=TRUE))
+      seg.bases <- bases[first:last]
+      seg.mean <- sum(seg.data * seg.bases)/sum(seg.bases)
+      loglik.vec <- dpois(seg.data, seg.mean, log=TRUE)
+      seg.lik[segment.i] <- -sum(loglik.vec * seg.bases)
     }
     lik[segments] <- sum(seg.lik)
   }
@@ -123,13 +201,22 @@ PoissonLik <- function(count, bases, end.mat){
 un.lik <- PoissonLik(x, w, un.ends)
 stopifnot(all.equal(as.numeric(un.lik),
                     as.numeric(res@likelihood)))
+my.info <- alice.oracle(un.ends, un.lik)
+stopifnot(all.equal(as.numeric(my.info$crit), as.numeric(Cr$criterion)))
 
+## TODO: verify the same computation for weighted data.
 x.rle <- rle(x)
 comp.fit <- uPoissonSeg_(x.rle$values, x.rle$lengths, 40)
+comp.ends <- getPath(comp.fit)
+comp.lik <- PoissonLik(x.rle$values, x.rle$lengths, comp.ends)
+stopifnot(all.equal(as.numeric(comp.lik),
+                    as.numeric(res@likelihood)))
+comp.info <- weighted.oracle(comp.ends, comp.lik)
+stopifnot(all.equal(as.numeric(comp.info$crit), as.numeric(Cr$criterion)))
 
-if (penalty == "mBIC") 
-  K <- which.min(crit <- Lik + 0.5 * sapply(1:Kmax, 
-                                                         sizenr) + (1:Kmax - 0.5) * log(n))
+if (penalty == "mBIC")
+  entropy.term <- sapply(1:Kmax, sizenr)
+  K <- which.min(crit <- Lik + 0.5 * entropy.term + (1:Kmax - 0.5) * log(n))
 if (penalty == "BIC") 
   K <- which.min(crit <- Lik + (1:K) * log(n))
 if (penalty == "AIC") 
