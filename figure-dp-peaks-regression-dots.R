@@ -22,9 +22,18 @@ regression.set.i <- dp.peaks.regression %>%
   mutate(algorithm="PeakSeg")
 both.cols <- c("set.name", "set.i", "algorithm", "errors", "regions")
 
-both <- rbind(##regression.set.i[, both.cols],
-              dp.peaks.baseline[, both.cols],
-              data.frame(reg)[, both.cols]) %>%
+ann <- function(df, parameters, supervision){
+  data.table(df,
+             parameters=factor(parameters,
+                    c("several parameters", "1 parameter")),
+             supervision)
+}
+both <-
+  rbind(##regression.set.i[, both.cols],
+        ann(data.frame(reg)[, both.cols],
+            "several parameters", "supervised"),
+        ann(dp.peaks.baseline[, both.cols], "1 parameter", "supervised")
+        ) %>%
   group_by() %>%
   mutate(percent=errors/regions*100,
          set.name=as.character(set.name))
@@ -50,13 +59,17 @@ scatter+
 scatter+
   geom_point(aes(macs.trained, L1.reg),
              data=wide, pch=1)
+scatter+
+  geom_point(aes(log.bases.log.max, L1.reg),
+             data=wide, pch=1)
 
 algo.colors <-
   c(macs.trained="#1B9E77", PeakSeg="#D95F02", hmcan.broad.trained="#7570B3")
 both$algo <- sub(".trained", "", both$algorithm)
+both$algo <- both$algorithm
 
 mean.both <- both %>%
-  group_by(set.name, algo) %>%
+  group_by(set.name, parameters, supervision, algo) %>%
   summarise(mean=mean(percent))
 algo.stats <- mean.both %>%
   group_by(algo) %>%
@@ -101,18 +114,17 @@ dev.off()
 
 dots <- 
 ggplot()+
-  geom_point(aes(algo, mean),
+  geom_point(aes(mean, algo),
              data=mean.both, color="grey", size=5)+
-  geom_point(aes(algo, percent),
+  geom_point(aes(percent, algo),
              data=both, pch=1)+
-  facet_grid(.~set.name, labeller=function(var, val){
+  facet_grid(parameters + supervision ~ set.name, labeller=function(var, val){
     gsub("_", "\n", val)
-  })+
-  xlab("algorithm")+
+  }, scales="free_y", space="free_y")+
+  scale_y_discrete("algorithm")+
   theme_bw()+
   theme(panel.margin=grid::unit(0, "cm"))+
-  coord_flip()+
-  scale_y_continuous("percent test error", breaks=seq(0, 50, by=25))
+  scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
 pdf("figure-dp-peaks-regression-dots.pdf", h=3)
 print(dots)
 dev.off()
