@@ -37,16 +37,27 @@ for(set.name in names(regularized.all$models)){
   }
 }
 coef.dt <- do.call(rbind, coef.list)
+all.stats <- coef.dt %>%
+  filter(feature != "intercept") %>%
+  group_by(set.name, testSet, model.name) %>%
+  summarise(nonzero=sum(weight != 0),
+            mean=mean(weight),
+            sd=sd(weight)) %>%
+  arrange(-nonzero, -abs(mean))
+
 coef.two <- coef.dt %>%
   filter(feature %in% c("log.bases", "log.unweighted.quartile.100%"),
          model.name != "L1.reg.log")
-coef.wide <- dcast(coef.two, set.name + testSet + model.name ~ feature)
+coef.wide <- dcast(coef.two, set.name + testSet + model.name ~ feature) %>%
+  inner_join(all.stats)
 
 br <- seq(-2, 2, by=0.5)
 ggplot()+
-  geom_hline(yintercept=0)+
-  geom_vline(xintercept=0)+
-  geom_point(aes(`log.unweighted.quartile.100%`, log.bases, color=model.name),
+  geom_hline(yintercept=0, color="grey")+
+  geom_vline(xintercept=0, color="grey")+
+  geom_text(aes(`log.unweighted.quartile.100%`, log.bases,
+                label=nonzero,
+                color=model.name),
              data=coef.wide, pch=1)+
   scale_x_continuous("normalized weight of log(max(count)) feature",
                      breaks=br)+

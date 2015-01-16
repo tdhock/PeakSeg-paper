@@ -31,6 +31,26 @@ both <- rbind(##regression.set.i[, both.cols],
 
 wide <- dcast(both, set.name + set.i ~ algorithm, value.var="errors")
 
+scatter <- 
+ggplot()+
+  geom_abline(aes(intercept=intercept, slope=slope),
+              color="grey",
+              data=data.frame(intercept=0, slope=1))+
+  theme_bw()+
+  theme(panel.margin=grid::unit(0, "cm"))+
+  facet_grid(. ~ set.name)+
+  coord_equal()
+
+## Scatterplots show that L1.reg does not always have lower test error
+## than competitors, but it does at least for a majority of train/test
+## splits on each data set.
+scatter+
+  geom_point(aes(hmcan.broad.trained, L1.reg),
+             data=wide, pch=1)
+scatter+
+  geom_point(aes(macs.trained, L1.reg),
+             data=wide, pch=1)
+
 algo.colors <-
   c(macs.trained="#1B9E77", PeakSeg="#D95F02", hmcan.broad.trained="#7570B3")
 both$algo <- sub(".trained", "", both$algorithm)
