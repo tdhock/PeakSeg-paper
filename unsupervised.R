@@ -94,54 +94,62 @@ alice.mBIC <- function
   stopifnot(length(Lik) == ncol(end.mat))
   n <- end.mat[1, 1]
   sizenr <- function(k) {
-    sum(log(diff(c(1, end.mat[k, 1:k]))))
+    ## This is copied directly from Alice's code and I suspect it is
+    ## incorrect -- the 1 should be 0.
+    bases.vec <- diff(c(1, end.mat[k, 1:k]))
+    sum(log(bases.vec))
     ## the number of base pairs is used in the penalty computation
     ## ... this will change with our weighted problem!
   }
-  saut <- function(Lv, pen, Kseq, seuil = sqrt(n)/log(n), biggest = TRUE) {
-    J = -Lv
-    Kmax = length(J)
-    k = 1
-    kv = c()
-    dv = c()
-    pv = c()
-    dmax = 1
-    while (k < Kmax) {
-      pk = (J[(k + 1):Kmax] - J[k])/(pen[k] - pen[(k + 1):Kmax])
-      pm = max(pk)
-      dm = which.max(pk)
-      dv = c(dv, dm)
-      kv = c(kv, k)
-      pv = c(pv, pm)
-      if (dm > dmax) {
-        dmax = dm
-        kmax = k
-        pmax = pm
-      }
-      k = k + dm
-    }
-    if (biggest) {
-      pv = c(pv, 0)
-      kv = c(kv, Kmax)
-      dv = diff(kv)
-      dmax = max(dv)
-      rt = max(dv)
-      rt = which(dv == rt)
-      pmax = pv[rt[length(rt)]]
-      alpha = 2 * pmax
-      km = kv[alpha >= pv]
-      Kh = Kseq[km[1]]
-      return(c(Kh, alpha))
-    }
-    else {
-      paux <- pv[which(kv <= seuil)]
-      alpha <- 2 * min(paux)
-      km = kv[alpha >= pv]
-      Kh = Kseq[km[1]]
-      return(c(Kh, alpha))
-    }
-  }
+  ## mBIC penalty code.
+  entropy.term <- sapply(1:Kmax, sizenr)
+  crit <- Lik + 0.5 * entropy.term + (1:Kmax - 0.5) * log(n)
+  K <- which.min(crit)
+  list(crit=crit,
+       segments=K)
+}
 
+incorrect.mBIC <- function(end.mat, Lik, weight){
+  stopifnot(length(Lik) == nrow(end.mat))
+  stopifnot(length(Lik) == ncol(end.mat))
+  n <- sum(weight)
+  sizenr <- function(k) {
+    model.ends <- end.mat[k, 1:k]
+    model.starts <- c(1, 1+model.ends[-length(model.ends)])
+    bases.vec <-
+      sapply(seq_along(model.starts), function(segment.i){
+        from <- model.starts[[segment.i]]
+        to <- model.ends[[segment.i]]
+        sum(weight[from:to])
+      })
+    bases.vec[1] <- bases.vec[1] - 1 # THIS LINE IS THE ONLY DIFFERENCE!
+    sum(log(bases.vec))
+  }
+  ## mBIC penalty code.
+  entropy.term <- sapply(1:Kmax, sizenr)
+  crit <- Lik + 0.5 * entropy.term + (1:Kmax - 0.5) * log(n)
+  K <- which.min(crit)
+  list(crit=crit,
+       segments=K)
+}
+
+correct.mBIC <- function(end.mat, Lik, weight){
+  stopifnot(length(Lik) == nrow(end.mat))
+  stopifnot(length(Lik) == ncol(end.mat))
+  n <- sum(weight)
+  sizenr <- function(k) {
+    model.ends <- end.mat[k, 1:k]
+    model.starts <- c(1, 1+model.ends[-length(model.ends)])
+    bases.vec <-
+      sapply(seq_along(model.starts), function(segment.i){
+        from <- model.starts[[segment.i]]
+        to <- model.ends[[segment.i]]
+        sum(weight[from:to])
+      })
+    sum(log(bases.vec))
+    ## the number of base pairs is used in the penalty computation
+    ## ... this will change with our weighted problem!
+  }
   ## mBIC penalty code.
   entropy.term <- sapply(1:Kmax, sizenr)
   crit <- Lik + 0.5 * entropy.term + (1:Kmax - 0.5) * log(n)
@@ -206,7 +214,13 @@ stopifnot(all.equal(as.numeric(comp.lik),
 comp.info <- alice.oracle(length(x), comp.lik)
 stopifnot(all.equal(as.numeric(comp.info$crit), as.numeric(Cr$criterion)))
 
-## TODO: verify mBIC for weighted data.
+## Verify mBIC for weighted data.
+comp.incorrect <- incorrect.mBIC(comp.ends, comp.lik, x.rle$lengths)
+comp.correct <- correct.mBIC(comp.ends, comp.lik, x.rle$lengths)
+stopifnot(all.equal(as.numeric(comp.incorrect$crit),
+                    as.numeric(Cr.mBIC$criterion)))
+all.equal(as.numeric(comp.correct$crit),
+          as.numeric(Cr.mBIC$criterion)) # not equal!
 
 if(FALSE){ # code from SelectModel
   if (penalty == "mBIC")
