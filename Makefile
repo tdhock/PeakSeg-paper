@@ -62,3 +62,5 @@ regularized.one.RData: regularized.one.R dp.peaks.intervals.RData dp.peaks.sets.
 	R --no-save < $<
 regularized.all.RData: regularized.all.R dp.peaks.intervals.RData dp.peaks.sets.RData
 	R --no-save < $<
+figure-regularized-all.pdf: figure-regularized-all.R regularized.all.RData
+	R --no-save < $<
