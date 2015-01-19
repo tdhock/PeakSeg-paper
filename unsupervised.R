@@ -1,4 +1,5 @@
 works_with_R("3.1.2",
+             "tdhock/ggplot2@aac38b6c48c016c88123208d497d896864e74bd7",
              directlabels="2014.6.13",
              dplyr="0.4.0",
              PeakSeg="2014.12.2",
@@ -283,20 +284,28 @@ for(model.file.i in seq_along(model.files)){
     weight <- with(sample.counts, chromEnd-chromStart)
     sample.lik <- 
       PoissonLik(sample.counts$coverage, weight, end.mat)
+    force.na <- is.na(sample.lik)
     sample.lik[seq(2, 18, by=2)] <- sample.lik[seq(1, 17, by=2)]
+    while(any(isNA <- is.na(sample.lik))){
+      na.i <- which(isNA)[1]
+      sample.lik[na.i] <- sample.lik[na.i-1]
+    }
+    ##stopifnot(diff(sample.lik) <= 0)
+    segSeq <- seq(1, 19, by=2)
     sample.lik[is.na(sample.lik)] <- sample.lik[1]
     sample.mBIC <- correct.mBIC(end.mat, sample.lik, weight)
     mbic <- sample.mBIC$crit[segSeq]
     mbic[is.na(mbic)] <- mbic[1]
     sample.oracle <- alice.oracle(sum(weight), sample.lik)
-    segSeq <- seq(1, 19, by=2)
-    penalty.mat <- 
+    write.na <- force.na[segSeq]
+    penalty.mat <-  #peaks x penalties
       cbind(oracle=sample.oracle$crit[segSeq],
             mBIC=mbic,
             BIC=sample.lik[segSeq] + segSeq * log(sum(weight)),
             AIC=sample.lik[segSeq] + segSeq * 2,
             none=sample.lik[segSeq])
     rownames(penalty.mat) <- segSeq
+    penalty.mat[write.na, ] <- NA
     selected.rows <- apply(penalty.mat, 2, which.min)
     selected.segs <- segSeq[selected.rows]
     names(selected.segs) <- names(selected.rows)

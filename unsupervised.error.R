@@ -1,3 +1,6 @@
+works_with_R("3.1.2", 
+             "Rdatatable/data.table@fd5464e4c587d4a96fa32c809eb94a45bb361133")
+
 load("unsupervised.RData")
 load("dp.peaks.matrices.RData")
 load("dp.peaks.sets.RData")
@@ -28,6 +31,7 @@ for(set.name in names(dp.peaks.sets)){
         sample.id <- names(segs)
         i.mat <- cbind(sample.id, param.name)
         errors <- err.mat[i.mat]
+        stopifnot(!is.na(errors))
         elist[[paste(set.name, set.i, test.chunk, algorithm)]] <- 
           data.table(set.name, set.i, testSet, test.chunk, algorithm,
                      param.name, sample.id, errors, regions)

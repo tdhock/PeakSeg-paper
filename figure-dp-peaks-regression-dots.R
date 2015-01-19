@@ -6,6 +6,7 @@ works_with_R("3.1.2", reshape2="1.2.2", ggplot2="1.0",
 load("dp.peaks.baseline.RData")
 load("dp.peaks.regression.RData")
 load("regularized.all.RData")
+load("unsupervised.error.RData")
 
 reg <- regularized.all$error %>%
   filter(model.name %in% c("L1.reg", "log.bases.log.max")) %>%
@@ -22,17 +23,33 @@ regression.set.i <- dp.peaks.regression %>%
   mutate(algorithm="PeakSeg")
 both.cols <- c("set.name", "set.i", "algorithm", "errors", "regions")
 
+un <- unsupervised.error %>%
+  group_by(set.name, set.i, algorithm) %>%
+  summarise(errors=sum(errors),
+            regions=sum(regions)) %>%
+  mutate(percent=errors/regions*100)
+un.other <- un %>%
+  filter(!algorithm %in% c("none", "AIC", "BIC", "mBIC"))
+un.bad <- un %>%
+  filter(algorithm == "none") %>%
+  mutate(algorithm="AIC/BIC/mBIC")
+un.show <-
+  rbind(un.other,
+        un.bad)
+
 ann <- function(df, parameters, supervision){
   data.table(df,
              parameters=factor(parameters,
-                    c(">1 parameters", "1 parameter", "0 parameters")),
+                    c(">1", "1", "0")),
              supervision)
 }
 both <-
   rbind(##regression.set.i[, both.cols],
+        ann(data.frame(un.show)[, both.cols],
+            "0", "unsupervised"),
         ann(data.frame(reg)[, both.cols],
-            ">1 parameters", "supervised"),
-        ann(dp.peaks.baseline[, both.cols], "1 parameter", "supervised")
+            ">1", "supervised"),
+        ann(dp.peaks.baseline[, both.cols], "1", "supervised")
         ) %>%
   group_by() %>%
   mutate(percent=errors/regions*100,
@@ -76,6 +93,10 @@ algo.stats <- mean.both %>%
   summarise(mean=mean(mean)) %>%
   arrange(mean)
 algo.levs <- rev(algo.stats$algo)
+algo.levs <-
+  rev(c("L1.reg", "log.bases.log.max", "oracle", "AIC/BIC/mBIC",
+        "hmcan.broad.trained", "hmcan.broad.default",
+        "macs.trained", "macs.default"))
 both$algo <- factor(both$algo, algo.levs)
 mean.both$algo <- factor(mean.both$algo, algo.levs)
 
@@ -112,7 +133,7 @@ pdf("figure-dp-peaks-regression-boxes-flip.pdf", h=1.6)
 print(boxes.flip)
 dev.off()
 
-dots <- 
+dots <-  #with facets...
 ggplot()+
   geom_point(aes(mean, algo),
              data=mean.both, color="grey", size=5)+
@@ -120,11 +141,28 @@ ggplot()+
              data=both, pch=1)+
   facet_grid(parameters + supervision ~ set.name, labeller=function(var, val){
     gsub("_", "\n", val)
-  }, scales="free_y", space="free_y")+
+  }, scales="free", space="free_y")+
   scale_y_discrete("algorithm")+
   theme_bw()+
   theme(panel.margin=grid::unit(0, "cm"))+
-  scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
-pdf("figure-dp-peaks-regression-dots.pdf", h=3.5, w=7.5)
+  ##scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
+  scale_x_continuous("percent test error", breaks=seq(0, 100, by=20))
+
+dots <-  #without facets.
+ggplot()+
+  geom_point(aes(mean, algo, color=parameters),
+             data=mean.both, alpha=0.25, size=4)+
+  geom_point(aes(percent, algo, color=parameters),
+             data=both, pch=1)+
+  facet_grid(. ~ set.name, labeller=function(var, val){
+    gsub("_", "\n", val)
+  }, scales="free", space="free_y")+
+  scale_y_discrete("algorithm")+
+  theme_bw()+
+  theme(panel.margin=grid::unit(0, "cm"))+
+  scale_color_discrete("learned\nparams")+
+  ##scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
+  scale_x_continuous("percent test error", breaks=seq(0, 100, by=20))
+pdf("figure-dp-peaks-regression-dots.pdf", h=3, w=8)
 print(dots)
 dev.off()
