@@ -38,6 +38,7 @@ un.show <-
         un.bad)
 
 ann <- function(df, parameters, supervision){
+  parameters <- ifelse(df$algorithm == "oracle.trained", "1", parameters)
   data.table(df,
              parameters=factor(parameters,
                     c(">1", "1", "0")),
@@ -94,7 +95,8 @@ algo.stats <- mean.both %>%
   arrange(mean)
 algo.levs <- rev(algo.stats$algo)
 algo.levs <-
-  rev(c("L1.reg", "log.bases.log.max", "oracle", "AIC/BIC/mBIC",
+  rev(c("L1.reg", "log.bases.log.max",
+        "oracle.trained", "oracle", "AIC/BIC/mBIC",
         "hmcan.broad.trained", "hmcan.broad.default",
         "macs.trained", "macs.default"))
 both$algo <- factor(both$algo, algo.levs)

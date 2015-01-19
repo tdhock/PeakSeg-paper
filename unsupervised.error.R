@@ -16,11 +16,26 @@ for(set.name in names(dp.peaks.sets)){
   for(set.i in seq_along(train.sets)){
     testSet <- paste(set.name, "split", set.i)
     train.chunks <- train.sets[[set.i]]
+    train.list <- list()
+    for(train.chunk in train.chunks){
+      seg.mat <- oracle.segments[[train.chunk]]
+      err.mat <- chunk.list[[train.chunk]]$PeakSeg
+      err.big <- apply(seg.mat, 2, function(segs){
+        err.mat[cbind(seq_along(segs), (segs-1)/2+1)]
+      })
+      train.list[[train.chunk]] <- colSums(err.big)
+    }
+    train.mat <- do.call(rbind, train.list)
+    train.err <- colSums(train.mat)
+    plot(train.err)
+    best.beta <- which.min(train.err)
     cat(sprintf("%d / %d %s\n", set.i, length(train.sets), set.name))
     test.chunks <- names(chunk.list)[! names(chunk.list) %in% train.chunks]
     for(test.chunk in test.chunks){
       test.info <- chunk.list[[test.chunk]]
-      seg.mat <- unsupervised[[test.chunk]]
+      seg.mat <-
+        cbind(unsupervised[[test.chunk]],
+              oracle.trained=oracle.segments[[test.chunk]][, best.beta])
       err.mat <- test.info$PeakSeg
       regions <- test.info$regions
       stopifnot(rownames(seg.mat) == rownames(err.mat))

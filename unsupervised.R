@@ -92,7 +92,7 @@ my.oracle <- function
 ### number of base pairs to segment.
  Lik,
 ### Numeric vector of Kmax -sum(dpois(x, mu, log=TRUE)) values.
- beta=10^seq(-3, 3, l=200)
+ beta=10^seq(-2, 4, l=200)
 ### beta from equation (6) in arXiv:1301.2534.
  ){
   Kmax <- length(Lik)
