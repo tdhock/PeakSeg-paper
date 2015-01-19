@@ -1,4 +1,6 @@
 works_with_R("3.1.2",
+             directlabels="2014.6.13",
+             dplyr="0.4.0",
              PeakSeg="2014.12.2",
              Segmentor3IsBack="1.8")
 
@@ -222,31 +224,33 @@ stopifnot(all.equal(as.numeric(comp.incorrect$crit),
 all.equal(as.numeric(comp.correct$crit),
           as.numeric(Cr.mBIC$criterion)) # not equal!
 
-if(FALSE){ # code from SelectModel
-  if (penalty == "mBIC")
-    entropy.term <- sapply(1:Kmax, sizenr)
-  K <- which.min(crit <- Lik + 0.5 * entropy.term + (1:Kmax - 0.5) * log(n))
-  if (penalty == "BIC") 
-    K <- which.min(crit <- Lik + (1:K) * log(n))
-  if (penalty == "AIC") 
-    K <- which.min(crit <- Lik + (1:K) * 2)
-  if (penalty == "oracle") {
-    Kseq = 1:Kmax
-    pen = Kseq * (1 + 4 * sqrt(1.1 + log(n/Kseq))) * 
-      (1 + 4 * sqrt(1.1 + log(n/Kseq)))
-    if (greatjump) {
-      K = saut(-Lik[Kseq], pen, Kseq)
-      crit <- Lik[Kseq] + K[2] * pen
-      K <- K[1]
-    }
-    else {
-      K = saut(-Lik[Kseq], pen, Kseq, 
-        seuil, biggest = FALSE)
-      crit <- Lik[Kseq] + K[2] * pen
-      K <- K[1]
-    }
-  }
+## Also compute AIC/BIC.
+crit.BIC <- comp.lik + (1:Kmax) * log(length(x))
+crit.AIC <- comp.lik + (1:Kmax) * 2
+
+cr <- function(crit, penalty){
+  data.frame(crit,
+             segments=seq_along(crit),
+             penalty)
 }
+crit.df <- 
+rbind(cr(comp.info$crit, "oracle"),
+      cr(crit.BIC, "BIC"),
+      cr(crit.AIC, "AIC"),
+      cr(comp.lik, "none"),
+      cr(comp.correct$crit, "mBIC"))
+best.df <- 
+crit.df %>%
+  group_by(penalty) %>%
+  filter(seq_along(crit) == which.min(crit))
+with.legend <- 
+ggplot()+
+  geom_line(aes(segments, crit, color=penalty),
+            data=crit.df)+
+  geom_point(aes(segments, crit, color=penalty),
+             data=best.df, pch=1)+
+  scale_y_log10()
+direct.label(with.legend)
 
 ## TODO: For each (penalty, set, chunk, sample) compute the optimal
 ## number of peaks.
