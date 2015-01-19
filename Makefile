@@ -66,3 +66,5 @@ figure-regularized-all.pdf: figure-regularized-all.R regularized.all.RData
 	R --no-save < $<
 unsupervised.RData: unsupervised.R dp.timings.RData
 	R --no-save < $<
+unsupervised.error.RData: unsupervised.error.R unsupervised.RData dp.peaks.matrices.RData dp.peaks.sets.RData
+	R --no-save < $<
