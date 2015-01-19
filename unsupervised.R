@@ -28,6 +28,7 @@ alice.oracle <- function
  Lik
 ### Numeric vector of Kmax -sum(dpois(x, mu, log=TRUE)) values.
  ){
+  Kmax <- length(Lik)
   saut <- function(Lv, pen, Kseq, seuil = sqrt(n)/log(n), biggest = TRUE) {
     J = -Lv
     Kmax = length(J)
@@ -139,18 +140,21 @@ correct.mBIC <- function(end.mat, Lik, weight){
   stopifnot(length(Lik) == nrow(end.mat))
   stopifnot(length(Lik) == ncol(end.mat))
   n <- sum(weight)
+  Kmax <- length(Lik)
   sizenr <- function(k) {
     model.ends <- end.mat[k, 1:k]
-    model.starts <- c(1, 1+model.ends[-length(model.ends)])
-    bases.vec <-
-      sapply(seq_along(model.starts), function(segment.i){
-        from <- model.starts[[segment.i]]
-        to <- model.ends[[segment.i]]
-        sum(weight[from:to])
-      })
-    sum(log(bases.vec))
-    ## the number of base pairs is used in the penalty computation
-    ## ... this will change with our weighted problem!
+    if(all(!is.na(model.ends))){
+      model.starts <- c(1, 1+model.ends[-length(model.ends)])
+      bases.vec <-
+        sapply(seq_along(model.starts), function(segment.i){
+          from <- model.starts[[segment.i]]
+          to <- model.ends[[segment.i]]
+          sum(weight[from:to])
+        })
+      sum(log(bases.vec))
+    }else{
+      NA
+    }
   }
   ## mBIC penalty code.
   entropy.term <- sapply(1:Kmax, sizenr)
@@ -183,18 +187,20 @@ PoissonLik <- function(count, bases, end.mat){
   for(segments in 1:Kmax){
     seg.lik <- rep(NA, segments)
     ends <- end.mat[segments, 1:segments]
-    breaks <- ends[-length(ends)]
-    starts <- c(1, breaks+1)
-    for(segment.i in 1:segments){
-      first <- starts[segment.i]
-      last <- ends[segment.i]
-      seg.data <- count[first:last]
-      seg.bases <- bases[first:last]
-      seg.mean <- sum(seg.data * seg.bases)/sum(seg.bases)
-      loglik.vec <- dpois(seg.data, seg.mean, log=TRUE)
-      seg.lik[segment.i] <- -sum(loglik.vec * seg.bases)
+    if(all(!is.na(ends))){
+      breaks <- ends[-length(ends)]
+      starts <- c(1, breaks+1)
+      for(segment.i in 1:segments){
+        first <- starts[segment.i]
+        last <- ends[segment.i]
+        seg.data <- count[first:last]
+        seg.bases <- bases[first:last]
+        seg.mean <- sum(seg.data * seg.bases)/sum(seg.bases)
+        loglik.vec <- dpois(seg.data, seg.mean, log=TRUE)
+        seg.lik[segment.i] <- -sum(loglik.vec * seg.bases)
+      }
+      lik[segments] <- sum(seg.lik)
     }
-    lik[segments] <- sum(seg.lik)
   }
   lik
 }
@@ -252,5 +258,53 @@ ggplot()+
   scale_y_log10()
 direct.label(with.legend)
 
-## TODO: For each (penalty, set, chunk, sample) compute the optimal
-## number of peaks.
+unsupervised <- list()
+model.files <- Sys.glob("data/*/*/dp.model.RData")
+for(model.file.i in seq_along(model.files)){
+  model.file <- model.files[[model.file.i]]
+  count.file <- sub("dp.model", "counts", model.file)
+  chunk.name <- sub("data/", "", dirname(model.file))
+  cat(sprintf("%4d / %4d %s\n", model.file.i, length(model.files), chunk.name))
+  load(model.file)
+  load(count.file)
+  sample.list <- split(counts, counts$sample.id)
+  segments.list <- list()
+  for(sample.id in names(sample.list)){
+    sample.segments <- dp.model[[sample.id]]$segments
+    sample.counts <- sample.list[[sample.id]]
+    seg.list <- split(sample.segments, sample.segments$segments)
+    end.mat <- matrix(NA, 19, 19)
+    rownames(end.mat) <- 1:19
+    for(seg.str in names(seg.list)){
+      seg.num <- as.numeric(seg.str)
+      segs <- seg.list[[seg.str]]
+      end.mat[seg.str, 1:nrow(segs)] <- segs$last
+    }
+    weight <- with(sample.counts, chromEnd-chromStart)
+    sample.lik <- 
+      PoissonLik(sample.counts$coverage, weight, end.mat)
+    sample.lik[seq(2, 18, by=2)] <- sample.lik[seq(1, 17, by=2)]
+    sample.lik[is.na(sample.lik)] <- sample.lik[1]
+    sample.mBIC <- correct.mBIC(end.mat, sample.lik, weight)
+    mbic <- sample.mBIC$crit[segSeq]
+    mbic[is.na(mbic)] <- mbic[1]
+    sample.oracle <- alice.oracle(sum(weight), sample.lik)
+    segSeq <- seq(1, 19, by=2)
+    penalty.mat <- 
+      cbind(oracle=sample.oracle$crit[segSeq],
+            mBIC=mbic,
+            BIC=sample.lik[segSeq] + segSeq * log(sum(weight)),
+            AIC=sample.lik[segSeq] + segSeq * 2,
+            none=sample.lik[segSeq])
+    rownames(penalty.mat) <- segSeq
+    selected.rows <- apply(penalty.mat, 2, which.min)
+    selected.segs <- segSeq[selected.rows]
+    names(selected.segs) <- names(selected.rows)
+    segments.list[[sample.id]] <- selected.segs
+  }
+  unsupervised[[chunk.name]] <- do.call(rbind, segments.list)
+}
+test <- do.call(rbind, unsupervised)
+stopifnot(!is.na(test))
+
+save(unsupervised, file="unsupervised.RData")
