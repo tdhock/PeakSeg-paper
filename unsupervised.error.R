@@ -6,7 +6,7 @@ default.params <-
   c(macs.trained="1.30103",
     hmcan.broad.trained="2.30258509299405")
 
-unsupervised.errors <- list()
+elist <- list()
 for(set.name in names(dp.peaks.sets)){
   train.sets <- dp.peaks.sets[[set.name]]
   chunk.list <- dp.peaks.matrices[[set.name]]
@@ -28,7 +28,7 @@ for(set.name in names(dp.peaks.sets)){
         sample.id <- names(segs)
         i.mat <- cbind(sample.id, param.name)
         errors <- err.mat[i.mat]
-        unsupervised.errors[[paste(set.name, set.i, test.chunk, algorithm)]] <- 
+        elist[[paste(set.name, set.i, test.chunk, algorithm)]] <- 
           data.table(set.name, set.i, testSet, test.chunk, algorithm,
                      param.name, sample.id, errors, regions)
       }
@@ -38,7 +38,7 @@ for(set.name in names(dp.peaks.sets)){
         errors <- err.mat[, param.name]
         sample.id <- names(errors)
         algorithm <- sub("trained", "default", algorithm)
-        unsupervised.errors[[paste(set.name, set.i, test.chunk, algorithm)]] <- 
+        elist[[paste(set.name, set.i, test.chunk, algorithm)]] <- 
           data.table(set.name, set.i, testSet, test.chunk, algorithm,
                      param.name, sample.id, errors, regions)
       }
@@ -46,6 +46,6 @@ for(set.name in names(dp.peaks.sets)){
   }
 }
 
-unsupervised.errors <- do.call(rbind, unsupervised.errors)
+unsupervised.error <- do.call(rbind, elist)
 
-save(unsupervised.errors, file="unsupervised.errors.RData")
+save(unsupervised.error, file="unsupervised.error.RData")
