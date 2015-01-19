@@ -84,6 +84,26 @@ alice.oracle <- function
        segments=from.saut[1])
 }
 
+my.oracle <- function
+### An adapted version of Alice's Segmentor3IsBack::SelectModel code
+### for penalty="oracle" -- this function can be used with any model
+### (not just Segmentor S4 classes).
+(n,
+### number of base pairs to segment.
+ Lik,
+### Numeric vector of Kmax -sum(dpois(x, mu, log=TRUE)) values.
+ beta=10^seq(-3, 3, l=200)
+### beta from equation (6) in arXiv:1301.2534.
+ ){
+  Kmax <- length(Lik)
+  Kseq <- 1:Kmax
+  in.square <- 1 + 4 * sqrt(1.1 + log(n/Kseq))
+  pen <- Kseq * in.square * in.square
+  sapply(beta, function(b){
+    which.min(Lik + b * pen)
+  })
+}
+
 alice.mBIC <- function
 ### An adapted version of Alice's Segmentor3IsBack::SelectModel code
 ### for penalty="mBIC" -- this function can be used with any model
@@ -260,6 +280,7 @@ ggplot()+
 direct.label(with.legend)
 
 unsupervised <- list()
+oracle.segments <- list()
 model.files <- Sys.glob("data/*/*/dp.model.RData")
 for(model.file.i in seq_along(model.files)){
   model.file <- model.files[[model.file.i]]
@@ -270,6 +291,7 @@ for(model.file.i in seq_along(model.files)){
   load(count.file)
   sample.list <- split(counts, counts$sample.id)
   segments.list <- list()
+  oseg.list <- list()
   for(sample.id in names(sample.list)){
     sample.segments <- dp.model[[sample.id]]$segments
     sample.counts <- sample.list[[sample.id]]
@@ -297,6 +319,7 @@ for(model.file.i in seq_along(model.files)){
     mbic <- sample.mBIC$crit[segSeq]
     mbic[is.na(mbic)] <- mbic[1]
     sample.oracle <- alice.oracle(sum(weight), sample.lik)
+    oseg.list[[sample.id]] <- my.oracle(sum(weight), sample.lik)
     write.na <- force.na[segSeq]
     penalty.mat <-  #peaks x penalties
       cbind(oracle=sample.oracle$crit[segSeq],
@@ -312,8 +335,9 @@ for(model.file.i in seq_along(model.files)){
     segments.list[[sample.id]] <- selected.segs
   }
   unsupervised[[chunk.name]] <- do.call(rbind, segments.list)
+  oracle.segments[[chunk.name]] <- do.call(rbind, oseg.list)
 }
 test <- do.call(rbind, unsupervised)
 stopifnot(!is.na(test))
 
-save(unsupervised, file="unsupervised.RData")
+save(unsupervised, oracle.segments, file="unsupervised.RData")
