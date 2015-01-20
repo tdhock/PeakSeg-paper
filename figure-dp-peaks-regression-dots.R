@@ -80,7 +80,9 @@ ggplot()+
               data=data.frame(intercept=0, slope=1))+
   theme_bw()+
   theme(panel.margin=grid::unit(0, "cm"))+
-  facet_grid(. ~ set.name)+
+  facet_grid(. ~ set.name, labeller=function(var, val){
+    gsub("_", "\n", val)
+  })+
   coord_equal()
 
 ## Scatterplots show that L1.reg does not always have lower test error
@@ -116,6 +118,30 @@ algo.levs <-
         "macs.trained", "macs.default"))
 both$algo <- factor(both$algo, algo.levs)
 mean.both$algo <- factor(mean.both$algo, algo.levs)
+
+## scatterplot comparing oracle.trained and L1.reg.
+ref.diff <- both %>%
+  filter(algo=="L1.reg") %>%
+  mutate(baseline=percent) %>%
+  select(set.name, set.i, baseline) %>%
+  inner_join(both, c("set.name", "set.i")) %>%
+  mutate(diff=percent-baseline)
+both.wide <- dcast(both, set.name + set.i ~ algo, value.var = "percent")
+scatter.best <- 
+scatter+
+  geom_point(aes(L1.reg, oracle.trained),
+             data=both.wide, pch=1)
+pdf("figure-dp-peaks-regression-scatter.pdf", h=2)
+print(scatter.best)
+dev.off()
+
+scatter.oracle <- 
+scatter+
+  geom_point(aes(oracle.trained, oracle.default),
+             data=both.wide, pch=1)
+pdf("figure-dp-peaks-regression-scatter-oracle.pdf", h=3)
+print(scatter.oracle)
+dev.off()
 
 dp.peaks.regression.dots <- both
 save(dp.peaks.regression.dots, file="dp.peaks.regression.dots.RData")
@@ -165,7 +191,25 @@ ggplot()+
   ##scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
   scale_x_continuous("percent test error", breaks=seq(0, 100, by=20))
 
-dots <-  #without facets.
+dots <-  #with differences.
+ggplot()+
+  geom_vline(xintercept=0, color="grey")+
+  geom_point(aes(diff, algo, color=parameters),
+             data=ref.diff, pch=1)+
+  facet_grid(algo.type ~ set.name, labeller=function(var, val){
+    gsub("_", "\n", val)
+  }, scales="free_y", space="free_y")+
+  scale_y_discrete("algorithm")+
+  theme_bw()+
+  theme(panel.margin=grid::unit(0, "cm"))+
+  scale_color_discrete("learned\nparams")+
+  scale_x_continuous("test error difference from L1.reg model",
+                     breaks=seq(0, 100, by=20))
+pdf("figure-dp-peaks-regression-dots-diff.pdf", h=3, w=8)
+print(dots)
+dev.off()
+
+dots <-  #with 1 set of facets.
 ggplot()+
   geom_point(aes(mean, algo, color=parameters),
              data=mean.both, alpha=0.25, size=4)+
@@ -173,7 +217,7 @@ ggplot()+
              data=both, pch=1)+
   facet_grid(algo.type ~ set.name, labeller=function(var, val){
     gsub("_", "\n", val)
-  }, scales="free", space="free_y")+
+  }, scales="free_y", space="free_y")+
   scale_y_discrete("algorithm")+
   theme_bw()+
   theme(panel.margin=grid::unit(0, "cm"))+
