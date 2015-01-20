@@ -12,6 +12,7 @@
 \DeclareMathOperator*{\Peaks}{Peaks}
 \DeclareMathOperator*{\HotSpots}{HotSpots}
 \newcommand{\Cost}{\text{Cost}}
+\usepackage{stfloats}
 \DeclareMathOperator*{\Diag}{Diag}
 \DeclareMathOperator*{\TPR}{TPR}
 \DeclareMathOperator*{\Segments}{Segments}
@@ -119,27 +120,39 @@ but were calibrated using the annotated region labels to choose the
 best scalar significance threshold hyperparameter via grid search.
 
 The ChIP-seq segmentation model we propose is a constrained version of
-the model proposed by \citet{cleynen2013segmentation}. Specifically,
+the Poisson model proposed by \citet{Segmentor}. Specifically,
 they proposed to search all possible change-points to find the optimal
 segmentation, but we propose to constrain the possible change-points to
 the subset of models that can be interpreted as peaks.
 
-\section{Unsupervised PeakSeg: segmenting one ChIP-seq profile}
+TODO: discuss penalty functions \citep{cleynen2013segmentation}.
+
+TODO: table of penalty functions.
+
+\section{From unconstrained to constrained maximum likelihoood
+  segmentation}
+
+In this section we discuss Poisson maximum likelihood segmentation
+models for count data. First, we discuss an existing unconstrained
+model, and then we propose a constraint that makes the model suitable
+for peak detection.
+
+\subsection{Unconstrained maximum likelihood segmentation}
 
 \begin{figure*}[b!]
   \centering
   \includegraphics[width=\textwidth]{figure-Segmentor-PeakSeg}
   %\input{figure-Segmentor-PeakSeg}
   \vskip -0.5cm
-  \caption{Example profile $\mathbf y$ (black), with green horizontal
+  \caption{Example profile $\mathbf y$ (grey), with green horizontal
     lines for the segmentation mean $\mathbf m$, and green vertical
     lines to emphasize change-points. For this particular profile
-    $\mathbf y$, the models are equivalent $\mathbf{\hat m}^s(\mathbf
-    y) = \mathbf{\tilde m}^s(\mathbf y)$ for $s\in\{1, 3\}$ segments
-    but not for $s\in\{5, 7\}$. For the constrained models, the 2nd,
-    4th, ...  segments are interpreted as peaks (\ref{eq:peaks}), whose
-    accuracy can be quantified using the annotations
-    (\ref{eq:error}).}
+    $\mathbf y$, the unconstrained and contrained models are
+    equivalent $\mathbf{\hat m}^s(\mathbf y) = \mathbf{\tilde
+      m}^s(\mathbf y)$ for $s\in\{1, 3\}$ segments but not for
+    $s\in\{5, 7\}$. For the constrained models, the even numbered
+    segments are interpreted as peaks (\ref{eq:peaks}), whose accuracy
+    can be quantified using the annotations (\ref{eq:error}).}
   \label{fig:profiles}
 \end{figure*}
 
@@ -157,11 +170,17 @@ for any $s\in\{1, 2, \dots, s_{\max}\}$ as
     &\text{such that} && \Segments(\mathbf m)=s,
   \end{aligned}
 \end{equation}
-where $\rho(\mathbf m, \mathbf y)= \sum_{j=1}^d m_j - y_j \log m_j$ is
-the loss function corresponding to maximum likelihood inference of a
-Poisson distribution with mean parameter $m_j$. The model complexity
-$\Segments(\mathbf m)=1+\sum_{j=2}^d I(m_j \neq m_{j-1})$ is the
-number of segments, where $I$ is the indicator function. Although it
+where the Poisson loss function is
+\begin{equation}
+  \rho(\mathbf m, \mathbf y)= \sum_{j=1}^d m_j - y_j \log m_j.
+\end{equation} 
+The model complexity is the number of piecewise constant segments
+\begin{equation}
+  \Segments(\mathbf m)=1+\sum_{j=2}^d I(m_j \neq m_{j-1}),
+\end{equation}
+where $I$ is the indicator function. 
+
+Although it
 is a non-convex optimization problem, the sequence of segmentations
 $\mathbf{\hat m}^1(\mathbf y), \dots, \mathbf{\hat
   m}^{s_{\text{max}}}(\mathbf y)$ can be computed in $O(s_{\text{max}}
@@ -184,54 +203,103 @@ before base $j\in\{2, \dots, d\}$ as
   \label{eq:sign}
   S_j(\mathbf m) = \sign( m_{j} - m_{j-1} ),
 \end{equation}
-with $S_1(\mathbf m)=0$ by convention. Furthermore we define the number
-of peaks at base $j\in\{1, \dots, d\}$ as
+with $S_1(\mathbf m)=0$ by convention. Furthermore we define the peak
+indicator at base $j\in\{1, \dots, d\}$ as
 \begin{equation}
   \label{eq:peaks}
   P_j(\mathbf m) = \sum_{k=1}^j S_k(\mathbf m).
 \end{equation}
-In general for the unconstrained model $P_j(\mathbf m)\in\ZZ$, and for
-example in Figure~\ref{fig:profiles} there is a position $j$ for which
-$P_j\left[ \mathbf{\hat m}^5(\mathbf y) \right]=2$ (since the mean
-changes up, up, down, down). We would like to constrain the number of
-peaks $P_j(\mathbf m)\in\{0, 1\}$ so that we can use $c(\mathbf y) =
-\mathbf P\left[ \mathbf{\tilde m}^s(\mathbf y) \right]$ as a peak
-detector, where $\mathbf P[\mathbf m] = \left[\begin{array}{ccc}
-    P_1(\mathbf m) & \cdots & P_d(\mathbf m)
-\end{array}\right]\in\{0, 1\}^d$. That results 
-in the constrained problem
+Then we define a peak detector $c(\mathbf y) = \mathbf P\left[
+  \mathbf{\tilde m}^s(\mathbf y) \right]\in\{0, 1\}^d$, where
 \begin{equation}
-  \label{argmin:constrained}
-  \begin{aligned}
-    \mathbf{\tilde m}^s(\mathbf y)  =\ 
-    &\argmin_{\mathbf m\in\RR^{d}} && 
-    %\sum_{j=1}^d \log\Lik
-    \rho
-    (\mathbf m, \mathbf y) \\
-    \\
-    &\text{such that} && \Segments(\mathbf m)=s,\\
-    &&& P_j(\mathbf m) \in\{0, 1\} \text{ for all } j\in\{1, \dots, d\}.
-  \end{aligned}
+  \mathbf
+P[\mathbf m] = \left[\begin{array}{ccc} P_1(\mathbf m) & \cdots &
+    P_d(\mathbf m)
+\end{array}\right].
 \end{equation}
+\subsection{A constrained model for peak detection}
+
+In general for the unconstrained model $P_j(\mathbf m)\in\ZZ$, which
+is problematic since we want to use it as a peak detector with binary
+outputs $P_j(\mathbf m)\in \{0, 1\}$. 
+
+For example in Figure~\ref{fig:profiles} there is a position $j$ for
+which $P_j\left[ \mathbf{\hat m}^5(\mathbf y) \right]=2$ (since the
+mean changes up, up, down, down). 
+
+Thus we constrain the peak indicator $P_j(\mathbf
+m)\in\{0, 1\}$, which results
+in the constrained problem
+\begin{eqnarray}
+  \label{argmin:constrained}
+  \mathbf{\tilde m}^s(\mathbf y)  =
+    \argmin_{\mathbf m\in\RR^{d}} && 
+    \rho(\mathbf m, \mathbf y) \\
+    \text{such that} && \Segments(\mathbf m)=s, \nonumber \\
+     \forall j\in\{1, \dots, d\}, &&P_j(\mathbf m) \in\{0, 1\}.
+     \nonumber
+\end{eqnarray}
 Another way to interpret the constrained problem
 (\ref{argmin:constrained}) is that the sequence of changes in the
 segment means $\mathbf m$ must begin with a positive change and then
 alternate: up, down, up, down, ... (and not up, up, down). Thus the
 even numbered segments (2nd, 4th, etc) may be interpreted as peaks,
 and the odd numbered segments (1st, 3rd, etc) may be interpreted as
-background. Figure~\ref{fig:profiles} shows a profile where the
-constraint is necessary to detect peaks for models with $s\in\{5, 7\}$
-segments. We propose to use dynamic programming to compute the
-sequence of maximum likelihood models $\mathbf{\tilde m}^1(\mathbf y),
-\dots, \mathbf{\tilde m}^{s_{\text{max}}}(\mathbf y)$ satisfying this
-up-down constraint\footnote{An R package implementing the 
-  dynamic programming is available at
-  \url{https://github.com/tdhock/PeakSegDP}}. The algorithm is in
-$O(s_{\text{max}} d^2)$ time, where $d$ is the number of data points,
-using the compression scheme proposed by \citet{Segmentor}.
+background. 
 
-\section{Supervised PeakSeg: learning a penalty function using several ChIP-seq profiles}
+Figure~\ref{fig:profiles} shows a profile where the constraint is
+necessary. In particular, it is clear that unconstrained models with
+$s\in\{5, 7\}$ segments do not satisfy $P_j[\mathbf{\hat m}^s(\mathbf
+y)]\in\{0, 1\}$ for all positions $j\in\{1,\dots, d\}$ (since they
+both have up, up, down changes).
+
+\section{Algorithms}
+
+In this section we propose algorithms that can compute the Poisson
+constrained optimal segmentation model. We first propose a constrained
+dynamic programming algorithm that can be used to recover a sequence
+of constrained maximum likelihood segmentations, $\mathbf{\tilde
+  m}^1(\mathbf y), \dots, \mathbf{\tilde m}^{s_{\text{max}}}(\mathbf
+y)$ (Section~\ref{sec:constrained-dp}). Then, we show how an existing
+algorithm can be used to learn a penalty function for choosing the
+number of segments $s\in\{1, \dots, s_{\text{max}}\}$
+(Section~\ref{sec:supervised}).
+
+\subsection{Constrained dynamic programming}
+\label{sec:constrained-dp}
+
+We propose to use dynamic programming to compute the sequence of
+maximum likelihood models $\mathbf{\tilde m}^1(\mathbf y), \dots,
+\mathbf{\tilde m}^{s_{\text{max}}}(\mathbf y)$ satisfying this up-down
+constraint.
+
+TODO: more detailed description of dynamic programming.
+
+The algorithm is in $O(s_{\text{max}} d^2)$ time, where $d$ is the
+number of data points, using the compression scheme proposed by
+\citet{Segmentor}. A free/open-source R package implementing the
+dynamic
+programming is available at\\
+\url{https://github.com/tdhock/PeakSegDP}
+
+\subsection{Supervised penalty learning for peak detection}
 \label{sec:supervised}
+
+
+\begin{figure*}[b!]
+  \centering
+  \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots}
+  \vskip -0.5cm
+  \caption{Test error of algorithms on seven annotated region data
+    sets (each point shows one of six randomly selected train/test
+    splits, and the shaded circle is the mean test error). Data set
+    names show histone mark type (e.g. H3K36me3), annotator (AM), and
+    cell types (immune). Colors show how parameters were learned on
+    the training data set: unsupervised/default parameters (0, blue),
+    grid search for 1 scalar parameter (1, green), or max margin interval
+    regression for several parameters ($>1$, orange).}
+  \label{fig:test-error}
+\end{figure*}
 
 After computing the constrained maximum likelihood segmentations for
 each sample $i\in\{1,\dots, n\}$, the only question that remains is:
@@ -277,8 +345,7 @@ y)$, and finally the predicted peaks $\mathbf P\left[ \mathbf{\tilde
 \section{Results: state-of-the-art peak detection for two data types}
 
 We downloaded 7 benchmark data sets, which included a
-total of 12,826 manually annotated regions
-\footnote{\url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}}.
+total of 12,826 manually annotated regions\footnote{\url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}}.
 Since these genomic windows are relatively small, we set the maximum
 number of segments $s_{\text{max}}=19$, and for each profile $\mathbf
 y$ we computed $\mathbf{\tilde m}^1(\mathbf y), \dots, \mathbf{\tilde
@@ -304,47 +371,36 @@ test error than macs for H3K36me3 data. It is clear that our proposed
 PeakSeg algorithm had lower test error than both macs and hmcan.broad
 algorithms, for both data types.
 
+TODO: discussion of unsupervised vs 1-parameter vs multi-parameter
+learning.
+
 % \begin{center}
 %   \input{table-dp-peaks-regression}
 % \end{center}
 
 \section{Discussion, conclusions, and future work}
 
-\begin{figure*}[t!]
-  \centering
-  \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots}
-  \vskip -0.5cm
-  \caption{Test error of algorithms on seven annotated region data
-    sets (each point shows one of six randomly selected
-    train/test splits, and the shaded circle is the mean test
-    error). Data set names show histone mark type (e.g. H3K36me3),
-    annotator (AM), and cell types (immune). The multi-parameter
-    supervised penalty learning methods had the lowest test error for
-    all data sets.}
-  \label{fig:test-error}
-\end{figure*}
+% \begin{figure*}[t!]
+%   \centering
+%   \includegraphics[width=\textwidth]{figure-regularized-all}
+%   \vskip -0.5cm
+%   \caption{Normalized weights of the 2-feature log.bases.log.max model
+%     compared to the 41-feature L1.reg model. In some data sets the
+%     L1.reg model sets these feature weights to 0.}
+%   \label{fig:regularized-all}
+% \end{figure*}
 
-\begin{figure*}[t!]
-  \centering
-  \includegraphics[width=\textwidth]{figure-regularized-all}
-  \vskip -0.5cm
-  \caption{Normalized weights of the 2-feature log.bases.log.max model
-    compared to the 41-feature L1.reg model. In some data sets the
-    L1.reg model sets these feature weights to 0.}
-  \label{fig:regularized-all}
-\end{figure*}
-
-\begin{figure*}[t!]
-  \centering
-  \includegraphics[width=\textwidth]{figure-regularized-feature-importance}
-  \vskip -0.5cm
-  \caption{Importance of features in L1.reg models. There were several
-    features in H3K4me3 data sets which were selected in all 6
-    train/test splits (note that unweighted.quartile.100\% is the same
-    as the maximum of the data). For other data sets it is not clear
-    which features are most important.}
-  \label{fig:regularized-feature-importance}
-\end{figure*}
+% \begin{figure*}[t!]
+%   \centering
+%   \includegraphics[width=\textwidth]{figure-regularized-feature-importance}
+%   \vskip -0.5cm
+%   \caption{Importance of features in L1.reg models. There were several
+%     features in H3K4me3 data sets which were selected in all 6
+%     train/test splits (note that unweighted.quartile.100\% is the same
+%     as the maximum of the data). For other data sets it is not clear
+%     which features are most important.}
+%   \label{fig:regularized-feature-importance}
+% \end{figure*}
 
 We proposed to use the solution of a constrained optimal segmentation
 problem (\ref{argmin:constrained}) as a ChIP-seq peak detector. For
@@ -382,7 +438,7 @@ across several samples of the same cell type. This joint peak
 detection problem may lead to more accurate peak calls, but it is a
 considerably more difficult segmentation problem.
 
-\bibliographystyle{icml2015}
+\bibliographystyle{abbrvnat}
 
 \bibliography{refs}
 

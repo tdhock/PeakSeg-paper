@@ -28,8 +28,18 @@ un <- unsupervised.error %>%
   summarise(errors=sum(errors),
             regions=sum(regions)) %>%
   mutate(percent=errors/regions*100)
+bad.algos <- c("none", "AIC", "BIC", "mBIC")
+un.bad <- un %>%
+  filter(algorithm %in% bad.algos) %>%
+  group_by(set.name, set.i) %>%
+  summarise(min=min(errors),
+            max=max(errors),
+            algos=n())
+## make sure AIC/BIC/mBIC/none are really all the same.
+with(un.bad, stopifnot(min == max))
+
 un.other <- un %>%
-  filter(!algorithm %in% c("none", "AIC", "BIC", "mBIC"))
+  filter(!algorithm %in% bad.algos)
 un.bad <- un %>%
   filter(algorithm == "none") %>%
   mutate(algorithm="AIC/BIC/mBIC")
@@ -54,7 +64,12 @@ both <-
         ) %>%
   group_by() %>%
   mutate(percent=errors/regions*100,
-         set.name=as.character(set.name))
+         set.name=as.character(set.name),
+         algorithm=ifelse(algorithm=="oracle",
+           "oracle.default", as.character(algorithm)),
+         algo.type=ifelse(grepl("hmcan|macs", algorithm),
+           "heuristic", "max likelihood"),
+         algo.type=factor(algo.type, c("max likelihood", "heuristic")))
 
 wide <- dcast(both, set.name + set.i ~ algorithm, value.var="errors")
 
@@ -87,7 +102,7 @@ both$algo <- sub(".trained", "", both$algorithm)
 both$algo <- both$algorithm
 
 mean.both <- both %>%
-  group_by(set.name, parameters, supervision, algo) %>%
+  group_by(set.name, parameters, supervision, algo, algo.type) %>%
   summarise(mean=mean(percent))
 algo.stats <- mean.both %>%
   group_by(algo) %>%
@@ -96,7 +111,7 @@ algo.stats <- mean.both %>%
 algo.levs <- rev(algo.stats$algo)
 algo.levs <-
   rev(c("L1.reg", "log.bases.log.max",
-        "oracle.trained", "oracle", "AIC/BIC/mBIC",
+        "oracle.trained", "oracle.default", "AIC/BIC/mBIC",
         "hmcan.broad.trained", "hmcan.broad.default",
         "macs.trained", "macs.default"))
 both$algo <- factor(both$algo, algo.levs)
@@ -156,7 +171,7 @@ ggplot()+
              data=mean.both, alpha=0.25, size=4)+
   geom_point(aes(percent, algo, color=parameters),
              data=both, pch=1)+
-  facet_grid(. ~ set.name, labeller=function(var, val){
+  facet_grid(algo.type ~ set.name, labeller=function(var, val){
     gsub("_", "\n", val)
   }, scales="free", space="free_y")+
   scale_y_discrete("algorithm")+
