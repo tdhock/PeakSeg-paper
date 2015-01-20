@@ -303,10 +303,30 @@ programming is available at\\
 
 After computing the constrained maximum likelihood segmentations for
 each sample $i\in\{1,\dots, n\}$, the only question that remains is:
-how many segments? To predict a sample-specific number of segments, we
-propose to use the annotated regions to learn a penalty function
-\citep{HOCKING-penalties}. Briefly, we define the optimal number of
-segments 
+how many segments?
+
+There are several existing penalty functions for resolving this model
+selection problem. For example, one can use asymptotic arguments to
+get a penalty such as the AIC (REF), BIC (REF), or mBIC (REF). More
+recently, \citet{cleynen2013segmentation} proposed an oracle penalty
+by applying finite sample model selection theory to segmentation
+models of count data. All of these penalty functions are completely
+unsupervised since they ignore the annotated region labels in the
+training data set.
+
+\citet{cleynen2013segmentation} proposed to use the 
+un\-supervised heuristic of \citet{Lav05} for calibrating the penalty
+constant $\beta$ in equation (6) of their paper. Instead, we propose to
+use the annotated region labels as a super\-vised method for calibrating
+this penalty constant $\beta$. More specifically, we defined a grid of
+200 $\beta$ values evenly spaced on the log scale between $10^{-2}$
+and $10^4$, then used grid search to select the value that minimizes
+the annotation error (\ref{eq:error}) on the train set.
+
+For supervised learning of multi-parameter linear penalty functions,
+we can use the max margin interval regression algorithm of
+\citet{HOCKING-penalties}. Briefly, we define the optimal number of
+segments
 \begin{equation}
   s^*(\lambda, \mathbf y) = 
   \argmin_{s\in\{1,3,\dots, s_{\text{max}}\}}
@@ -317,13 +337,30 @@ segments
   + \lambda s,
 \end{equation}
 where $\lambda\in\RR_+$ is a positive
-penalty value. We define sample-specific penalty values $\log
-\lambda_i = f(\mathbf x_i) = \beta + \mathbf w^\intercal \mathbf x_i$,
-which is an affine function with parameters $\beta\in\RR,\mathbf
-w\in\RR^m$ that will be learned. We used an $m=2$-dimensional feature vector
-$\mathbf x_i = \left[\begin{array}{cc} \log\max \mathbf y_i & \log d_i
+penalty value. 
+
+We define sample-specific features $\mathbf x_i\in\RR^m$ and penalty
+values $\log \lambda_i = f(\mathbf x_i) = \beta + \mathbf w^\intercal
+\mathbf x_i$, which is an affine function with parameters
+$\beta\in\RR,\mathbf w\in\RR^m$ that will be learned. We considered
+learning two models:
+
+\begin{itemize}
+\item \textbf{log.bases.log.max}: we used an $m=2$-dimensional feature
+  vector $\mathbf x_i = \left[\begin{array}{cc} \log\max \mathbf y_i &
+      \log d_i
 \end{array}\right]$ where $d_i$ is the number of base pairs for 
-sample/chromosome $i$. The learning algorithm amounts to minimizing a
+sample/chromosome $i$.  This corresponds to a penalty $\lambda_i =
+e^\beta (\log\max\mathbf y_i)^{w_1} (\log d_i)^{w_2}$. We trained the
+model by solving problem (REF) with no regularization $\gamma=0$.
+\item \textbf{L1.reg} we defined $m=41$ features using transforms ($x,
+  \log x, \log[x+1], \log\log x$), where $x$ is: (un)weighted
+  quartiles of $\mathbf y_i$, (un)weighted mean of $\mathbf y_i$, and
+  number of (un)weighted data points $d_i$. We trained the model by solving
+  problem (REF), using an internal cross-validation loop to estimate
+  the regularization~$\gamma$.
+\end{itemize}
+The learning algorithm amounts to minimizing a
 smooth convex loss $\ell_i:\RR\rightarrow\RR_+$ which depends on the
 annotated region data $R_i$:
 \begin{equation}
