@@ -225,8 +225,10 @@ stopifnot(all.equal(as.integer(un.ends[40, ]),
 PoissonLik <- function(count, bases, end.mat){
   Kmax <- nrow(end.mat)
   lik <- rep(NA, Kmax)
+  loss <- rep(NA, Kmax)
   for(segments in 1:Kmax){
     seg.lik <- rep(NA, segments)
+    seg.loss <- rep(NA, segments)
     ends <- end.mat[segments, 1:segments]
     if(all(!is.na(ends))){
       breaks <- ends[-length(ends)]
@@ -239,10 +241,13 @@ PoissonLik <- function(count, bases, end.mat){
         seg.mean <- sum(seg.data * seg.bases)/sum(seg.bases)
         loglik.vec <- dpois(seg.data, seg.mean, log=TRUE)
         seg.lik[segment.i] <- -sum(loglik.vec * seg.bases)
+        seg.loss[segment.i] <- PoissonLoss(seg.mean, seg.data, seg.bases)
       }
       lik[segments] <- sum(seg.lik)
+      loss[segments] <- sum(seg.loss)
     }
   }
+  attr(lik, "loss") <- loss
   lik
 }
 
@@ -276,7 +281,7 @@ crit.BIC <- comp.lik + (1:Kmax) * log(length(x))
 crit.AIC <- comp.lik + (1:Kmax) * 2
 
 cr <- function(crit, penalty){
-  data.frame(crit,
+  data.frame(crit=as.numeric(crit),
              segments=seq_along(crit),
              penalty)
 }
@@ -301,6 +306,8 @@ direct.label(with.legend)
 
 unsupervised <- list()
 oracle.segments <- list()
+loss.segments <- list()
+lik.segments <- list()
 model.files <- Sys.glob("data/*/*/dp.model.RData")
 for(model.file.i in seq_along(model.files)){
   model.file <- model.files[[model.file.i]]
@@ -312,6 +319,8 @@ for(model.file.i in seq_along(model.files)){
   sample.list <- split(counts, counts$sample.id)
   segments.list <- list()
   oseg.list <- list()
+  loss.list <- list()
+  lik.list <- list()
   for(sample.id in names(sample.list)){
     sample.segments <- dp.model[[sample.id]]$segments
     sample.counts <- sample.list[[sample.id]]
@@ -326,6 +335,16 @@ for(model.file.i in seq_along(model.files)){
     weight <- with(sample.counts, chromEnd-chromStart)
     sample.lik <- 
       PoissonLik(sample.counts$coverage, weight, end.mat)
+    sample.loss <- attr(sample.lik, "loss")
+    segSeq <- seq(1, 19, by=2)
+    lik.list[[sample.id]] <- sapply(seq(-2, 4, l=200), function(pen){
+      which.min(sample.lik[segSeq] + pen * segSeq)
+    })
+    loss.list[[sample.id]] <- sapply(seq(-2, 4, l=200), function(pen){
+      which.min(sample.loss[segSeq] + pen * segSeq)
+    })
+    qplot(sample.lik, sample.loss)+
+      coord_equal()
     force.na <- is.na(sample.lik)
     sample.lik[seq(2, 18, by=2)] <- sample.lik[seq(1, 17, by=2)]
     while(any(isNA <- is.na(sample.lik))){
@@ -333,7 +352,6 @@ for(model.file.i in seq_along(model.files)){
       sample.lik[na.i] <- sample.lik[na.i-1]
     }
     ##stopifnot(diff(sample.lik) <= 0)
-    segSeq <- seq(1, 19, by=2)
     sample.lik[is.na(sample.lik)] <- sample.lik[1]
     sample.mBIC <- correct.mBIC(end.mat, sample.lik, weight)
     mbic <- sample.mBIC$crit[segSeq]
@@ -356,8 +374,11 @@ for(model.file.i in seq_along(model.files)){
   }
   unsupervised[[chunk.name]] <- do.call(rbind, segments.list)
   oracle.segments[[chunk.name]] <- do.call(rbind, oseg.list)
+  loss.segments[[chunk.name]] <- do.call(rbind, loss.list)
+  lik.segments[[chunk.name]] <- do.call(rbind, lik.list)
 }
 test <- do.call(rbind, unsupervised)
 stopifnot(!is.na(test))
 
-save(unsupervised, oracle.segments, file="unsupervised.RData")
+save(unsupervised, oracle.segments, loss.segments, lik.segments,
+     file="unsupervised.RData")
