@@ -73,5 +73,5 @@ oracle.optimal.RData: oracle.optimal.R dp.peaks.matrices.RData
 	R --no-save < $<
 oracle.intervals.RData: oracle.intervals.R oracle.optimal.RData
 	R --no-save < $<
-oracle.regression.RData: oracle.regression.R oracle.intervals.RData dp.peaks.sets.RData
+oracle.regularized.RData: oracle.regularized.R oracle.intervals.RData dp.peaks.sets.RData
 	R --no-save < $<

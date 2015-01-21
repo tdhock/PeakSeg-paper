@@ -14,7 +14,7 @@ g <- as.matrix(expand.grid(log.max.coverage=seq(2, 8, l=100),
 dp.peaks.grid.list <- list()
 dp.peaks.polygon.list <- list()
 dp.peaks.segment.list <- list()
-dp.peaks.regression <- NULL
+oracle.regression <- NULL
 dp.peaks.prediction.list <- list()
 dp.peaks.roc <- list()
 dp.peaks.roc.chosen <- list()
@@ -101,7 +101,7 @@ for(set.name in names(oracle.intervals)){
         errors <- this.test$test.errors[[sample.i]] <-
           error.list$PeakSeg[sample.i, peaks]
         regions <- error.list$regions[sample.i]
-        dp.peaks.regression <- rbind(dp.peaks.regression, {
+        oracle.regression <- rbind(oracle.regression, {
           data.frame(set.name, set.i, test.chunk,
                      sample.id,
                      peaks, errors, regions)
@@ -157,11 +157,11 @@ dp.peaks.grid <- do.call(rbind, dp.peaks.grid.list)
 dp.peaks.polygon <- do.call(rbind, dp.peaks.polygon.list)
 dp.peaks.segment <- do.call(rbind, dp.peaks.segment.list)
 
-save(dp.peaks.regression,
+save(oracle.regression,
      dp.peaks.roc,
      dp.peaks.roc.chosen,
      dp.peaks.prediction,
      dp.peaks.grid,
      dp.peaks.polygon,
      dp.peaks.segment,
-     file="dp.peaks.regression.RData")
+     file="oracle.regression.RData")
