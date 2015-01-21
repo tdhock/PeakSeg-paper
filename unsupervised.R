@@ -241,7 +241,7 @@ PoissonLik <- function(count, bases, end.mat){
         seg.mean <- sum(seg.data * seg.bases)/sum(seg.bases)
         loglik.vec <- dpois(seg.data, seg.mean, log=TRUE)
         seg.lik[segment.i] <- -sum(loglik.vec * seg.bases)
-        seg.loss[segment.i] <- PoissonLoss(seg.mean, seg.data, seg.bases)
+        seg.loss[segment.i] <- PoissonLoss(seg.data, seg.mean, seg.bases)
       }
       lik[segments] <- sum(seg.lik)
       loss[segments] <- sum(seg.loss)
@@ -337,11 +337,11 @@ for(model.file.i in seq_along(model.files)){
       PoissonLik(sample.counts$coverage, weight, end.mat)
     sample.loss <- attr(sample.lik, "loss")
     segSeq <- seq(1, 19, by=2)
-    lik.list[[sample.id]] <- sapply(seq(-2, 4, l=200), function(pen){
-      which.min(sample.lik[segSeq] + pen * segSeq)
+    lik.list[[sample.id]] <- sapply(10^seq(2, 6, l=200), function(pen){
+      segSeq[which.min(sample.lik[segSeq] + pen * segSeq)]
     })
-    loss.list[[sample.id]] <- sapply(seq(-2, 4, l=200), function(pen){
-      which.min(sample.loss[segSeq] + pen * segSeq)
+    loss.list[[sample.id]] <- sapply(10^seq(2, 6, l=200), function(pen){
+      segSeq[which.min(sample.loss[segSeq] + pen * segSeq)]
     })
     qplot(sample.lik, sample.loss)+
       coord_equal()

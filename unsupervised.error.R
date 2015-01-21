@@ -18,7 +18,7 @@ for(set.name in names(dp.peaks.sets)){
     train.chunks <- train.sets[[set.i]]
     train.list <- list()
     for(train.chunk in train.chunks){
-      seg.mat <- oracle.segments[[train.chunk]]
+      seg.mat <- loss.segments[[train.chunk]]
       err.mat <- chunk.list[[train.chunk]]$PeakSeg
       err.big <- apply(seg.mat, 2, function(segs){
         err.mat[cbind(seq_along(segs), (segs-1)/2+1)]
