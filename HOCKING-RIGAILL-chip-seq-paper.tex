@@ -109,6 +109,8 @@ test profiles:
   \minimize_c \sum_{i\in\text{test}} E[c(\mathbf y_i),  R_i].
 \end{equation}
 
+\textbf{TODO}: figure showing different patterns in different data sets.
+
 \section{Related work}
 
 In the benchmark data set of \citet{hocking2014visual}, there are two
@@ -125,39 +127,7 @@ they proposed to search all possible change-points to find the optimal
 segmentation, but we propose to constrain the possible change-points to
 the subset of models that can be interpreted as peaks.
 
-TODO: discuss penalty functions \citep{cleynen2013segmentation}.
-
-\begin{table*}
-  \centering
-  \begin{tabular}{lllll}
-    name & complexity & smoothing & parameters to learn & learning algorithm \\
-    \hline
-    L1.reg & $s$ & 
-    $e^\beta x_{i,1}^{w_1} \cdots x_{i, 41}^{w_{41}}$ & 
-    $\beta, w_1, \dots, w_{41}\in\RR$ & interval regression \\
-    log.bases.log.max & $s$ & 
-    $e^\beta b_i^{w_1} (\max \mathbf y_i)^{w_{2}}$ & 
-    $\beta, w_1, w_{2}\in\RR$ & interval regression \\
-    s.constant \textbf{TODO} & $s$ & 
-    $\beta$ & 
-    $\beta\in\RR_+$ & grid search \\
-    oracle.41 \textbf{TODO} & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
-    $e^\beta x_{i,1}^{w_1} \cdots x_{i, 41}^{w_{41}}$ & 
-    $\beta, w_1, \dots, w_{41}\in\RR$ & interval regression \\
-    oracle.2 \textbf{TODO} & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
-    $e^\beta b_i^{w_1} (\max \mathbf y_i)^{w_{2}}$ & 
-    $\beta, w_1, w_{2}\in\RR$ & interval regression \\
-    oracle.trained & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
-    $\beta$ & $\beta\in\RR_+$ & grid search \\
-    oracle.default & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
-    $\beta$ & none & unsupervised \\
-    AIC & $s$ & 2 & none & unsupervised \\
-    BIC & $s$ & $\log d_i$ & none & unsupervised \\
-    mBIC & \multicolumn{2}{c}{see \citet{mBIC}} & none & unsupervised\\
-  \end{tabular}
-  \caption{Maximum likelihood penalty functions considered in this paper.}
-  \label{tab:penalties}
-\end{table*}
+\textbf{TODO}: discuss penalty functions \citep{cleynen2013segmentation}.
 
 \section{From unconstrained to constrained maximum likelihoood
   segmentation}
@@ -168,8 +138,6 @@ model, and then we propose a constraint that makes the model suitable
 for peak detection.
 
 \subsection{Unconstrained maximum likelihood segmentation}
-
-TODO: figure showing different patterns in different data sets.
 
 \begin{figure*}[b!]
   \centering
@@ -305,7 +273,7 @@ maximum likelihood models $\mathbf{\tilde m}^1(\mathbf y), \dots,
 \mathbf{\tilde m}^{s_{\text{max}}}(\mathbf y)$ satisfying this up-down
 constraint.
 
-TODO: more detailed description of dynamic programming.
+\textbf{TODO}: more detailed description of dynamic programming.
 
 The algorithm is in $O(s_{\text{max}} d^2)$ time, where $d$ is the
 number of data points, using the compression scheme proposed by
@@ -314,8 +282,44 @@ dynamic
 programming is available at\\
 \url{https://github.com/tdhock/PeakSegDP}
 
+\textbf{TODO}: discussion of when the DP does not recover the optimal
+solution. Maybe a figure? Maybe not. Maybe a discussion of how many
+times it returned all 10 models in the real data sets.
+
 \subsection{Supervised penalty learning for peak detection}
 \label{sec:supervised}
+
+\begin{table*}
+  \centering
+  \begin{tabular}{lllll}
+    name & complexity & smoothing & parameters to learn & learning algorithm \\
+    \hline
+    L1.reg & $s$ & 
+    $e^\beta x_{i,1}^{w_1} \cdots x_{i, 41}^{w_{41}}$ & 
+    $\beta, w_1, \dots, w_{41}\in\RR$ & interval regression \\
+    log.bases.log.max & $s$ & 
+    $e^\beta b_i^{w_1} (\max \mathbf y_i)^{w_{2}}$ & 
+    $\beta, w_1, w_{2}\in\RR$ & interval regression \\
+    s.constant \textbf{TODO} & $s$ & 
+    $\beta$ & 
+    $\beta\in\RR_+$ & grid search \\
+    oracle.41 \textbf{TODO} & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
+    $e^\beta x_{i,1}^{w_1} \cdots x_{i, 41}^{w_{41}}$ & 
+    $\beta, w_1, \dots, w_{41}\in\RR$ & interval regression \\
+    oracle.2 \textbf{TODO} & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
+    $e^\beta b_i^{w_1} (\max \mathbf y_i)^{w_{2}}$ & 
+    $\beta, w_1, w_{2}\in\RR$ & interval regression \\
+    oracle.trained & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
+    $\beta$ & $\beta\in\RR_+$ & grid search \\
+    oracle.default & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
+    $\beta$ & none & unsupervised \\
+    AIC & $s$ & 2 & none & unsupervised \\
+    BIC & $s$ & $\log d_i$ & none & unsupervised \\
+    mBIC & \multicolumn{2}{c}{see \citet{mBIC}} & none & unsupervised\\
+  \end{tabular}
+  \caption{Maximum likelihood penalty functions considered in this paper.}
+  \label{tab:penalties}
+\end{table*}
 
 
 \begin{figure*}[b!]
@@ -383,7 +387,7 @@ learning two models:
       \log d_i
 \end{array}\right]$ where $d_i$ is the number of base pairs for 
 sample/chromosome $i$.  This corresponds to a penalty $\lambda_i =
-e^\beta (\log\max\mathbf y_i)^{w_1} (\log d_i)^{w_2}$. We trained the
+e^\beta (\max\mathbf y_i)^{w_1} d_i^{w_2}$. We trained the
 model by solving problem (REF) with no regularization $\gamma=0$.
 \item \textbf{L1.reg} we defined $m=41$ features using transforms ($x,
   \log x, \log[x+1], \log\log x$), where $x$ is: (un)weighted
@@ -440,7 +444,7 @@ test error than macs for H3K36me3 data. It is clear that our proposed
 PeakSeg algorithm had lower test error than both macs and hmcan.broad
 algorithms, for both data types.
 
-TODO: discussion of unsupervised vs 1-parameter vs multi-parameter
+\textbf{TODO}: discussion of unsupervised vs 1-parameter vs multi-parameter
 learning.
 
 % \begin{center}
@@ -449,10 +453,10 @@ learning.
 
 \section{Discussion, conclusions, and future work}
 
-TODO: discuss machine learning for recognizing different patterns,
-versus using several different unsupervised algorithms for specific
-data sets. E.g. car/face detector versus generic object detector
-trained on various different data sets.
+\textbf{TODO}: discuss machine learning for recognizing different
+patterns, versus using several different unsupervised algorithms for
+specific data sets. E.g. car/face detector versus generic object
+detector trained on various different data sets.
 
 % \begin{figure*}[t!]
 %   \centering
@@ -511,6 +515,29 @@ same time, since peaks are often observed in the same genomic location
 across several samples of the same cell type. This joint peak
 detection problem may lead to more accurate peak calls, but it is a
 considerably more difficult segmentation problem.
+
+\begin{table}[b!]
+  \centering
+  \begin{tabular}{ccc}
+    \textbf{learned} & \textbf{heuristic} & \textbf{max likelihood} \\
+    \textbf{params} & \textbf{algorithms} & \textbf{segmentation} \\
+    \hline
+    0 & hmcan.broad.default & oracle.default \\
+     & macs.default & AIC/BIC/mBIC \\
+     \hline
+     1 & hmcan.broad.trained & oracle.trained \\
+     & macs.trained & s.constant \\
+     \hline 
+     $>1$ & --- & L1.reg, oracle.2/41 \\
+      && log.bases.log.max
+  \end{tabular}
+  \caption{Comparison of peak detection methods for ChIP-seq data. 
+    The two main contributions of this paper 
+    are to show that peak detection can be improved 
+    using maximum likelihood segmentation and 
+    multi-parameter supervised learning algorithms.}
+  \label{tab:supervised-maxlik}
+\end{table}
 
 \bibliographystyle{abbrvnat}
 
