@@ -69,21 +69,23 @@ for(set.name in names(dp.peaks.matrices)){
       in.square <- 1 + 4 * sqrt(in.sqrt)
       complexity <- in.square * in.square * loss.df$segments
       exact.df <- exactModelSelection(loss.df$error, complexity, loss.df$peaks)
-      log.lambda.seq <- 
-      seq(exact.df$max.log.lambda[1]-1,
-          exact.df$min.log.lambda[nrow(exact.df)]+1,
-          l=200)
-      grid.peaks <- sapply(log.lambda.seq, function(log.lambda){
-        with(loss.df, {
-          peaks[which.min(error + exp(log.lambda) * complexity)]
+      if(FALSE){ # visual check of exact function with inexact grid search.
+        log.lambda.seq <- 
+          seq(exact.df$max.log.lambda[1]-1,
+              exact.df$min.log.lambda[nrow(exact.df)]+1,
+              l=200)
+        grid.peaks <- sapply(log.lambda.seq, function(log.lambda){
+          with(loss.df, {
+            peaks[which.min(error + exp(log.lambda) * complexity)]
+          })
         })
-      })
-      grid.df <- data.frame(peaks=grid.peaks, log.lambda=log.lambda.seq)
-      ggplot()+
-        geom_point(aes(log.lambda, peaks), data=grid.df, pch=1, color="red")+
-        geom_segment(aes(min.log.lambda, peaks,
-                         xend=max.log.lambda, yend=peaks),
-                     data=exact.df)
+        grid.df <- data.frame(peaks=grid.peaks, log.lambda=log.lambda.seq)
+        ggplot()+
+          geom_point(aes(log.lambda, peaks), data=grid.df, pch=1, color="red")+
+            geom_segment(aes(min.log.lambda, peaks,
+                             xend=max.log.lambda, yend=peaks),
+                         data=exact.df)
+      }
       oracle.optimal[[set.name]][[chunk.name]][[sample.id]] <- exact.df
     }
   }
