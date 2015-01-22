@@ -292,35 +292,37 @@ times it returned all 10 models in the real data sets.
 \begin{table*}
   \centering
   \begin{tabular}{lllll}
-    name & complexity & smoothing & parameters to learn & learning algorithm \\
+    name & complexity & smoothing & parameters learned & learning algorithm \\
     \hline
-    L1.reg & $s$ & 
-    $e^\beta x_{i,1}^{w_1} \cdots x_{i, 41}^{w_{41}}$ & 
-    $\beta, w_1, \dots, w_{41}\in\RR$ & interval regression \\
-    log.bases.log.max & $s$ & 
-    $e^\beta d_i^{w_1} (\max \mathbf y_i)^{w_{2}}$ & 
-    $\beta, w_1, w_{2}\in\RR$ & interval regression \\
-    s.constant \textbf{TODO} & $s$ & 
+    AIC/BIC.0 & $s$ & AIC=2, BIC=$\log d_i$ & none & unsupervised \\
+    AIC/BIC.1 & $s$ & 
     $\beta$ & 
     $\beta\in\RR_+$ & grid search \\
-    oracle.41 \textbf{TODO} & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
-    $e^\beta x_{i,1}^{w_1} \cdots x_{i, 41}^{w_{41}}$ & 
-    $\beta, w_1, \dots, w_{41}\in\RR$ & interval regression \\
-    oracle.2 \textbf{TODO} & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
+    AIC/BIC.3 & $s$ & 
     $e^\beta d_i^{w_1} (\max \mathbf y_i)^{w_{2}}$ & 
     $\beta, w_1, w_{2}\in\RR$ & interval regression \\
-    oracle.trained & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
-    $\beta$ & $\beta\in\RR_+$ & grid search \\
-    oracle.default & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
+    AIC/BIC.41 & $s$ & 
+    $\exp(\beta + \mathbf w^\intercal \mathbf x_i)}$ & 
+    $\beta\in\RR, \mathbf w\in\RR^{40}$ & 
+    interval regression \\
+    oracle.0 & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
     $\beta$ & none & unsupervised \\
-    AIC & $s$ & 2 & none & unsupervised \\
-    BIC & $s$ & $\log d_i$ & none & unsupervised \\
-    mBIC & \multicolumn{2}{c}{see \citet{mBIC}} & none & unsupervised\\
+    oracle.1 & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
+    $\beta$ & $\beta\in\RR_+$ & grid search \\
+    oracle.3 \textbf{TODO} & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
+    $e^\beta d_i^{w_1} (\max \mathbf y_i)^{w_{2}}$ & 
+    $\beta, w_1, w_{2}\in\RR$ & interval regression \\
+    oracle.41 \textbf{TODO} & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
+    $\exp(\beta + \mathbf w^\intercal \mathbf x_i)}$ & 
+    $\beta\in\RR, \mathbf w\in\RR^{40}$ & 
+    interval regression \\
+    %AIC & $s$ & 2 & none & unsupervised \\
+    %BIC & $s$ & $\log d_i$ & none & unsupervised \\
+    %mBIC & \multicolumn{2}{c}{see \citet{mBIC}} & none & unsupervised\\
   \end{tabular}
-  \caption{Maximum likelihood penalty functions considered in this paper.}
+  \caption{Penalty functions considered in this paper.}
   \label{tab:penalties}
 \end{table*}
-
 
 \begin{figure*}[b!]
   \centering
@@ -330,10 +332,10 @@ times it returned all 10 models in the real data sets.
     sets (each point shows one of six randomly selected train/test
     splits, and the shaded circle is the mean test error). Data set
     names show histone mark type (e.g. H3K36me3), annotator (AM), and
-    cell types (immune). Colors show how parameters were learned on
-    the training data set: unsupervised/default parameters (0, blue),
-    grid search for 1 scalar parameter (1, green), or max margin interval
-    regression for several parameters ($>1$, orange).}
+    cell types (immune). Colors show how the training data were used
+    to learn model parameters parameters (grey ``cheating'' is not an
+    algorithm but rather the best possible test error achievable by
+    the constrained optimization models).}
   \label{fig:test-error}
 \end{figure*}
 
@@ -516,28 +518,25 @@ across several samples of the same cell type. This joint peak
 detection problem may lead to more accurate peak calls, but it is a
 considerably more difficult segmentation problem.
 
-\begin{table}[b!]
+\begin{table*}[b!]
   \centering
   \begin{tabular}{ccc}
-    \textbf{learned} & \textbf{heuristic} & \textbf{max likelihood} \\
-    \textbf{params} & \textbf{algorithms} & \textbf{segmentation} \\
+    \textbf{learning algorithm} & \textbf{heuristics} & 
+    \textbf{constrained optimization} \\
     \hline
-    0 & hmcan.broad.default & oracle.default \\
-     & macs.default & AIC/BIC/mBIC \\
-     \hline
-     1 & hmcan.broad.trained & oracle.trained \\
-     & macs.trained & s.constant \\
-     \hline 
-     $>1$ & --- & L1.reg, oracle.2/41 \\
-      && log.bases.log.max
+    unsupervised & hmcan.broad.0, macs.0 & AIC/BIC.0, oracle.0 \\
+    grid search & hmcan.broad.1, macs.1 & AIC/BIC.1, oracle.1 \\
+    interval regression & --- & AIC/BIC.3, oracle.3 \\
+    regularized interval regression & --- & AIC/BIC.41, oracle.41 \\
   \end{tabular}
   \caption{Comparison of peak detection methods for ChIP-seq data. 
     The two main contributions of this paper 
     are to show that peak detection can be improved 
-    using maximum likelihood segmentation and 
-    multi-parameter supervised learning algorithms.}
+    using constrained optimization and 
+    interval regression to learn a 
+    multi-parameter penalty function.}
   \label{tab:supervised-maxlik}
-\end{table}
+\end{table*}
 
 \bibliographystyle{abbrvnat}
 

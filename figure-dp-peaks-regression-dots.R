@@ -1,5 +1,5 @@
 works_with_R("3.1.2", reshape2="1.2.2", ggplot2="1.0",
-             "Rdatatable/data.table@fd5464e4c587d4a96fa32c809eb94a45bb361133",
+             "Rdatatable/data.table@7f6b286d9961bc074a3473ba29747eef5a35dc84",
              dplyr="0.4.0",
              xtable="1.7.3")
 
@@ -80,11 +80,13 @@ both <-
          algorithm=ifelse(algorithm %in% names(alg.rep),
            alg.rep[as.character(algorithm)], as.character(algorithm)),
          algo.type=ifelse(grepl("hmcan|macs", algorithm),
-           "heuristic", "max likelihood"),
-         algo.type=factor(algo.type, c("max likelihood", "heuristic")),
+           "heuristics", "constrained optimization"),
+         algo.type=factor(algo.type, c("constrained optimization",
+           "heuristics")),
          learning=ifelse(grepl("[.]0$", algorithm), "unsupervised",
            ifelse(grepl("[.]1$", algorithm), "grid\nsearch",
-                  "interval\nregression")))
+                  ifelse(grepl("best", algorithm), "cheating",
+                         "interval\nregression"))))
 
 wide <- dcast(both, set.name + set.i ~ algorithm, value.var="errors")
 
@@ -114,7 +116,7 @@ ggplot()+
 ##              data=wide, pch=1)
 
 algo.colors <-
-  c(
+  c("cheating"="grey",
     "interval\nregression"="#D95F02",
     "grid\nsearch"="#1B9E77",
     "unsupervised"="#7570B3")
@@ -238,11 +240,13 @@ ggplot()+
   }, scales="free_y", space="free_y")+
   scale_y_discrete("algorithm . parameters learned")+
   theme_bw()+
-  theme(panel.margin=grid::unit(0, "cm"))+
+  guides(color=guide_legend())+
+  theme(panel.margin=grid::unit(0, "cm"),
+        legend.position="top")+
   scale_color_manual("learning\nalgorithm", values=algo.colors,
                      breaks=names(algo.colors))+
   ##scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
   scale_x_continuous("percent test error", breaks=seq(0, 100, by=20))
-pdf("figure-dp-peaks-regression-dots.pdf", h=3, w=8)
+pdf("figure-dp-peaks-regression-dots.pdf", h=4.5, w=8)
 print(dots)
 dev.off()

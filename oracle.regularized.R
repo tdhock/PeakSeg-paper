@@ -115,7 +115,9 @@ for(set.name in names(dp.peaks.sets)){
             ## automatically?
             overlap.one <- foverlaps(penalty.one, optimal.one, nomatch=0) %>%
             select(regularization, min.log.lambda, penalty, max.log.lambda) %>%
-              arrange(regularization)
+            filter(min.log.lambda < penalty,
+                   penalty < max.log.lambda) %>%
+            arrange(regularization)
             n.regularization <- length(fit$gamma.seq)
             stopifnot(nrow(overlap.one) == n.regularization)
           }
