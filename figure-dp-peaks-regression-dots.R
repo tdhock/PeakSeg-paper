@@ -139,7 +139,7 @@ mean.both$algo <- factor(mean.both$algo, algo.levs)
 
 ## scatterplot comparing oracle.trained and L1.reg.
 ref.diff <- both %>%
-  filter(algo=="AIC/BIC.41") %>%
+  filter(algo=="best.DP") %>%
   mutate(baseline=percent) %>%
   select(set.name, set.i, baseline) %>%
   inner_join(both, c("set.name", "set.i")) %>%
@@ -236,7 +236,7 @@ ggplot()+
   facet_grid(algo.type ~ set.name, labeller=function(var, val){
     gsub("_", "\n", val)
   }, scales="free_y", space="free_y")+
-  scale_y_discrete("algorithm")+
+  scale_y_discrete("algorithm . parameters learned")+
   theme_bw()+
   theme(panel.margin=grid::unit(0, "cm"))+
   scale_color_manual("learning\nalgorithm", values=algo.colors,

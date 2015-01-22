@@ -47,8 +47,11 @@ for(set.name in names(dp.peaks.sets)){
         seg.mat.list[[paste("grid", grid.name)]] <-
           oracle.segments[[test.chunk]][, best.beta]
       }
-      seg.mat <- do.call(cbind, seg.mat.list)
       err.mat <- test.info$PeakSeg
+      err.best <- apply(err.mat, 1, which.min)
+      best.dp.err <- sum(apply(err.mat, 1, min))
+      seg.mat.list$best.DP <- (err.best-1)*2 + 1
+      seg.mat <- do.call(cbind, seg.mat.list)
       regions <- test.info$regions
       stopifnot(rownames(seg.mat) == rownames(err.mat))
       for(algorithm in colnames(seg.mat)){
