@@ -17,6 +17,14 @@ reg <- regularized.all$error %>%
   mutate(percent=errors/regions*100,
          algorithm=model.name)
 
+oreg <- oracle.regularized$error %>%
+  filter(model.name %in% c("L1.reg", "log.bases.log.max")) %>%
+  group_by(set.name, set.i, model.name) %>%
+  summarise(errors=sum(errors),
+            regions=sum(regions)) %>%
+  mutate(percent=errors/regions*100,
+         algorithm=paste0("oracle.", model.name))
+
 regression.set.i <- dp.peaks.regression %>%
   group_by(set.name, set.i) %>%
   summarise(errors=sum(errors),
@@ -65,12 +73,16 @@ alg.rep <-
     "hmcan.broad.trained"="hmcan.broad.1",
     L1.reg="AIC/BIC.41",
     log.bases.log.max="AIC/BIC.3",
+    oracle.L1.reg="oracle.41",
+    oracle.log.bases.log.max="oracle.3",
     "grid oracle"="oracle.1")
 both <-
   rbind(##regression.set.i[, both.cols],
         ann(data.frame(un.show)[, both.cols],
             "0", "unsupervised"),
         ann(data.frame(reg)[, both.cols],
+            ">1", "supervised"),
+        ann(data.frame(oreg)[, both.cols],
             ">1", "supervised"),
         ann(dp.peaks.baseline[, both.cols], "1", "supervised")
         ) %>%
@@ -87,6 +99,9 @@ both <-
            ifelse(grepl("[.]1$", algorithm), "grid\nsearch",
                   ifelse(grepl("best", algorithm), "cheating",
                          "interval\nregression"))))
+
+dot.counts <- with(both, table(algorithm, set.name))
+stopifnot(dot.counts == 6)
 
 wide <- dcast(both, set.name + set.i ~ algorithm, value.var="errors")
 
