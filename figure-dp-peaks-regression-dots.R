@@ -7,6 +7,7 @@ load("dp.peaks.baseline.RData")
 load("dp.peaks.regression.RData")
 load("regularized.all.RData")
 load("unsupervised.error.RData")
+load("oracle.regularized.RData")
 
 reg <- regularized.all$error %>%
   filter(model.name %in% c("L1.reg", "log.bases.log.max")) %>%
@@ -39,10 +40,11 @@ un.bad <- un %>%
 with(un.bad, stopifnot(min == max))
 
 un.other <- un %>%
-  filter(!algorithm %in% bad.algos)
+  filter(!algorithm %in% bad.algos,
+         algorithm != "grid loss")
 un.bad <- un %>%
   filter(algorithm == "none") %>%
-  mutate(algorithm="AIC/BIC/mBIC")
+  mutate(algorithm="AIC/BIC.0")
 un.show <-
   rbind(un.other,
         un.bad)
@@ -54,6 +56,16 @@ ann <- function(df, parameters, supervision){
                     c(">1", "1", "0")),
              supervision)
 }
+alg.rep <-
+  c("oracle"="oracle.0",
+    "grid lik"="AIC/BIC.1",
+    "macs.default"="macs.0",
+    "macs.trained"="macs.1",
+    "hmcan.broad.default"="hmcan.broad.0",
+    "hmcan.broad.trained"="hmcan.broad.1",
+    L1.reg="AIC/BIC.41",
+    log.bases.log.max="AIC/BIC.3",
+    "grid oracle"="oracle.1")
 both <-
   rbind(##regression.set.i[, both.cols],
         ann(data.frame(un.show)[, both.cols],
@@ -65,11 +77,14 @@ both <-
   group_by() %>%
   mutate(percent=errors/regions*100,
          set.name=as.character(set.name),
-         algorithm=ifelse(algorithm=="oracle",
-           "oracle.default", as.character(algorithm)),
+         algorithm=ifelse(algorithm %in% names(alg.rep),
+           alg.rep[as.character(algorithm)], as.character(algorithm)),
          algo.type=ifelse(grepl("hmcan|macs", algorithm),
            "heuristic", "max likelihood"),
-         algo.type=factor(algo.type, c("max likelihood", "heuristic")))
+         algo.type=factor(algo.type, c("max likelihood", "heuristic")),
+         learning=ifelse(grepl("[.]0$", algorithm), "unsupervised",
+           ifelse(grepl("[.]1$", algorithm), "grid\nsearch",
+                  "interval\nregression")))
 
 wide <- dcast(both, set.name + set.i ~ algorithm, value.var="errors")
 
@@ -88,60 +103,63 @@ ggplot()+
 ## Scatterplots show that L1.reg does not always have lower test error
 ## than competitors, but it does at least for a majority of train/test
 ## splits on each data set.
-scatter+
-  geom_point(aes(hmcan.broad.trained, L1.reg),
-             data=wide, pch=1)
-scatter+
-  geom_point(aes(macs.trained, L1.reg),
-             data=wide, pch=1)
-scatter+
-  geom_point(aes(log.bases.log.max, L1.reg),
-             data=wide, pch=1)
+## scatter+
+##   geom_point(aes(hmcan.broad.trained, L1.reg),
+##              data=wide, pch=1)
+## scatter+
+##   geom_point(aes(macs.trained, L1.reg),
+##              data=wide, pch=1)
+## scatter+
+##   geom_point(aes(log.bases.log.max, L1.reg),
+##              data=wide, pch=1)
 
 algo.colors <-
-  c(macs.trained="#1B9E77", PeakSeg="#D95F02", hmcan.broad.trained="#7570B3")
+  c(
+    "interval\nregression"="#D95F02",
+    "grid\nsearch"="#1B9E77",
+    "unsupervised"="#7570B3")
 both$algo <- sub(".trained", "", both$algorithm)
 both$algo <- both$algorithm
 
 mean.both <- both %>%
-  group_by(set.name, parameters, supervision, algo, algo.type) %>%
+  group_by(set.name, parameters, learning, supervision, algo, algo.type) %>%
   summarise(mean=mean(percent))
 algo.stats <- mean.both %>%
   group_by(algo) %>%
   summarise(mean=mean(mean)) %>%
   arrange(mean)
 algo.levs <- rev(algo.stats$algo)
-algo.levs <-
-  rev(c("L1.reg", "log.bases.log.max",
-        "oracle.trained", "oracle.default", "AIC/BIC/mBIC",
-        "hmcan.broad.trained", "hmcan.broad.default",
-        "macs.trained", "macs.default"))
+## algo.levs <-
+##   rev(c("L1.reg", "log.bases.log.max",
+##         "oracle.trained", "oracle.default", "AIC/BIC/mBIC",
+##         "hmcan.broad.trained", "hmcan.broad.default",
+##         "macs.trained", "macs.default"))
 both$algo <- factor(both$algo, algo.levs)
 mean.both$algo <- factor(mean.both$algo, algo.levs)
 
 ## scatterplot comparing oracle.trained and L1.reg.
 ref.diff <- both %>%
-  filter(algo=="L1.reg") %>%
+  filter(algo=="AIC/BIC.41") %>%
   mutate(baseline=percent) %>%
   select(set.name, set.i, baseline) %>%
   inner_join(both, c("set.name", "set.i")) %>%
   mutate(diff=percent-baseline)
 both.wide <- dcast(both, set.name + set.i ~ algo, value.var = "percent")
-scatter.best <- 
-scatter+
-  geom_point(aes(L1.reg, oracle.trained),
-             data=both.wide, pch=1)
-pdf("figure-dp-peaks-regression-scatter.pdf", h=2)
-print(scatter.best)
-dev.off()
+## scatter.best <- 
+## scatter+
+##   geom_point(aes(L1.reg, oracle.trained),
+##              data=both.wide, pch=1)
+## pdf("figure-dp-peaks-regression-scatter.pdf", h=2)
+## print(scatter.best)
+## dev.off()
 
-scatter.oracle <- 
-scatter+
-  geom_point(aes(oracle.trained, oracle.default),
-             data=both.wide, pch=1)
-pdf("figure-dp-peaks-regression-scatter-oracle.pdf", h=3)
-print(scatter.oracle)
-dev.off()
+## scatter.oracle <- 
+## scatter+
+##   geom_point(aes(oracle.trained, oracle.default),
+##              data=both.wide, pch=1)
+## pdf("figure-dp-peaks-regression-scatter-oracle.pdf", h=3)
+## print(scatter.oracle)
+## dev.off()
 
 dp.peaks.regression.dots <- both
 save(dp.peaks.regression.dots, file="dp.peaks.regression.dots.RData")
@@ -211,9 +229,9 @@ dev.off()
 
 dots <-  #with 1 set of facets.
 ggplot()+
-  geom_point(aes(mean, algo, color=parameters),
+  geom_point(aes(mean, algo, color=learning),
              data=mean.both, alpha=0.25, size=4)+
-  geom_point(aes(percent, algo, color=parameters),
+  geom_point(aes(percent, algo, color=learning),
              data=both, pch=1)+
   facet_grid(algo.type ~ set.name, labeller=function(var, val){
     gsub("_", "\n", val)
@@ -221,7 +239,8 @@ ggplot()+
   scale_y_discrete("algorithm")+
   theme_bw()+
   theme(panel.margin=grid::unit(0, "cm"))+
-  scale_color_discrete("learned\nparams")+
+  scale_color_manual("learning\nalgorithm", values=algo.colors,
+                     breaks=names(algo.colors))+
   ##scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
   scale_x_continuous("percent test error", breaks=seq(0, 100, by=20))
 pdf("figure-dp-peaks-regression-dots.pdf", h=3, w=8)
