@@ -306,15 +306,15 @@ grid.best <- grid.mean %>%
             algo=algo[which.min(mean)],
             learning=learning[which.min(mean)])
 
-dots <-  #with 1 set of facets.
+grid.dots <-  #with 1 set of facets.
 ggplot()+
-  ##geom_vline(aes(xintercept=min), data=grid.best)+
+  geom_vline(aes(xintercept=min), data=grid.best)+
   geom_point(aes(mean, algo, color=learning),
              data=grid.mean, alpha=0.25, size=4)+
   geom_point(aes(percent, algo, color=learning),
              data=grid.both, pch=1)+
   facet_grid(algo.type ~ set.name, labeller=function(var, val){
-    gsub("_", "\n", val)
+    gsub("[ _]", "\n", val)
   }, scales="free_y", space="free_y")+
   scale_y_discrete("algorithm . parameters learned")+
   theme_bw()+
@@ -328,8 +328,8 @@ ggplot()+
   ##scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
   scale_x_continuous("percent incorrect peak region labels (test error)",
                      breaks=seq(0, 100, by=20))
-pdf("figure-dp-peaks-regression-dots.pdf", h=4.1, w=8)
-print(dots)
+pdf("figure-dp-peaks-regression-dots-grid.pdf", h=4.1, w=8)
+print(grid.dots)
 dev.off()
 
 best.percent <- mean.both %>%

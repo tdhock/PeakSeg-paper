@@ -212,8 +212,8 @@ maxIter 20
   broad H3K36me3 profiles).
 \end{frame}
 
-\section{Unsupervised PeakSeg: 
-constrained optimal segmentation}
+\section{Methods: constrained optimal segmentation and 
+  supervised penalty learning}
 
 % \begin{frame}
 %   \frametitle{Previous work: maximum likelihood segmentation}
@@ -395,11 +395,8 @@ constrained optimal segmentation}
     (peaks are 2nd, 4th, ... segments).
   \end{itemize}
   How to choose the optimal number of peaks?\\
-  Manually annotated regions + supervised learning (next section).
+  Manually annotated regions + supervised learning (next slide).
 \end{frame}
-
-\section{Supervised PeakSeg: 
-  learning to predict the number of peaks}
 
 \begin{frame}
   \frametitle{Previous work on breakpoint detection}
@@ -421,7 +418,7 @@ constrained optimal segmentation}
   We can use the same method for peak detection!
 \end{frame}
 
-\section{Results on the McGill benchmark data set, conclusions}
+\section{Results on the McGill benchmark data set}
 
 \begin{frame}
   \frametitle{Benchmark: 7 annotated region data sets}
@@ -442,6 +439,81 @@ constrained optimal segmentation}
   \item macs takes about 90 minutes for one whole genome.
   \end{itemize}
 \end{frame}
+
+\begin{frame}
+  \frametitle{Penalty functions learned in this paper}
+
+Predicted number of segments for profile $i\in\{1, \dots, n\}$:
+
+\begin{equation*}
+  \hat s_i = 
+  \argmin_{s\in\{1,3,\dots, s_{\text{max}=19}\}}
+  \rho\left[
+    \mathbf{\tilde m}^s(\mathbf y_i),
+    \mathbf y_i
+  \right]
+  + \alert<3>{\lambda_i}
+  \alert<2>{h(s, d_i)},
+\end{equation*}
+
+  Names: (model complexity).(number of parameters learned):
+
+  \begin{center}
+  \begin{tabular}{ll}
+    \textbf{name} & \textbf{model complexity} \alert<2>{$h(s, d_i)$} \\
+    \hline
+    AIC/BIC.* & \alert<2>{$s$}\\
+    oracle.* & \alert<2>{$s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$}
+  \end{tabular}
+\end{center}
+
+  \begin{center}
+  \begin{tabular}{lllll}
+    \textbf{name} & \textbf{smoothing} \alert<3>{$\lambda_i$} & 
+    \textbf{parameters} & \textbf{learning algorithm} \\
+    \hline
+    *.0 & AIC=\alert<3>{2}, BIC=\alert<3>{$\log d_i$} & none & unsupervised \\
+    *.1 & 
+    \alert<3>{$\beta$} & 
+    $\beta\in\RR_+$ & grid search \\
+    *.3 & 
+    \alert<3>{$e^\beta d_i^{w_1} (\max \mathbf y_i)^{w_{2}}$} & 
+    $\beta, w_1, w_{2}\in\RR$ & interval regression \\
+    *.41 & 
+    \alert<3>{$\exp(\beta + \mathbf w^\intercal \mathbf x_i)$} & 
+    $\beta\in\RR, \mathbf w\in\RR^{40}$ & 
+    interval regression \\
+  \end{tabular}
+\end{center}
+
+($d_i$ = number of data for profile $i$)
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Unsupervised constrained optimization algorithm works
+    for both H3K36me3 and H3K4me3 data types}
+  \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots-unsupervised}
+  
+  Six train/test splits (open circles) and mean (shaded circle).
+\end{frame}
+
+\begin{frame}
+  \frametitle{Training 1 parameter with grid search reduces test error}
+  \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots-grid}
+
+  Six train/test splits (open circles) and mean (shaded circle).
+\end{frame}
+
+\begin{frame}
+  \frametitle{Training several parameters with interval regression 
+    further reduces test error}
+  \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots}
+
+  Six train/test splits (open circles) and mean (shaded circle).
+\end{frame}
+
+\section{Conclusions and future work}
 
 \begin{frame}
   \frametitle{Conclusions and future work}
