@@ -1,4 +1,4 @@
-HOCKING-RIGAILL-chip-seq-paper.pdf: HOCKING-RIGAILL-chip-seq-paper.tex refs.bib figure-Segmentor-PeakSeg.png figure-dp-peaks-regression-dots.pdf figure-4samples-just-regions.png figure-interval-regression.tex figure-dp-peaks-train-2.png 
+HOCKING-RIGAILL-chip-seq-paper.pdf: HOCKING-RIGAILL-chip-seq-paper.tex refs.bib figure-Segmentor-PeakSeg.png figure-dp-peaks-regression-dots.pdf figure-dp-peaks-train.png 
 	rm -f *.aux *.bbl
 	pdflatex HOCKING-RIGAILL-chip-seq-paper
 	bibtex HOCKING-RIGAILL-chip-seq-paper
@@ -54,7 +54,7 @@ dp.peaks.train.RData: dp.peaks.train.R
 	R --no-save < $<
 PeakSeg4samples.RData: PeakSeg4samples.R dp.peaks.error.RData
 	R --no-save < $<
-figure-dp-peaks-train-2.png: figure-dp-peaks-train.R dp.peaks.train.RData
+figure-dp-peaks-train.png: figure-dp-peaks-train.R dp.peaks.train.RData
 	R --no-save < $<
 
 ## regularized model for ICML paper.

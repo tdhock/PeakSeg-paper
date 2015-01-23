@@ -1,9 +1,9 @@
-works_with_R("3.1.1",
+works_with_R("3.1.2",
              "tdhock/ggplot2@aac38b6c48c016c88123208d497d896864e74bd7",
              "tdhock/PeakSegDP@5bcee97f494dcbc01a69e0fe178863564e9985bc",
-             data.table="1.9.4",
+             "Rdatatable/data.table@200b5b40dd3b05112688c3a9ca2dd41319c2bbae",
              reshape2="1.2.2",
-             dplyr="0.3.0.2")
+             dplyr="0.4.0")
 
 load("dp.peaks.train.RData")
 load("dp.peaks.error.RData")
@@ -53,6 +53,9 @@ ann.colors <-
     peakEnd="#ff4c4c",
     peaks="#a445ee")
 
+region.list <- list()
+count.list <- list()
+max.list <- list()
 for(experiment.i in 1:nrow(biggest)){
   chunk.info <- biggest[experiment.i, ]
   experiment <- as.character(chunk.info$experiment)
@@ -85,7 +88,7 @@ for(experiment.i in 1:nrow(biggest)){
   dp.regions <- subset(dp.error, param.name==dp.param)
   sample.ids <- as.character(unique(dp.error$sample.id))
   ## Try to show only a subset of samples.
-  sample.ids <- sprintf("McGill%04d", c(4, 5, 24, 26, 29, 107))
+  sample.ids <- sprintf("McGill%04d", c(24, 26))
   dp.peaks.samples <- dp.peaks[[chunk.name]]
   dp.peak.list <- list()
   for(sample.id in sample.ids){
@@ -97,15 +100,20 @@ for(experiment.i in 1:nrow(biggest)){
   counts.file <- file.path("data", chunk.name, "counts.RData")
   load(counts.file)
   sample.counts <- counts %>%
-    filter(sample.id %in% sample.ids)
-  tit <- with(chunk.info, paste({
-    ifelse(experiment=="H3K4me3", "sharp peaks,", "broadly enriched regions,")
-  }, cell.type, chunk.name))
+    filter(sample.id %in% sample.ids) %>%
+    group_by(sample.id) %>%
+    mutate(coverage.norm=coverage/max(coverage))
+  tit <-
+    sprintf("%s data (%s pattern)",
+            experiment, ifelse(experiment=="H3K4me3", "sharp", "broad"))
   sample.max.df <- sample.counts %>%
     group_by(sample.id) %>%
-    summarise(count=max(coverage))
+    summarise(count=max(coverage),
+              norm=max(coverage.norm))
   sample.max <- sample.max.df$count
   names(sample.max) <- as.character(sample.max.df$sample.id)
+  sample.max.df$chromStart <- sample.counts$chromStart[1]
+  sample.max.df$chromEnd <- sample.counts$chromEnd[nrow(sample.counts)]
 
   other.params <- subset(show.params, algorithm != "PeakSeg")
   trained.param <- subset(other.params, grepl("trained", algorithm))
@@ -193,66 +201,55 @@ for(experiment.i in 1:nrow(biggest)){
       "#FDBF6F", "#FF7F00", #orange
       "#CAB2D6", PeakSeg="#6A3D9A", #purple
       "#FFFF99", "#B15928") #yellow/brown
-  
+  region.list[[experiment.i]] <-
+    data.frame(tit, subset(dp.regions, sample.id %in% sample.ids))
+  count.list[[experiment.i]] <-
+    data.frame(tit, sample.counts)
+  max.list[[experiment.i]] <-
+    data.frame(tit, sample.max.df)
+}#experiment.i
 
-  selectedPlot <- 
+counts <- do.call(rbind, count.list)
+regions <- do.call(rbind, region.list)
+maxes <- do.call(rbind, max.list)
+scales <-
+  data.frame(chromStart=c(175450, 20000),
+             y=-0.1,
+             sample.id="McGill0026",
+             tit=c("H3K4me3 data (sharp pattern)",
+               "H3K36me3 data (broad pattern)")) %>%
+  mutate(chromEnd=chromStart+50)
+selectedPlot <- 
   ggplot()+
   geom_tallrect(aes(xmin=chromStart/1e3, xmax=chromEnd/1e3,
                     fill=annotation),
-                data=subset(dp.regions, sample.id %in% sample.ids),
+                data=regions,
                 color="grey",
                 alpha=1/2)+
-  geom_step(aes(chromStart/1e3, coverage),
-            data=sample.counts, color="grey50")+
-  geom_text(aes(chromStart/1e3, y.mid,
-                label=sprintf("%s, %s=%s, %2d FP, %2d FN ",
-                  algorithm, param.desc,
-                  substr(param.name, 1, 5),
-                  fp, fn)),
-            data=compare.labels, 
-            ##vjust=0.25, size=2,
-            size=2.5,
-            hjust=1)+
-  geom_rect(aes(xmin=chromStart/1e3, xmax=chromEnd/1e3,
-                ymin=y.min, ymax=y.max,
-                linetype=status),
-            data=subset(compare.regions, sample.id %in% sample.ids),
-            fill=NA, color="black", size=0.5)+
-  scale_linetype_manual("error type",
-                        values=c(correct=0,
-                          "false negative"=3,
-                          "false positive"=1))+
-  geom_point(aes(chromStart/1e3, y.mid, color=algorithm),
-             data=compare.peaks,
-             pch=1, size=2)+
-  geom_segment(aes(chromStart/1e3, y.mid,
-                   xend=chromEnd/1e3, yend=y.mid,
-                   color=algorithm),
-               data=compare.peaks, size=1)+
-  scale_color_manual(values=algo.colors)+
+  geom_step(aes(chromStart/1e3, coverage.norm),
+            data=counts, color="grey50")+
+  geom_text(aes(chromStart/1e3, 1, label=sprintf("max=%d", count)),
+            vjust=1, hjust=0, data=maxes, size=3)+
+  geom_segment(aes(chromStart, y, xend=chromEnd, yend=y),
+               data=scales, size=2)+
   theme_bw()+
-  coord_cartesian(xlim=with(more.info, c(expandStart, expandEnd)/1e3))+
   theme(panel.margin=grid::unit(0, "cm"))+
-  facet_grid(sample.id ~ ., scales="free", labeller=function(var, val){
+  facet_grid(sample.id ~ tit, labeller=function(var, val){
     sub("McGill0", "", val)
     paste(val)
-  })+
-  scale_y_continuous("aligned read coverage",
+  }, scales="free", space="free_y")+
+  scale_y_continuous("count of aligned reads",
                      labels=function(x){
-                       sprintf("%.1f", x)
+                       c("0", "max")
                      },
-                     breaks=function(limits){
-                       c(0, limits[2])
-                     })+
-  xlab(paste("position on", chunkChrom, "(kilo base pairs)"))+
+                     breaks=c(0, 1))+
+  xlab(paste("position on chromosome (kilo base pairs)"))+
   scale_fill_manual("annotation", values=ann.colors,
-                    breaks=names(ann.colors))+
-  ggtitle(tit)
+                    breaks=names(ann.colors))
 
-  png.file <- sprintf("figure-dp-peaks-train-%d.png", experiment.i)
-  png(png.file,
-      units="in", res=200, width=8, height=length(sample.ids))
-  print(selectedPlot)
-  dev.off()
-  ##system(paste("firefox", png.file))
-}
+png("figure-dp-peaks-train.png",
+    units="in", res=200, width=8, height=2.7)
+print(selectedPlot)
+dev.off()
+##system(paste("firefox", png.file))
+

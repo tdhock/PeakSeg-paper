@@ -111,6 +111,19 @@ test profiles:
 
 \textbf{TODO}: figure showing different patterns in different data sets.
 
+\begin{figure*}[b!]
+  \centering
+  \includegraphics[width=\textwidth]{figure-dp-peaks-train}
+  \vskip -0.5cm
+  \caption{Different ChIP-seq data types have peaks with different
+    patterns. The goal of supervised peak detection is to learn the
+    data set-specific peak pattern encoded in the annotated region
+    labels (peakStart/peakEnd mean there should be exactly 1 peak
+    start/end somewhere in the region, and noPeaks means there should
+    be no overlapping peaks).}
+  \label{fig:dp-peaks-train}
+\end{figure*}
+
 \section{Related work}
 
 In the benchmark data set of \citet{hocking2014visual}, there are two
