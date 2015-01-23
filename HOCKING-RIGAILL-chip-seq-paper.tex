@@ -54,28 +54,29 @@
 \begin{abstract}
   Peak detection is a central problem in ChIP-seq data analysis, and
   current algorithms for this task are unsupervised and mostly
-  effective for a single data type (e.g. histone H3K4me3 profiles with
-  sharp peaks). We propose PeakSeg, a supervised peak detection
-  algorithm based on constrained optimal segmentation, which is easy
-  to tune since it has only one free parameter: the optimal number of
-  peaks. We propose to tune it using annotated regions in a supervised
-  penalty function learning problem, which we show results in
-  state-of-the-art peak detection for both sharp H3K4me3 and broad
-  H3K36me3 data types. 
+  effective for a single data type and pattern (e.g. H3K4me3 data with
+  a sharp peak pattern). We propose a new constrained maximum
+  likelihood segmentation model for peak detection, and an efficient
+  inference algorithm: constrained dynamic programming. We investigate
+  un\-super\-vised and super\-vised learning of penalties for
+  the critical model selection problem. We show that the 
+  supervised method is the first algorithm with state-of-the-art peak
+  detection across all data sets in a benchmark that includes both
+  sharp (H3K4me3) and broad (H3K36me3) patterns.
 \end{abstract}
 
 \section{Introduction to supervised ChIP-seq peak detection}
 
-Chromatin immunoprecipitation sequencing (ChIP-seq) is a genome-wide
-assay to profile histone modifications and transcription factor
-binding sites, with many experimental and computational steps
-\citep{practical}. Briefly, each experiment yields a set of sequence
-reads which are aligned to a reference genome, and then the data are
-interpreted by counting the number of aligned reads at each genomic
-position. In this paper we propose a new method for peak calling these
-data, which is a binary classification problem for each genomic
-position. The positive class is enriched (peaks) and the negative
-class is background noise.
+Chromatin immunoprecipitation sequencing (ChIP-seq) is a biological
+experiment for genome-wide profiling of histone modifications and
+transcription factor binding sites, with many experimental and
+computational steps \citep{practical}. Briefly, each experiment yields
+a set of sequence reads which are aligned to a reference genome, and
+then the data are interpreted by counting the number of aligned reads
+at each genomic position. In this paper we propose a new method for
+peak calling these data, which is a binary classification problem for
+each genomic position. The positive class is enriched (peaks) and the
+negative class is background noise.
 
 More concretely, a single ChIP-seq profile on a genomic region with
 $d$ base pairs can be represented as a vector $\mathbf y= \left[
@@ -90,7 +91,7 @@ most previous algorithms are unsupervised since they define a peak
 detector $c$ using only the profile data $\mathbf y$.
 
 In supervised peak detection \citep{hocking2014visual}, there
-are $n$ annotated samples, and each sample $i\in\{1, \dots, n\}$ has a
+are $n$ labeled samples, and each sample $i\in\{1, \dots, n\}$ has a
 profile $\mathbf y_i\in\ZZ_+^d$ and a set of annotated regions $R_i$
 which defines a non-convex annotation error function
 \begin{equation}
