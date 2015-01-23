@@ -77,9 +77,8 @@ data, which is a binary classification problem for each genomic
 position. The positive class is enriched (peaks) and the negative
 class is background noise.
 
-More concretely, a ChIP-seq profile on a single
-chromosome with $d$ base pairs is a vector $\mathbf y=
-\left[
+More concretely, a single ChIP-seq profile on a genomic region with
+$d$ base pairs can be represented as a vector $\mathbf y= \left[
   \begin{array}{ccc}
     y_1 & \cdots & y_d
   \end{array}
@@ -102,7 +101,7 @@ which defines a non-convex annotation error function
 \end{equation}
 The annotation error counts the number of false positive (FP) and
 false negative (FN) regions, so it takes values in the non-negative
-integers. The goal is to find a peak caller with minimal error on some
+integers. The goal is to find a peak caller~$c$ with minimal error on some
 test profiles:
 \begin{equation}
   \label{eq:min_error}
@@ -192,38 +191,44 @@ We refer to (\ref{argmin:unconstrained}) as the unconstrained problem
 since $\mathbf{\hat m}^s(\mathbf y)$ is the most likely segmentation
 of all possible models with $s$ segments. Several unconstrained models
 are shown on the left of Figure~\ref{fig:profiles}, and for example
-the 2nd segment of the model with $s=3$ segments appears to capture
+the second segment of the model with $s=3$ segments appears to capture
 the peak in the data. 
 % In general, we would like to use the 2nd, 4th,
 % ... segments as peaks, and the 1st, 3rd, ... segments as
 % background. 
-To construct a peak detector $c$, first define the sign of the change
-before base $j\in\{2, \dots, d\}$ as
-\begin{equation}
-  \label{eq:sign}
-  S_j(\mathbf m) = \sign( m_{j} - m_{j-1} ),
-\end{equation}
-with $S_1(\mathbf m)=0$ by convention. Furthermore we define the peak
-indicator at base $j\in\{1, \dots, d\}$ as
+To construct a peak detector $c$, we first define the peak indicator at base
+$j\in\{2, \dots, d\}$ as
 \begin{equation}
   \label{eq:peaks}
-  P_j(\mathbf m) = \sum_{k=1}^j S_k(\mathbf m).
+  P_j(\mathbf m) = \sum_{k=2}^j \sign( m_{k} - m_{k-1} ),
 \end{equation}
+where $P_1(\mathbf m)=0$ by convention. $P_j(\mathbf m)$ is the
+cumulative sum of signs of changes up to point $j$ in the piecewise constant
+vector $\mathbf m$. 
+
 Then we define a peak detector $c(\mathbf y) = \mathbf P\left[
-  \mathbf{\tilde m}^s(\mathbf y) \right]\in\{0, 1\}^d$, where
+  \mathbf{\tilde m}^s(\mathbf y) \right]$, where
 \begin{equation}
   \mathbf
 P[\mathbf m] = \left[\begin{array}{ccc} P_1(\mathbf m) & \cdots &
     P_d(\mathbf m)
 \end{array}\right].
 \end{equation}
+
 \subsection{A constrained model for peak detection}
 
 In general for the unconstrained model $P_j(\mathbf m)\in\ZZ$, which
 is problematic since we want to use it as a peak detector with binary
 outputs $P_j(\mathbf m)\in \{0, 1\}$. 
 
-For example in Figure~\ref{fig:profiles} there is a position $j$ for
+For example, if $\mathbf m = \left[\begin{array}{ccccccc}1.1 &
+    1.1 & 2 & 2 & 4 & 4 & 3\end{array}\right]$, with two changes up
+followed by one change down, then $P(\mathbf m) =
+\left[\begin{array}{ccccccc}0 & 0 & 1 & 1 & 2 & 2 &
+    1 \end{array}\right]$.
+
+This is also a practical problem that can be observed in real data
+sets. For example in Figure~\ref{fig:profiles} there is a position $j$ for
 which $P_j\left[ \mathbf{\hat m}^5(\mathbf y) \right]=2$ (since the
 mean changes up, up, down, down). 
 
@@ -251,7 +256,7 @@ Figure~\ref{fig:profiles} shows a profile where the constraint is
 necessary. In particular, it is clear that unconstrained models with
 $s\in\{5, 7\}$ segments do not satisfy $P_j[\mathbf{\hat m}^s(\mathbf
 y)]\in\{0, 1\}$ for all positions $j\in\{1,\dots, d\}$ (since they
-both have up, up, down changes).
+ have up, up, down changes).
 
 \section{Algorithms}
 
@@ -323,7 +328,8 @@ times it returned all 10 models in the real data sets.
     For example, the AIC/BIC.41 model has a penalty of
     $s \exp(\beta + \mathbf w^\intercal \mathbf x_i)$, 
     where the parameters $\beta,\mathbf w$ 
-    are learned using regularized interval regression.
+    are learned using regularized interval regression 
+    on a training data set.
   }
   \label{tab:penalties}
 \end{table*}
@@ -339,9 +345,9 @@ times it returned all 10 models in the real data sets.
     data set). Data set names show histone mark type (e.g. H3K36me3),
     annotator (AM), and cell types (immune). Colors show how the
     training data were used to learn model parameters (grey
-    ``cheating'' is not an algorithm but rather the best possible test
-    error achievable by the constrained optimization models from 0 to
-    9 peaks computed by the DP algorithm).}
+    ``cheating'' best.DP is not an algorithm but rather the best
+    possible test error achievable by the constrained optimization
+    models from 0 to 9 peaks computed by the DP algorithm).}
   \label{fig:test-error}
 \end{figure*}
 
