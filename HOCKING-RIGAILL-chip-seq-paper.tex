@@ -65,7 +65,9 @@
   sharp (H3K4me3) and broad (H3K36me3) patterns.
 \end{abstract}
 
-\section{Introduction to supervised ChIP-seq peak detection}
+\section{Introduction}
+
+\subsection{Supervised ChIP-seq peak detection}
 
 Chromatin immunoprecipitation sequencing (ChIP-seq) is a biological
 experiment for genome-wide profiling of histone modifications and
@@ -109,7 +111,26 @@ test profiles:
   \minimize_c \sum_{i\in\text{test}} E[c(\mathbf y_i),  R_i].
 \end{equation}
 
-\textbf{TODO}: figure showing different patterns in different data sets.
+\subsection{Different ChIP-seq peak patterns}
+
+Figure~\ref{fig:dp-peaks-train} shows two example data sets of H3K4me3
+data with a sharp peak pattern, and two data sets of H3K36me3 with a
+broad peak pattern. Current peak detectors are unsupervised learning
+algorithms that are designed for specific patterns. For example, the
+MACS algorithm was designed for the sharp pattern in H3K4me3 data
+\citep{MACS}.
+
+Another example is the HMCan algorithm \citep{HMCan}, whose authors
+suggest fixed pattern-specific mergeDistance parameters:\\
+H3K4me3 $\Rightarrow \text{mergeDistance}=200$, \\
+H3K36me3 $\Rightarrow\text{mergeDistance}=1000$.
+
+The goal of this paper is to propose a supervised learning algorithm
+that is effective for several pattern types. Rather than taking
+unsupervised model parameters for granted, we propose to train model
+parameters using labeled data of the same pattern type. Our method is
+the first peak detector that uses supervised learning, and achieves
+accurate peak detection across several data sets and patterns.
 
 \begin{figure*}[b!]
   \centering
