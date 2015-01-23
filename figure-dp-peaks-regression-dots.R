@@ -1,5 +1,5 @@
 works_with_R("3.1.2", reshape2="1.2.2", ggplot2="1.0",
-             "Rdatatable/data.table@7f6b286d9961bc074a3473ba29747eef5a35dc84",
+             "Rdatatable/data.table@200b5b40dd3b05112688c3a9ca2dd41319c2bbae",
              dplyr="0.4.0",
              xtable="1.7.3")
 
@@ -146,11 +146,16 @@ algo.stats <- mean.both %>%
   summarise(mean=mean(mean)) %>%
   arrange(mean)
 algo.levs <- rev(algo.stats$algo)
-## algo.levs <-
-##   rev(c("L1.reg", "log.bases.log.max",
-##         "oracle.trained", "oracle.default", "AIC/BIC/mBIC",
-##         "hmcan.broad.trained", "hmcan.broad.default",
-##         "macs.trained", "macs.default"))
+algo.levs <-
+  rev(c("best.DP",
+        ## "oracle.41", "AIC/BIC.41",
+        ## "oracle.3", "AIC/BIC.3",
+        ## "oracle.1", "AIC/BIC.1",
+        ## "oracle.0", "AIC/BIC.0",
+        "oracle.41", "oracle.3", "oracle.1", "oracle.0",
+        "AIC/BIC.41", "AIC/BIC.3", "AIC/BIC.1", "AIC/BIC.0",
+        "hmcan.broad.1", "hmcan.broad.0",
+        "macs.1", "macs.0"))
 both$algo <- factor(both$algo, algo.levs)
 mean.both$algo <- factor(mean.both$algo, algo.levs)
 
@@ -161,14 +166,26 @@ ref.diff <- both %>%
   select(set.name, set.i, baseline) %>%
   inner_join(both, c("set.name", "set.i")) %>%
   mutate(diff=percent-baseline)
-both.wide <- dcast(both, set.name + set.i ~ algo, value.var = "percent")
-## scatter.best <- 
-## scatter+
-##   geom_point(aes(L1.reg, oracle.trained),
-##              data=both.wide, pch=1)
-## pdf("figure-dp-peaks-regression-scatter.pdf", h=2)
-## print(scatter.best)
-## dev.off()
+
+both.more <- both %>%
+  mutate(algo.type=sub("[.].*$", "", algo),
+         learned=sub("^.*[.]", "", algo))
+oracle.bic <- both.more %>%
+  filter(algo.type %in% c("oracle", "AIC/BIC"))
+both.wide <-
+  dcast(oracle.bic,
+        set.name + set.i + learned ~ algo.type,
+        value.var = "percent")
+scatter.best <- 
+scatter+
+  facet_grid(learned ~ set.name, labeller=function(var, val){
+    gsub("_", "\n", val)
+  })+
+  geom_point(aes(`AIC/BIC`, oracle),
+             data=both.wide, pch=1)
+pdf("figure-dp-peaks-regression-scatter.pdf", h=2)
+print(scatter.best)
+dev.off()
 
 ## scatter.oracle <- 
 ## scatter+
@@ -226,28 +243,49 @@ ggplot()+
   ##scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
   scale_x_continuous("percent test error", breaks=seq(0, 100, by=20))
 
+best.diff <- ref.diff %>%
+  group_by(set.name, algo) %>%
+  summarise(mean=mean(diff)) %>%
+  filter(algo != "best.DP") %>%
+  group_by(set.name) %>%
+  summarise(min=min(mean))
+
 dots <-  #with differences.
 ggplot()+
-  geom_vline(xintercept=0, color="grey")+
-  geom_point(aes(diff, algo, color=parameters),
+  ##geom_vline(xintercept=0, color="grey")+
+  geom_vline(aes(xintercept=min), data=best.diff)+
+  geom_point(aes(diff, algo, color=learning),
              data=ref.diff, pch=1)+
   facet_grid(algo.type ~ set.name, labeller=function(var, val){
     gsub("_", "\n", val)
   }, scales="free_y", space="free_y")+
   scale_y_discrete("algorithm")+
   theme_bw()+
-  theme(panel.margin=grid::unit(0, "cm"))+
-  scale_color_discrete("learned\nparams")+
-  scale_x_continuous("test error difference from L1.reg model",
+  guides(color=guide_legend())+
+  theme(panel.margin=grid::unit(0, "cm"),
+        legend.position="top")+
+  scale_color_manual("learning\nalgorithm", values=algo.colors,
+                     breaks=names(algo.colors))+
+  scale_x_continuous("test error difference from best possible DP model",
                      breaks=seq(0, 100, by=20))
 pdf("figure-dp-peaks-regression-dots-diff.pdf", h=3, w=8)
 print(dots)
 dev.off()
 
+best.percent <- mean.both %>%
+  filter(algo != "best.DP") %>%
+  group_by(set.name) %>%
+  summarise(min=min(mean),
+            algo=algo[which.min(mean)],
+            learning=learning[which.min(mean)])
+
 dots <-  #with 1 set of facets.
 ggplot()+
+  geom_vline(aes(xintercept=min), data=best.percent)+
   geom_point(aes(mean, algo, color=learning),
              data=mean.both, alpha=0.25, size=4)+
+  ## geom_point(aes(min, algo, fill=learning),
+  ##            data=best.percent, pch=21, size=4, color="black")+
   geom_point(aes(percent, algo, color=learning),
              data=both, pch=1)+
   facet_grid(algo.type ~ set.name, labeller=function(var, val){
@@ -260,8 +298,11 @@ ggplot()+
         legend.position="top")+
   scale_color_manual("learning\nalgorithm", values=algo.colors,
                      breaks=names(algo.colors))+
+  scale_fill_manual("learning\nalgorithm", values=algo.colors,
+                     breaks=names(algo.colors))+
   ##scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
-  scale_x_continuous("percent test error", breaks=seq(0, 100, by=20))
-pdf("figure-dp-peaks-regression-dots.pdf", h=4.5, w=8)
+  scale_x_continuous("percent incorrect peak region labels (test error)",
+                     breaks=seq(0, 100, by=20))
+pdf("figure-dp-peaks-regression-dots.pdf", h=4.1, w=8)
 print(dots)
 dev.off()

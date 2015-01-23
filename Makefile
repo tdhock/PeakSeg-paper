@@ -7,7 +7,7 @@ HOCKING-RIGAILL-chip-seq-paper.pdf: HOCKING-RIGAILL-chip-seq-paper.tex refs.bib 
 
 figure-Segmentor-PeakSeg.png: figure-Segmentor-PeakSeg.R
 	R --no-save < $<
-figure-dp-peaks-regression-dots.pdf: figure-dp-peaks-regression-dots.R dp.peaks.regression.RData dp.peaks.baseline.RData regularized.all.RData unsupervised.error.RData
+figure-dp-peaks-regression-dots.pdf: figure-dp-peaks-regression-dots.R dp.peaks.regression.RData dp.peaks.baseline.RData regularized.all.RData unsupervised.error.RData oracle.regularized.RData
 	R --no-save < $<
 figure-dp-timings.pdf: figure-dp-timings.R dp.timings.RData
 	R --no-save < $<

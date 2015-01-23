@@ -1,7 +1,7 @@
 works_with_R("3.1.2",
              "tdhock/ggplot2@aac38b6c48c016c88123208d497d896864e74bd7",
              reshape2="1.2.2",
-             "Rdatatable/data.table@7f6b286d9961bc074a3473ba29747eef5a35dc84",
+             "Rdatatable/data.table@200b5b40dd3b05112688c3a9ca2dd41319c2bbae",
              directlabels="2014.6.13",
              dplyr="0.4.0")
 
