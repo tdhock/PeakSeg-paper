@@ -289,38 +289,42 @@ times it returned all 10 models in the real data sets.
 \subsection{Supervised penalty learning for peak detection}
 \label{sec:supervised}
 
-\begin{table*}
-  \centering
-  \begin{tabular}{lllll}
-    name & complexity & smoothing & parameters learned & learning algorithm \\
+\begin{table*}[b!]
+
+  \begin{minipage}{0.4\textwidth}
+  \begin{tabular}{ll}
+    \textbf{name} & \textbf{model complexity} $h(s, d_i)$ \\
     \hline
-    AIC/BIC.0 & $s$ & AIC=2, BIC=$\log d_i$ & none & unsupervised \\
-    AIC/BIC.1 & $s$ & 
+    AIC/BIC.* & $s$\\
+    oracle.* & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$
+  \end{tabular}
+  \end{minipage}
+  \begin{minipage}{0.5\textwidth}
+  \begin{tabular}{lllll}
+    \textbf{name} & \textbf{smoothing} $\lambda_i$ & 
+    \textbf{parameters} & \textbf{learning algorithm} \\
+    \hline
+    *.0 & AIC=2, BIC=$\log d_i$ & none & unsupervised \\
+    *.1 & 
     $\beta$ & 
     $\beta\in\RR_+$ & grid search \\
-    AIC/BIC.3 & $s$ & 
+    *.3 & 
     $e^\beta d_i^{w_1} (\max \mathbf y_i)^{w_{2}}$ & 
     $\beta, w_1, w_{2}\in\RR$ & interval regression \\
-    AIC/BIC.41 & $s$ & 
+    *.41 & 
     $\exp(\beta + \mathbf w^\intercal \mathbf x_i)$ & 
     $\beta\in\RR, \mathbf w\in\RR^{40}$ & 
-    interval regression \\
-    oracle.0 & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
-    $\beta$ & none & unsupervised \\
-    oracle.1 & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
-    $\beta$ & $\beta\in\RR_+$ & grid search \\
-    oracle.3 & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
-    $e^\beta d_i^{w_1} (\max \mathbf y_i)^{w_{2}}$ & 
-    $\beta, w_1, w_{2}\in\RR$ & interval regression \\
-    oracle.41 & $s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$ &
-    $\exp(\beta + \mathbf w^\intercal \mathbf x_i)$ & 
-    $\beta\in\RR, \mathbf w\in\RR^{40}$ & 
-    interval regression \\
-    %AIC & $s$ & 2 & none & unsupervised \\
-    %BIC & $s$ & $\log d_i$ & none & unsupervised \\
-    %mBIC & \multicolumn{2}{c}{see \citet{mBIC}} & none & unsupervised\\
+    regularized int. reg. \\
   \end{tabular}
-  \caption{Penalty functions considered in this paper.}
+  \end{minipage}
+
+  \caption{Penalty functions considered in this paper are of the form
+    $h(s, d_i) \lambda_i $.
+    For example, the AIC/BIC.41 model has a penalty of
+    $s \exp(\beta + \mathbf w^\intercal \mathbf x_i)$, 
+    where the parameters $\beta,\mathbf w$ 
+    are learned using regularized interval regression.
+  }
   \label{tab:penalties}
 \end{table*}
 
