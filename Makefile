@@ -5,6 +5,10 @@ HOCKING-RIGAILL-chip-seq-paper.pdf: HOCKING-RIGAILL-chip-seq-paper.tex refs.bib 
 	pdflatex HOCKING-RIGAILL-chip-seq-paper
 	pdflatex HOCKING-RIGAILL-chip-seq-paper
 
+HOCKING-peak-penalty-slides.pdf: HOCKING-peak-penalty-slides.tex figure-dp-peaks-regression-dots.pdf
+	pdflatex HOCKING-peak-penalty-slides
+	pdflatex HOCKING-peak-penalty-slides
+
 figure-Segmentor-PeakSeg.png: figure-Segmentor-PeakSeg.R
 	R --no-save < $<
 figure-dp-peaks-regression-dots.pdf: figure-dp-peaks-regression-dots.R dp.peaks.regression.RData dp.peaks.baseline.RData regularized.all.RData unsupervised.error.RData oracle.regularized.RData

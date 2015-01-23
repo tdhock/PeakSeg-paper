@@ -228,21 +228,6 @@ pdf("figure-dp-peaks-regression-boxes-flip.pdf", h=1.6)
 print(boxes.flip)
 dev.off()
 
-dots <-  #with facets...
-ggplot()+
-  geom_point(aes(mean, algo),
-             data=mean.both, color="grey", size=5)+
-  geom_point(aes(percent, algo),
-             data=both, pch=1)+
-  facet_grid(parameters + supervision ~ set.name, labeller=function(var, val){
-    gsub("_", "\n", val)
-  }, scales="free", space="free_y")+
-  scale_y_discrete("algorithm")+
-  theme_bw()+
-  theme(panel.margin=grid::unit(0, "cm"))+
-  ##scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
-  scale_x_continuous("percent test error", breaks=seq(0, 100, by=20))
-
 best.diff <- ref.diff %>%
   group_by(set.name, algo) %>%
   summarise(mean=mean(diff)) %>%
@@ -269,6 +254,81 @@ ggplot()+
   scale_x_continuous("test error difference from best possible DP model",
                      breaks=seq(0, 100, by=20))
 pdf("figure-dp-peaks-regression-dots-diff.pdf", h=3, w=8)
+print(dots)
+dev.off()
+
+un.both <- both %>%
+  filter(grepl("[.][0]$", algo)) %>%
+  mutate(algo.type=sub(" ", "\n", algo.type))
+un.mean <- un.both %>%
+  group_by(set.name, algo, algo.type, learning) %>%
+  summarise(mean=mean(percent))
+un.best <- un.mean %>%
+  group_by(set.name) %>%
+  summarise(min=min(mean),
+            algo=algo[which.min(mean)],
+            learning=learning[which.min(mean)])
+
+un.dots <-  #unsupervised
+ggplot()+
+  geom_vline(aes(xintercept=min), data=un.best)+
+  geom_point(aes(mean, algo, color=learning),
+             data=un.mean, alpha=0.25, size=4)+
+  geom_point(aes(percent, algo, color=learning),
+             data=un.both, pch=1)+
+  facet_grid(algo.type ~ set.name, labeller=function(var, val){
+    gsub("_", "\n", val)
+  }, scales="free_y", space="free_y")+
+  scale_y_discrete("algorithm . parameters learned")+
+  theme_bw()+
+  guides(color=guide_legend())+
+  theme(panel.margin=grid::unit(0, "cm"),
+        legend.position="top")+
+  scale_color_manual("learning\nalgorithm", values=algo.colors,
+                     breaks=names(algo.colors))+
+  scale_fill_manual("learning\nalgorithm", values=algo.colors,
+                     breaks=names(algo.colors))+
+  ##scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
+  scale_x_continuous("percent incorrect peak region labels (test error)",
+                     breaks=seq(0, 100, by=20),
+                     limits=c(0, NA))
+pdf("figure-dp-peaks-regression-dots-unsupervised.pdf", h=3.5, w=8)
+print(un.dots)
+dev.off()
+
+grid.both <- both %>%
+  filter(grepl("[.][01]$", algo))
+grid.mean <- mean.both %>%
+  filter(grepl("[.][01]$", algo))
+grid.best <- grid.mean %>%
+  group_by(set.name) %>%
+  summarise(min=min(mean),
+            algo=algo[which.min(mean)],
+            learning=learning[which.min(mean)])
+
+dots <-  #with 1 set of facets.
+ggplot()+
+  ##geom_vline(aes(xintercept=min), data=grid.best)+
+  geom_point(aes(mean, algo, color=learning),
+             data=grid.mean, alpha=0.25, size=4)+
+  geom_point(aes(percent, algo, color=learning),
+             data=grid.both, pch=1)+
+  facet_grid(algo.type ~ set.name, labeller=function(var, val){
+    gsub("_", "\n", val)
+  }, scales="free_y", space="free_y")+
+  scale_y_discrete("algorithm . parameters learned")+
+  theme_bw()+
+  guides(color=guide_legend())+
+  theme(panel.margin=grid::unit(0, "cm"),
+        legend.position="top")+
+  scale_color_manual("learning\nalgorithm", values=algo.colors,
+                     breaks=names(algo.colors))+
+  scale_fill_manual("learning\nalgorithm", values=algo.colors,
+                     breaks=names(algo.colors))+
+  ##scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
+  scale_x_continuous("percent incorrect peak region labels (test error)",
+                     breaks=seq(0, 100, by=20))
+pdf("figure-dp-peaks-regression-dots.pdf", h=4.1, w=8)
 print(dots)
 dev.off()
 
