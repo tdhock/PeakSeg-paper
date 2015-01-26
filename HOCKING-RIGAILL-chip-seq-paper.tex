@@ -231,7 +231,7 @@ time whereas the DPA takes $O(d^2)$ time.
     $s\in\{5, 7\}$. For the constrained models, the even numbered
     segments are interpreted as peaks (\ref{eq:peaks}), whose accuracy
     can be quantified using the annotated region labels (\ref{eq:error}).}
-  \label{fig:profiles}
+  \label{fig:Segmentor-PeakSeg}
 \end{figure*}
 
 In constrast to the unconstrained segmentation model of
@@ -247,12 +247,36 @@ modification to the standard DPA solver. Although the DPA is an exact
 solver for the unconstrained problem, we show that the cDPA is a
 heuristic that is not guaranteed to solve the constrained
 problem (Section~\ref{sec:dp-fails}). However, we show that it is
-still very useful in practice in real data
+still very useful in practice on real data
 (Section~\ref{sec:results}).
 
 \subsection{Penalty functions for segmentation}
 
-\textbf{TODO}: discuss penalty functions \citep{cleynen2013segmentation}.
+For each segmentation problem, the proposed cDPA returns a sequence of
+models with $s\in\{1, 3, \dots, s_{\text{max}}\}$ segments. The model
+selection problem is choosing a sample-specific number of segments $s$
+that maximizes the number of true positive peak detections while
+minimizing the number of false positives. For example, in the sample
+of Figure~\ref{fig:Segmentor-PeakSeg}, an ideal model selection
+procedure would choose $s\in\{3, 5\}$ segments, since those models
+have zero errors (\ref{eq:error}).
+
+There are many unsupervised penalty functions for model selection. For
+example, the classical AIC \citep{Akaike73} and BIC \citep{Schwarz78} are based
+on theoretical asymptotic arguments. Several attempts have been made
+to adapt the BIC for segmentation problems \citep{Yao88,
+  mBIC}, and the non-asymptotic model selection theory of
+\citet{cleynen2013segmentation} suggests another penalty function.
+
+In the supervised setting of this paper, there is a training data set
+of annotated segmentation problems, with labels that can be used to
+compute the annotation error (\ref{eq:error}). Thus, rather than
+taking a particular unsupervised penalty function for granted, we can
+use the training data to learn the penalty function with minimum
+error. In particular we propose to adapt the max margin interval
+regression algorithm of \citet{HOCKING-penalties}, which was
+originally proposed for learning a penalty function for optimal
+change-point detection.
 
 \section{From unconstrained to constrained maximum likelihoood
   segmentation}
@@ -300,7 +324,7 @@ This problem is ``\ref{unconstrained}'' in the sense that
 $\mathbf{\hat m}^s(\mathbf y)$ is the most likely segmentation of all
 possible models with $s$ piecewise constant segments ($s-1$
 change-points). Several unconstrained models are shown on the left of
-Figure~\ref{fig:profiles}, and for example the second segment of the
+Figure~\ref{fig:Segmentor-PeakSeg}, and for example the second segment of the
 model with $s=3$ segments appears to capture the peak in the data.
 % In general, we would like to use the 2nd, 4th,
 % ... segments as peaks, and the 1st, 3rd, ... segments as
@@ -338,7 +362,7 @@ followed by one change down, then $P(\mathbf m) =
     1 \end{array}\right]$.
 
 This is also a practical problem that can be observed in real data
-sets. For example in Figure~\ref{fig:profiles} there is a position $j$ for
+sets. For example in Figure~\ref{fig:Segmentor-PeakSeg} there is a position $j$ for
 which $P_j\left[ \mathbf{\hat m}^5(\mathbf y) \right]=2$ (since the
 mean changes up, up, down, down). 
 
@@ -367,7 +391,7 @@ For example, Figure~\ref{fig:dp-peaks-train} shows the $p=2$ peaks
 detected on the second and fourth segments of the \ref{PeakSeg}
 solution for $s=5$ segments.
 
-Figure~\ref{fig:profiles} shows a profile where the constraint is
+Figure~\ref{fig:Segmentor-PeakSeg} shows a profile where the constraint is
 necessary for the even-numbered segments to be interpreted as
 peaks. In particular, it is clear that unconstrained models with
 $s\in\{5, 7\}$ segments do not satisfy $P_j[\mathbf{\hat m}^s(\mathbf
