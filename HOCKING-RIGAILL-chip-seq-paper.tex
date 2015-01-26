@@ -270,28 +270,35 @@ mean changes up, up, down, down).
 Thus we constrain the peak indicator $P_j(\mathbf
 m)\in\{0, 1\}$, which results
 in the constrained problem
-\begin{eqnarray}
-  \label{argmin:constrained}
+\begin{align*}
+  \label{PeakSeg}
   \mathbf{\tilde m}^s(\mathbf y)  =
-    \argmin_{\mathbf m\in\RR^{d}} && 
-    \rho(\mathbf m, \mathbf y) \\
-    \text{such that} && \Segments(\mathbf m)=s, \nonumber \\
-     \forall j\in\{1, \dots, d\}, &&P_j(\mathbf m) \in\{0, 1\}.
-     \nonumber
-\end{eqnarray}
-Another way to interpret the constrained problem
-(\ref{argmin:constrained}) is that the sequence of changes in the
-segment means $\mathbf m$ must begin with a positive change and then
-alternate: up, down, up, down, ... (and not up, up, down). Thus the
-even numbered segments (2nd, 4th, etc) may be interpreted as peaks,
-and the odd numbered segments (1st, 3rd, etc) may be interpreted as
-background. 
+    \argmin_{\mathbf m\in\RR^{d}} &\ \ 
+    \rho(\mathbf m, \mathbf y) 
+    \tag{\textbf{PeakSeg}}
+\\
+    \text{such that} &\ \  \Segments(\mathbf m)=s,  \\
+     \forall j\in\{1, \dots, d\}, &\ \ P_j(\mathbf m) \in\{0, 1\}.
+\end{align*}
+Note that one must specify the number of segments $s$ or,
+equivalently, the number of peaks $p=(s-1)/2$. Another way to
+interpret the constrained (\ref{PeakSeg}) problem is that
+the sequence of changes in the segment means $\mathbf m$ must begin
+with a positive change and then alternate: up, down, up, down,
+... (and not up, up, down). Thus the even numbered segments (2nd, 4th,
+etc) may be interpreted as peaks, and the odd numbered segments (1st,
+3rd, etc) may be interpreted as background.
+
+For example, Figure~\ref{fig:dp-peaks-train} shows the $p=2$ peaks
+detected on the second and fourth segments of the (\ref{PeakSeg})
+solution for $s=5$ segments.
 
 Figure~\ref{fig:profiles} shows a profile where the constraint is
-necessary. In particular, it is clear that unconstrained models with
+necessary for the even-numbered segments to be interpreted as
+peaks. In particular, it is clear that unconstrained models with
 $s\in\{5, 7\}$ segments do not satisfy $P_j[\mathbf{\hat m}^s(\mathbf
 y)]\in\{0, 1\}$ for all positions $j\in\{1,\dots, d\}$ (since they
- have up, up, down changes).
+have up, up, down changes).
 
 \section{Algorithms}
 
@@ -471,7 +478,7 @@ total of 12,826 manually annotated regions\footnote{\url{http://cbio.ensmp.fr/~t
 Since these genomic windows are relatively small, we set the maximum
 number of segments $s_{\text{max}}=19$, and for each profile $\mathbf
 y$ we computed $\mathbf{\tilde m}^1(\mathbf y), \dots, \mathbf{\tilde
-  m}^{19}(\mathbf y)$ (\ref{argmin:constrained}). For the largest
+  m}^{19}(\mathbf y)$ (\ref{PeakSeg}). For the largest
 profile we considered ($d=263,169$ weighted data points after
 compression), the DP algorithm computed the 19 constrained optimal
 segmentations in about 155 minutes.
@@ -530,7 +537,7 @@ detector trained on various different data sets.
 % \end{figure*}
 
 We proposed to use the solution of a constrained optimal segmentation
-problem (\ref{argmin:constrained}) as a ChIP-seq peak detector. For
+problem (\ref{PeakSeg}) as a ChIP-seq peak detector. For
 $d$ data points and $s_{\text{max}}$ segments, we proposed to use
 dynamic programming to compute the solutions in $O(s_{\text{max}} d^2)$
 time. Furthermore, we proposed to use annotated region data as
