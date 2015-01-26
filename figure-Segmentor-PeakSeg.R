@@ -119,6 +119,7 @@ segs.regions <-
   geom_tallrect(aes(xmin=chromStart/1e3, xmax=chromEnd/1e3),
                 data=error.regions,
                 fill=NA, color="grey")+
+  ylab("count of aligned reads")+
   geom_tallrect(aes(xmin=chromStart/1e3, xmax=chromEnd/1e3,
                     linetype=status),
                 data=error.regions,

@@ -2,9 +2,9 @@ PeakSeg: Peak detection via constrained optimal Segmentation
 
 This repos contains the code for the long version of
 https://github.com/tdhock/PeakSegDP-NIPS -- the main differences are
-- more discussion of penalty learning framework.
-- comparison with mBIC, BIC.
-- L1-regularized model and discussion of selected variables.
+- more discussion of constrained DP and penalty learning.
+- comparison with unsupervised AIC/BIC/mBIC and oracle penalty.
+- L1-regularized 41-parameter model.
 
 To make sure to use the same package versions, please install the
 =works_with_R= function by copying the code in [[file:works_with.R]] to

@@ -247,7 +247,7 @@ modification to the standard DPA solver. Although the DPA is an exact
 solver for the unconstrained problem, we show that the cDPA is a
 heuristic that is not guaranteed to solve the constrained
 problem (Section~\ref{sec:dp-fails}). However, we show that it is
-still very useful in practice on real data
+still very useful and accurate in practice on real data
 (Section~\ref{sec:results}).
 
 \subsection{Penalty functions for segmentation}
@@ -269,11 +269,12 @@ to adapt the BIC for segmentation problems \citep{Yao88,
 \citet{cleynen2013segmentation} suggests another penalty function.
 
 In the supervised setting of this paper, there is a training data set
-of annotated segmentation problems, with labels that can be used to
-compute the annotation error (\ref{eq:error}). Thus, rather than
-taking a particular unsupervised penalty function for granted, we can
-use the training data to learn the penalty function with minimum
-error. In particular we propose to adapt the max margin interval
+of segmentation problems $i\in\{1, \dots, n\}$, with labeled regions
+$R_i$ that can be used to compute the annotation error
+(\ref{eq:error}). Thus, rather than taking a particular unsupervised
+penalty function for granted, we can use the training data to learn
+the penalty function with minimum error. In particular in
+Section~\ref{sec:supervised} we propose using the max margin interval
 regression algorithm of \citet{HOCKING-penalties}, which was
 originally proposed for learning a penalty function for optimal
 change-point detection.
@@ -436,7 +437,7 @@ times it returned all 10 models in the real data sets.
 
 
 
-\subsection{Supervised penalty learning for peak detection}
+\subsection{Unsupervised penalty learning}
 \label{sec:supervised}
 
 \begin{table*}[b!]
@@ -493,18 +494,21 @@ times it returned all 10 models in the real data sets.
   \label{fig:test-error}
 \end{figure*}
 
-After computing the constrained maximum likelihood segmentations for
-each sample $i\in\{1,\dots, n\}$, the only question that remains is:
-how many segments?
+% After computing the constrained maximum likelihood segmentations for
+% each sample $i\in\{1,\dots, n\}$, the only question that remains is:
+% how many segments?
 
-There are several existing penalty functions for resolving this model
-selection problem. For example, one can use asymptotic arguments to
-get a penalty such as the AIC (REF), BIC (REF), or mBIC (REF). More
-recently, \citet{cleynen2013segmentation} proposed an oracle penalty
-by applying finite sample model selection theory to segmentation
-models of count data. All of these penalty functions are completely
-unsupervised since they ignore the annotated region labels in the
-training data set.
+There are several unsupervised penalty functions for choosing the
+number of segments $s$. For example, one can use asymptotic arguments to
+get a penalty such as the AIC (Akaike73), BIC \citep{Schwarz78}, or
+mBIC \citep{mBIC}. More recently, \citet{cleynen2013segmentation}
+proposed an oracle penalty by applying finite sample model selection
+theory to segmentation models of count data. All of these penalty
+functions are completely unsupervised since they ignore the annotated
+region labels in the training data set.
+
+\subsection{Supervised single-parameter penalty learning}
+\label{sec:supervised}
 
 \citet{cleynen2013segmentation} proposed to use the 
 un\-supervised heuristic of \citet{Lav05} for calibrating the penalty
@@ -515,28 +519,47 @@ this penalty constant $\beta$. More specifically, we defined a grid of
 and $10^4$, then used grid search to select the value that minimizes
 the annotation error (\ref{eq:error}) on the train set.
 
+\subsection{Supervised multi-parameter penalty learning}
+\label{sec:supervised}
+
 For supervised learning of multi-parameter linear penalty functions,
 we can use the max margin interval regression algorithm of
-\citet{HOCKING-penalties}. Briefly, we define the optimal number of
-segments
+\citet{HOCKING-penalties}. Briefly, for each segmentation problem
+$i\in\{1, \dots, n\}$, we define the predicted number of segments
 \begin{equation}
-  s^*(\lambda, \mathbf y) = 
+  \hat s_i =
   \argmin_{s\in\{1,3,\dots, s_{\text{max}}\}}
   \rho\left[
-    \mathbf{\tilde m}^s(\mathbf y),
-    \mathbf y
+    \mathbf{\tilde m}^s(\mathbf y_i),
+    \mathbf y_i
   \right]
-  + \lambda s,
+  + h(s, d_i) \lambda_i,
 \end{equation}
-where $\lambda\in\RR_+$ is a positive
-penalty value. 
+where $\lambda_i\in\RR_+$ is a positive penalty value that will be
+learned, and $h(s, d_i)$ is a model complexity function that is given
+(Table~\ref{tab:penalties}).
 
 We define sample-specific features $\mathbf x_i\in\RR^m$ and penalty
 values $\log \lambda_i = f(\mathbf x_i) = \beta + \mathbf w^\intercal
 \mathbf x_i$, which is an affine function with parameters
-$\beta\in\RR,\mathbf w\in\RR^m$ that will be learned. As shown in
-Table~\ref{tab:penalties}, we considered learning models with 3 and 41
-parameters:
+$\beta\in\RR,\mathbf w\in\RR^m$ that will be learned. 
+
+The learning algorithm amounts to minimizing a
+smooth convex loss $\ell_i:\RR\rightarrow\RR_+$ which depends on the
+annotated region data $R_i$,
+\begin{equation}
+  \label{eq:relax}
+  \mathbf{\hat w}^\gamma, \hat \beta^\gamma = \argmin_{\mathbf w\in\RR^m, \beta\in\RR}
+  \gamma ||\mathbf w||_1 +
+  \sum_{i=1}^n
+  \ell_i\left[  \beta+ \mathbf w^\intercal \mathbf x_i \right],
+\end{equation}
+where $\gamma\in\RR_+$ is the degree of regularization. Since
+$\ell_i$ is smooth and convex, this problem can be easily solved using
+proximal gradient algorithms such as FISTA \citep{fista}.
+
+As shown in Table~\ref{tab:penalties}, we considered learning models
+with 3 and 41 parameters:
 
 \begin{itemize}
 \item \textbf{3}: we used an $m=2$-dimensional feature
@@ -545,25 +568,14 @@ parameters:
 \end{array}\right]$ where $d_i$ is the number of base pairs for 
 sample/chromosome $i$.  This corresponds to a penalty $\lambda_i =
 e^\beta (\max\mathbf y_i)^{w_1} d_i^{w_2}$. We trained the
-model by solving problem (REF) with no regularization $\gamma=0$.
+model by solving problem (\ref{eq:relax}) with no regularization $\gamma=0$.
 \item \textbf{41}: we defined $m=40$ features using transforms ($x,
   \log x, \log[x+1], \log\log x$), where $x$ is: (un)weighted
   quartiles of $\mathbf y_i$, (un)weighted mean of $\mathbf y_i$, and
   number of (un)weighted data points $d_i$. We trained the model by solving
-  problem (REF), using an internal cross-validation loop to estimate
+  problem (\ref{eq:relax}), using an internal cross-validation loop to estimate
   the regularization~$\gamma$.
 \end{itemize}
-The learning algorithm amounts to minimizing a
-smooth convex loss $\ell_i:\RR\rightarrow\RR_+$ which depends on the
-annotated region data $R_i$:
-\begin{equation}
-  \label{eq:relax}
-  \hat f = \argmin_f \sum_{i=1}^n
-  \ell_i\left[ f(\mathbf x_i) \right].
-\end{equation}
-Since $\ell_i$ is smooth and convex, this problem can be easily solved
-using gradient-based algorithms. We used the accelerated gradient
-method of the FISTA algorithm \citep{fista}.
 
 To make a prediction on a
 test sample with profile $\mathbf y$ and features $\mathbf x$, we
@@ -579,17 +591,35 @@ y)$, and finally the predicted peaks $\mathbf P\left[ \mathbf{\tilde
 We downloaded 7 benchmark data sets, which included a total of 12,826
 manually annotated regions across 2,752 separate segmentation
 problems\footnote{\url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}}.
-Since these genomic windows are relatively small, we set the maximum
+Each data set contains labels grouped into windows of nearby regions
+(from 4 to 30 windows per data set). For each data set, we randomly
+divided the annotated windows into half train and half test. 
+We considered 3 kinds of model training:
+\begin{itemize}
+\item \textbf{Unsupervised} uses the default parameters of each
+  algorithm, ignoring the labeled data in the train set.
+\item \textbf{Grid search} learns a scalar parameter with minimal
+  annotation error on the train set.
+\item \textbf{Interval regression} chooses the multi-parameter model
+  that minimizes a convex relaxation of the annotation error on the
+  train set (\ref{eq:relax}).
+\end{itemize}
+
+\subsection{Effectiveness of heuristic cDPA}
+
+To run the cDPA on the benchmark data set, we first set the maximum
 number of segments $s_{\text{max}}=19$, meaning a maximum of $p=9$
 peaks. Running the cDPA on all of the data sets in the benchmark took
 a total of about 6.5 days. For the largest profile we considered
 ($d=263,169$ weighted data points after compression), the cDPA took
-about 155 minutes.
+about 155 minutes. The source code for benchmarking 
+is at\\
+\url{https://github.com/tdhock/PeakSeg-paper}
 
 As discussed in Section~\ref{sec:dp-fails}, the cDPA is a heuristic
-for solving the \ref{PeakSeg} problem. To assess whether or not this
+for computing the \ref{PeakSeg} model. To assess whether or not this
 is a problem in real data sets, we checked for how many segmentation
-problems the cDPA returned the full sequence of 10 models
+problems the cDPA returned the complete sequence of 10 models
 $\mathbf{\tilde m}^1(\mathbf y),\mathbf{\tilde m}^3(\mathbf y), \dots,
 \mathbf{\tilde m}^{19}(\mathbf y)$. For the vast majority of
 segmentation problems (2738/2752=99.5\%), the constrained DP returned
@@ -601,22 +631,40 @@ although the cDPA is technically a heuristic algorithm for
 solving \ref{PeakSeg}, it is still a useful peak detector in the vast
 majority of real data sets.
 
-We compared the proposed PeakSeg algorithm to the two previous
-state-of-the-art peak detectors on this benchmark, macs and
-\mbox{hmcan.broad}. For each data set, we randomly divided the
-annotated windows into half train and half test. We trained the macs
-and hmcan.broad algorithms by choosing the significance threshold with
-minimal annotation error on the train set. We trained PeakSeg by
-learning a penalty function $\hat f$ on the train set
-(\ref{eq:relax}).
+% \subsection{Baseline peak detection algorithms}
 
-We show the percent test error for each algorithm and each data set in
-Figure~\ref{fig:test-error}. As previously described
-\citep{hocking2014visual}, macs had lower test error than
-\mbox{hmcan.broad} for H3K4me3 data, and \mbox{hmcan.broad} had lower
-test error than macs for H3K36me3 data. It is clear that our proposed
-PeakSeg algorithm had lower test error than both macs and hmcan.broad
-algorithms, for both data types.
+% We compared the proposed PeakSeg algorithm to the two previous
+% state-of-the-art peak detectors on this benchmark, macs and
+% \mbox{hmcan.broad}. 
+
+\subsection{Comparison of unsupervised methods}
+
+In a previous study of this benchmark data set
+\citep{hocking2014visual}, the macs algorithm was found to be the most
+accurate peak detector for H3K4me3 data, whereas hmcan.broad was best
+for H3K36me3 data.
+
+Figure~\ref{fig:test-error} shows that in three H3K36me3 data sets
+(broad peak pattern), hmcan.broad.0 is clearly more accurate than
+macs.0. Furthermore, it is clear that the oracle.0 model is at least
+as accurate as hmcan.broad.0.
+
+For the four H3K4me3 data sets (sharp peak pattern), oracle.0 is about
+as accurate as macs.0, which is clearly more accurate than
+hmcan.broad.0.
+
+Finally, the unsupervised AIC/BIC.0 method is clearly the least
+accurate of all methods, since it always picks the model with the most
+peaks (same as no penalty). We also tried the modified BIC of
+\citet{mBIC}, but obtained the same high false positive rates.
+
+\subsection{Supervised learning of 1 parameter increases peak
+  detection accuracy}
+
+\textbf{TODO}: discussion.
+
+\subsection{Supervised learning of several parameters further 
+  increases peak detection accuracy}
 
 \textbf{TODO}: discussion of unsupervised vs 1-parameter vs multi-parameter
 learning.
@@ -628,10 +676,16 @@ learning.
 \section{Discussion}
 \label{sec:discussion}
 
+\subsection{Supervised versus unsupervised learning}
+
 \textbf{TODO}: discuss machine learning for recognizing different
 patterns, versus using several different unsupervised algorithms for
 specific data sets. E.g. car/face detector versus generic object
 detector trained on various different data sets.
+
+\subsection{Oracle penalty versus AIC/BIC penalty}
+
+\textbf{TODO}
 
 % \begin{figure*}[t!]
 %   \centering
