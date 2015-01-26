@@ -333,9 +333,13 @@ dynamic
 programming is available at\\
 \url{https://github.com/tdhock/PeakSegDP}
 
+\subsection{Constrained DP is a heuristic}
+\label{sec:dp-fails}
 \textbf{TODO}: discussion of when the DP does not recover the optimal
 solution. Maybe a figure? Maybe not. Maybe a discussion of how many
 times it returned all 10 models in the real data sets.
+
+
 
 \subsection{Supervised penalty learning for peak detection}
 \label{sec:supervised}
@@ -472,17 +476,34 @@ the predicted number of segments $\hat s = s^*(\hat \lambda, \mathbf
 y)$, and finally the predicted peaks $\mathbf P\left[ \mathbf{\tilde
     m}^{\hat s}(\mathbf y) \right]$.
 
-\section{Results: state-of-the-art peak detection for two data types}
+\section{Results: state-of-the-art peak detection
+  for two data types}
 
-We downloaded 7 benchmark data sets, which included a
-total of 12,826 manually annotated regions\footnote{\url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}}.
+We downloaded 7 benchmark data sets, which included a total of 12,826
+manually annotated regions across 2,752 separate segmentation
+problems\footnote{\url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}}.
 Since these genomic windows are relatively small, we set the maximum
 number of segments $s_{\text{max}}=19$, and for each profile $\mathbf
-y$ we computed $\mathbf{\tilde m}^1(\mathbf y), \dots, \mathbf{\tilde
-  m}^{19}(\mathbf y)$ (\ref{PeakSeg}). For the largest
-profile we considered ($d=263,169$ weighted data points after
-compression), the DP algorithm computed the 19 constrained optimal
-segmentations in about 155 minutes.
+y$ we applied the constrained DP algorithm. It took a total of about
+6.5 days to run the constrained DP all the problems in the
+benchmark. For the largest profile we considered ($d=263,169$ weighted
+data points after compression), the DP algorithm computed the 10 models
+in about 155 minutes.
+
+As discussed in Section~\ref{sec:dp-fails}, the constrained DP algorithm is a
+heuristic for solving the \ref{PeakSeg} problem. To assess whether or
+not this is a problem in real data sets, we checked for how many
+segmentation problems the constrained DP returned the full sequence of
+10 models. For the vast majority of segmentation problems
+(2,738/2,752=99.5\%), the constrained DP returned all 10 models
+$\mathbf{\tilde m}^1(\mathbf y), \dots, \mathbf{\tilde m}^{19}(\mathbf
+y)$. For the other 14 problems, the algorithm did not return at least
+one of the segmentations. Of these 14 segmentation problems, 11 had at
+least one model with zero annotation error. We concluded that although
+the constrained DP is technically a heuristic algorithm for solving
+\ref{PeakSeg}, it is still useful in the vast majority of real data
+sets.
+
 
 We compared the proposed PeakSeg algorithm to the two previous
 state-of-the-art peak detectors on this benchmark, macs and
