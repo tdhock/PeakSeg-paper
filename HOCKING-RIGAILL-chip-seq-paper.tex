@@ -184,21 +184,32 @@ best scalar significance threshold hyperparameter via grid search.
 
 \subsection{Maximum likelihood segmentation models}
 
-There are several differences between the \ref{PeakSeg} model we
-propose and the previous Poisson segmentation model proposed by
-\citet{Segmentor}. First, they proposed to search all possible
-change-points to find the optimal segmentation with $s$ segments, but
-we propose to constrain the possible change-points to the subset of
-models that can be interpreted as peaks
-(Section~\ref{sec:constrained}). Second, their pruned dynamic
-programming algorithm (pDPA) is guaranteed to recover the exact
-solution, whereas our proposed constrained dynamic programming
-algorithm (cDPA) is a heuristic (Section~\ref{sec:dp-fails}). Also,
-for segmenting a sequence of $d$ data points, the pDPA takes on
-average $O(d\log d)$ time whereas our proposed cDPA takes $O(d^2)$
-time. Finally, implementing our proposed cDPA takes only a small
-modification to the standard DPA, which is much simpler to implement
-than the pDPA.
+The \ref{PeakSeg} model we propose in this paper is a constrained
+version of the Poisson segmentation model of \citet{Segmentor}.
+Their unconstrained model can be computed using a dynamic programming
+algorithm (DPA) \citep{bellman}, or a pruned dynamic programming
+algorithm (pDPA) \citep{pruned-dp}. Both algorithms are guaranteed to
+recover the exact solution to the unconstrained model, but there are
+two important differences. The pDPA is more complicated to implement,
+but is also computationally faster than the DPA. For segmenting a
+sequence of $d$ data points, the pDPA takes on average $O(d\log d)$
+time whereas the DPA takes $O(d^2)$ time. 
+
+In constrast to the unconstrained segmentation model of
+\citet{Segmentor}, our proposed \ref{PeakSeg} model has an additional
+constraint. Rather than searching all possible change-points to find
+the optimal segmentation with $s$ segments, we propose to constrain
+the possible change-points to the subset of models that can be
+interpreted as peaks (Section~\ref{sec:constrained}).
+
+Due to the simplicity of its implementation, we propose a constrained
+dynamic programming algorithm (cDPA) that requires a small
+modification to the standard DPA solver. Although the DPA is an exact
+solver for the unconstrained problem, we show that the cDPA is a
+heuristic that is not guaranteed to solve the constrained
+problem (Section~\ref{sec:dp-fails}). However, we show that it is
+still very useful in practice in real data
+(Section~\ref{sec:results}).
 
 \subsection{Penalty functions for segmentation}
 
