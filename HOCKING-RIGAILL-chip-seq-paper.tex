@@ -439,18 +439,19 @@ penalty value.
 We define sample-specific features $\mathbf x_i\in\RR^m$ and penalty
 values $\log \lambda_i = f(\mathbf x_i) = \beta + \mathbf w^\intercal
 \mathbf x_i$, which is an affine function with parameters
-$\beta\in\RR,\mathbf w\in\RR^m$ that will be learned. We considered
-learning two models:
+$\beta\in\RR,\mathbf w\in\RR^m$ that will be learned. As shown in
+Table~\ref{tab:penalties}, we considered learning models with 3 and 41
+parameters:
 
 \begin{itemize}
-\item \textbf{log.bases.log.max}: we used an $m=2$-dimensional feature
+\item \textbf{3}: we used an $m=2$-dimensional feature
   vector $\mathbf x_i = \left[\begin{array}{cc} \log\max \mathbf y_i &
       \log d_i
 \end{array}\right]$ where $d_i$ is the number of base pairs for 
 sample/chromosome $i$.  This corresponds to a penalty $\lambda_i =
 e^\beta (\max\mathbf y_i)^{w_1} d_i^{w_2}$. We trained the
 model by solving problem (REF) with no regularization $\gamma=0$.
-\item \textbf{L1.reg} we defined $m=41$ features using transforms ($x,
+\item \textbf{41}: we defined $m=40$ features using transforms ($x,
   \log x, \log[x+1], \log\log x$), where $x$ is: (un)weighted
   quartiles of $\mathbf y_i$, (un)weighted mean of $\mathbf y_i$, and
   number of (un)weighted data points $d_i$. We trained the model by solving
@@ -594,25 +595,25 @@ across several samples of the same cell type. This joint peak
 detection problem may lead to more accurate peak calls, but it is a
 considerably more difficult segmentation problem.
 
-\begin{table*}[b!]
-  \centering
-  \begin{tabular}{ccc}
-    \textbf{learning algorithm} & \textbf{heuristics} & 
-    \textbf{constrained optimization} \\
-    \hline
-    unsupervised & hmcan.broad.0, macs.0 & AIC/BIC.0, oracle.0 \\
-    grid search & hmcan.broad.1, macs.1 & AIC/BIC.1, oracle.1 \\
-    interval regression & --- & AIC/BIC.3, oracle.3 \\
-    regularized interval regression & --- & AIC/BIC.41, oracle.41 \\
-  \end{tabular}
-  \caption{Comparison of peak detection methods for ChIP-seq data. 
-    The two main contributions of this paper 
-    are to show that peak detection can be improved 
-    using constrained optimization and 
-    interval regression to learn a 
-    multi-parameter penalty function.}
-  \label{tab:supervised-maxlik}
-\end{table*}
+% \begin{table*}[b!]
+%   \centering
+%   \begin{tabular}{ccc}
+%     \textbf{learning algorithm} & \textbf{heuristics} & 
+%     \textbf{constrained optimization} \\
+%     \hline
+%     unsupervised & hmcan.broad.0, macs.0 & AIC/BIC.0, oracle.0 \\
+%     grid search & hmcan.broad.1, macs.1 & AIC/BIC.1, oracle.1 \\
+%     interval regression & --- & AIC/BIC.3, oracle.3 \\
+%     regularized interval regression & --- & AIC/BIC.41, oracle.41 \\
+%   \end{tabular}
+%   \caption{Comparison of peak detection methods for ChIP-seq data. 
+%     The two main contributions of this paper 
+%     are to show that peak detection can be improved 
+%     using constrained optimization and 
+%     interval regression to learn a 
+%     multi-parameter penalty function.}
+%   \label{tab:supervised-maxlik}
+% \end{table*}
 
 \bibliographystyle{abbrvnat}
 
