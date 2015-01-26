@@ -48,8 +48,7 @@ un.bad <- un %>%
 with(un.bad, stopifnot(min == max))
 
 un.other <- un %>%
-  filter(!algorithm %in% bad.algos,
-         algorithm != "grid loss")
+  filter(!algorithm %in% c(bad.algos, "grid loss", "best.DP"))
 un.bad <- un %>%
   filter(algorithm == "none") %>%
   mutate(algorithm="AIC/BIC.0")
@@ -363,6 +362,6 @@ ggplot()+
   ##scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
   scale_x_continuous("percent incorrect peak region labels (test error)",
                      breaks=seq(0, 100, by=20))
-pdf("figure-dp-peaks-regression-dots.pdf", h=4.1, w=8)
+pdf("figure-dp-peaks-regression-dots.pdf", h=4.2, w=8)
 print(dots)
 dev.off()

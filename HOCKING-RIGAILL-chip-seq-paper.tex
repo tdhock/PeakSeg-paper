@@ -57,12 +57,12 @@
   Peak detection is a central problem in ChIP-seq data analysis, and
   current algorithms for this task are unsupervised and mostly
   effective for a single data type and pattern (e.g. H3K4me3 data with
-  a sharp peak pattern). We propose a new constrained maximum
+  a sharp peak pattern). We propose PeakSeg, a new constrained maximum
   likelihood segmentation model for peak detection, and an efficient
   inference algorithm: constrained dynamic programming. We investigate
   un\-super\-vised and super\-vised learning of penalties for
   the critical model selection problem. We show that the 
-  supervised method is the first algorithm with state-of-the-art peak
+  super\-vised method is the first algorithm with state-of-the-art peak
   detection across all data sets in a benchmark that includes both
   sharp (H3K4me3) and broad (H3K36me3) patterns.
 \end{abstract}
@@ -191,7 +191,7 @@ for peak detection.
       m}^s(\mathbf y)$ for $s\in\{1, 3\}$ segments but not for
     $s\in\{5, 7\}$. For the constrained models, the even numbered
     segments are interpreted as peaks (\ref{eq:peaks}), whose accuracy
-    can be quantified using the annotations (\ref{eq:error}).}
+    can be quantified using the annotated region labels (\ref{eq:error}).}
   \label{fig:profiles}
 \end{figure*}
 
@@ -255,7 +255,7 @@ P[\mathbf m] = \left[\begin{array}{ccc} P_1(\mathbf m) & \cdots &
 \end{array}\right].
 \end{equation}
 
-\subsection{A constrained model for peak detection}
+\subsection{PeakSeg: constrained maximum likelihood}
 
 In general for the unconstrained model $P_j(\mathbf m)\in\ZZ$, which
 is problematic since we want to use it as a peak detector with binary
@@ -287,15 +287,14 @@ in the constrained problem
 \end{align*}
 Note that one must specify the number of segments $s$ or,
 equivalently, the number of peaks $p=(s-1)/2$. Another way to
-interpret the constrained (\ref{PeakSeg}) problem is that
-the sequence of changes in the segment means $\mathbf m$ must begin
-with a positive change and then alternate: up, down, up, down,
-... (and not up, up, down). Thus the even numbered segments (2nd, 4th,
-etc) may be interpreted as peaks, and the odd numbered segments (1st,
-3rd, etc) may be interpreted as background.
+interpret the constrained \ref{PeakSeg} problem is that the sequence
+of changes in the segment means $\mathbf m$ must begin with a positive
+change and then alternate: up, down, up, down, ... (and not up, up,
+down). Thus the even-numbered segments may be interpreted as peaks,
+and the odd-numbered segments may be interpreted as background.
 
 For example, Figure~\ref{fig:dp-peaks-train} shows the $p=2$ peaks
-detected on the second and fourth segments of the (\ref{PeakSeg})
+detected on the second and fourth segments of the \ref{PeakSeg}
 solution for $s=5$ segments.
 
 Figure~\ref{fig:profiles} shows a profile where the constraint is
@@ -307,10 +306,10 @@ have up, up, down changes).
 
 \section{Algorithms}
 
-In this section we propose algorithms that can compute the Poisson
-constrained optimal segmentation model. We first propose a constrained
-dynamic programming algorithm that can be used to recover a sequence
-of constrained maximum likelihood segmentations, $\mathbf{\tilde
+In this section we propose algorithms for computing the \ref{PeakSeg}
+model, and for choosing the number of segments $s$. We first propose a
+new constrained dynamic programming algorithm that can be used to
+recover a sequence of \ref{PeakSeg} models, $\mathbf{\tilde
   m}^1(\mathbf y), \dots, \mathbf{\tilde m}^{s_{\text{max}}}(\mathbf
 y)$ (Section~\ref{sec:constrained-dp}). Then, we show how an existing
 algorithm can be used to learn a penalty function for choosing the
@@ -391,10 +390,7 @@ times it returned all 10 models in the real data sets.
     the vertical black line is the mean of the best algorithm for each
     data set). Data set names show histone mark type (e.g. H3K36me3),
     annotator (AM), and cell types (immune). Colors show how the
-    training data were used to learn model parameters (grey
-    ``cheating'' best.DP is not an algorithm but rather the best
-    possible test error achievable by the constrained optimization
-    models from 0 to 9 peaks computed by the DP algorithm).}
+    training data were used to learn model parameters.}
   \label{fig:test-error}
 \end{figure*}
 
