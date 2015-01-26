@@ -69,7 +69,7 @@
 
 \section{Introduction}
 
-\subsection{Supervised ChIP-seq peak detection}
+\subsection{Unsupervised ChIP-seq peak detection}
 
 Chromatin immunoprecipitation sequencing (ChIP-seq) is a biological
 experiment for genome-wide profiling of histone modifications and
@@ -94,9 +94,11 @@ a peak. In contrast to the supervised method proposed in this paper,
 most previous algorithms are unsupervised since they define a peak
 detector $c$ using only the profile data $\mathbf y$.
 
+\subsection{Supervised peak detection}
+
 In supervised peak detection \citep{hocking2014visual}, there
 are $n$ labeled samples, and each sample $i\in\{1, \dots, n\}$ has a
-profile $\mathbf y_i\in\ZZ_+^d$ and a set of annotated regions $R_i$
+profile $\mathbf y_i\in\ZZ_+^d$ and a set of annotated region labels $R_i$
 which defines a non-convex annotation error function
 \begin{equation}
   \label{eq:error}
@@ -106,26 +108,29 @@ which defines a non-convex annotation error function
 \end{equation}
 The annotation error counts the number of false positive (FP) and
 false negative (FN) regions, so it takes values in the non-negative
-integers. The goal is to find a peak caller~$c$ with minimal error on some
-test profiles:
+integers. The goal of learning is to find a peak caller~$c$ with
+minimal error on some test profiles:
 \begin{equation}
   \label{eq:min_error}
   \minimize_c \sum_{i\in\text{test}} E[c(\mathbf y_i),  R_i].
 \end{equation}
+More specifically, we suppose that the training data and the test data
+exhibit the same pattern type.
 
 \subsection{Different ChIP-seq peak patterns}
 
-Figure~\ref{fig:dp-peaks-train} shows two example data sets of H3K4me3
-data with a sharp peak pattern, and two data sets of H3K36me3 with a
-broad peak pattern. Current peak detectors are unsupervised learning
-algorithms that are designed for specific patterns. For example, the
-MACS algorithm was designed for the sharp pattern in H3K4me3 data
-\citep{MACS}.
+There are several different kinds of peak patterns that have been
+observed and labeled in different ChIP-seq data sets. For example,
+Figure~\ref{fig:dp-peaks-train} shows H3K4me3 data with a sharp peak
+pattern, and H3K36me3 data with a broad peak pattern. Current peak
+detectors are unsupervised learning algorithms that are designed for
+specific patterns. For example, the MACS algorithm was designed for
+the sharp pattern in H3K4me3 data \citep{MACS}.
 
-Another example is the HMCan algorithm \citep{HMCan}, whose authors
-suggest fixed pattern-specific mergeDistance parameters:\\
-H3K4me3 $\Rightarrow \text{mergeDistance}=200$, \\
-H3K36me3 $\Rightarrow\text{mergeDistance}=1000$.
+Another example is HMCan \citep{HMCan}, whose authors suggest fixed
+pattern-specific mergeDistance parameters: H3K4me3 $\Rightarrow 200$,
+H3K36me3 $\Rightarrow 1000$. However, these parameters may not be
+optimal for any given data set.
 
 The goal of this paper is to propose a supervised learning algorithm
 that is effective for several pattern types. Rather than taking
@@ -150,26 +155,58 @@ accurate peak detection across several data sets and patterns.
   \label{fig:dp-peaks-train}
 \end{figure*}
 
+The rest of this paper is organized as follows. In
+Section~\ref{sec:related} we discuss related work and in
+Section~\ref{sec:model} we propose the constrained \ref{PeakSeg}
+model. In Section~\ref{sec:algorithms} we propose two efficient
+algorithms, and in Section~\ref{sec:results} we show that they achieve
+state-of-the-art peak detection accuracy in a large benchmark database
+of ChIP-seq profiles. We discuss the significance of these results in
+Section~\ref{sec:discussion} and propose some directions for future
+work in Section~\ref{sec:conclusions}.
+
 \section{Related work}
+\label{sec:related}
+
+Previous work can be divided into roughly three categories:
+unsupervised ChIP-seq peak detectors, maximum likelihood segmentation
+models, and optimal penalty functions for segmentation.
+
+\subsection{Unsupervised ChIP-seq peak detectors}
 
 In the benchmark data set of \citet{hocking2014visual}, there are two
-different histone mark types: H3K4me3 (sharp peaks) and H3K36me3
-(broadly enriched regions). The best peak detection algorithm for
+different histone mark types: H3K4me3 (sharp peak pattern) and
+H3K36me3 (broad peak pattern). The best peak detection algorithm for
 these H3K4me3 data was macs \citep{MACS}, and the best for H3K36me3
 was HMCan \citep{HMCan}. Both of these algorithms are unsupervised,
 but were calibrated using the annotated region labels to choose the
 best scalar significance threshold hyperparameter via grid search.
 
-The ChIP-seq segmentation model we propose is a constrained version of
-the Poisson model proposed by \citet{Segmentor}. Specifically,
-they proposed to search all possible change-points to find the optimal
-segmentation, but we propose to constrain the possible change-points to
-the subset of models that can be interpreted as peaks.
+\subsection{Maximum likelihood segmentation models}
+
+There are several differences between the \ref{PeakSeg} model we
+propose and the previous Poisson segmentation model proposed by
+\citet{Segmentor}. First, they proposed to search all possible
+change-points to find the optimal segmentation with $s$ segments, but
+we propose to constrain the possible change-points to the subset of
+models that can be interpreted as peaks
+(Section~\ref{sec:constrained}). Second, their pruned dynamic
+programming algorithm (pDPA) is guaranteed to recover the exact
+solution, whereas our proposed constrained dynamic programming
+algorithm (cDPA) is a heuristic (Section~\ref{sec:dp-fails}). Also,
+for segmenting a sequence of $d$ data points, the pDPA takes on
+average $O(d\log d)$ time whereas our proposed cDPA takes $O(d^2)$
+time. Finally, implementing our proposed cDPA takes only a small
+modification to the standard DPA, which is much simpler to implement
+than the pDPA.
+
+\subsection{Penalty functions for segmentation}
 
 \textbf{TODO}: discuss penalty functions \citep{cleynen2013segmentation}.
 
 \section{From unconstrained to constrained maximum likelihoood
   segmentation}
+\label{sec:model}
 
 In this section we discuss Poisson maximum likelihood segmentation
 models for count data. First, we discuss an existing unconstrained
@@ -256,6 +293,7 @@ P[\mathbf m] = \left[\begin{array}{ccc} P_1(\mathbf m) & \cdots &
 \end{equation}
 
 \subsection{PeakSeg: constrained maximum likelihood}
+\label{sec:constrained}
 
 In general for the unconstrained model $P_j(\mathbf m)\in\ZZ$, which
 is problematic since we want to use it as a peak detector with binary
@@ -305,6 +343,7 @@ y)]\in\{0, 1\}$ for all positions $j\in\{1,\dots, d\}$ (since they
 have up, up, down changes).
 
 \section{Algorithms}
+\label{sec:algorithms}
 
 In this section we propose algorithms for computing the \ref{PeakSeg}
 model, and for choosing the number of segments $s$. We first propose a
@@ -479,6 +518,7 @@ y)$, and finally the predicted peaks $\mathbf P\left[ \mathbf{\tilde
 
 \section{Results: state-of-the-art peak detection
   for two data types}
+\label{sec:results}
 
 We downloaded 7 benchmark data sets, which included a total of 12,826
 manually annotated regions across 2,752 separate segmentation
@@ -530,7 +570,8 @@ learning.
 %   \input{table-dp-peaks-regression}
 % \end{center}
 
-\section{Discussion, conclusions, and future work}
+\section{Discussion}
+\label{sec:discussion}
 
 \textbf{TODO}: discuss machine learning for recognizing different
 patterns, versus using several different unsupervised algorithms for
@@ -558,6 +599,9 @@ detector trained on various different data sets.
 %     which features are most important.}
 %   \label{fig:regularized-feature-importance}
 % \end{figure*}
+
+\section{Conclusions and future work}
+\label{sec:conclusions}
 
 We proposed to use the solution of a constrained optimal segmentation
 problem (\ref{PeakSeg}) as a ChIP-seq peak detector. For
