@@ -132,12 +132,13 @@ pattern-specific mergeDistance parameters: H3K4me3 $\Rightarrow 200$,
 H3K36me3 $\Rightarrow 1000$. However, these parameters may not be
 optimal for any given data set.
 
-The goal of this paper is to propose a supervised learning algorithm
-that is effective for several pattern types. Rather than taking
-unsupervised model parameters for granted, we propose to train model
-parameters using labeled data of the same pattern type. Our method is
-the first peak detector that uses supervised learning, and achieves
-accurate peak detection across several data sets and patterns.
+The main contribution of this paper is \ref{PeakSeg}, a supervised
+learning algorithm that is effective for several pattern types. Rather
+than taking unsupervised model parameters for granted, we propose to
+train model parameters using labeled data of the same pattern
+type. Our method is the first peak detector that uses supervised
+learning, and achieves accurate peak detection across several data
+sets and patterns.
 
 \begin{figure*}[b!]
   \centering
@@ -154,6 +155,14 @@ accurate peak detection across several data sets and patterns.
     pattern types.}
   \label{fig:dp-peaks-train}
 \end{figure*}
+
+A second contribution of this paper is a detailed study of the peak
+detection accuracy of several unsupervised and supervised segmentation
+algorithms in a large benchmark ChIP-seq data set. The two main
+results are that the oracle penalty of \citet{cleynen2013segmentation}
+is more accurate than asymptotic penalties like the AIC/BIC, and that
+supervised penalty learning can be used to further increase peak
+detection accuracy.
 
 The rest of this paper is organized as follows. In
 Section~\ref{sec:related} we discuss related work and in
@@ -174,13 +183,26 @@ models, and optimal penalty functions for segmentation.
 
 \subsection{Unsupervised ChIP-seq peak detectors}
 
-In the benchmark data set of \citet{hocking2014visual}, there are two
-different histone mark types: H3K4me3 (sharp peak pattern) and
-H3K36me3 (broad peak pattern). The best peak detection algorithm for
-these H3K4me3 data was macs \citep{MACS}, and the best for H3K36me3
-was HMCan \citep{HMCan}. Both of these algorithms are unsupervised,
-but were calibrated using the annotated region labels to choose the
-best scalar significance threshold hyperparameter via grid search.
+There are literally dozens of unsupervised algorithms for peak
+detection in ChIP-seq data sets, and the bioinformatics literature
+contains several published comparison studies \citep{evaluation2010,
+  rye2010manually, chip-seq-bench}. 
+
+However, supervised peak detection model training is a relatively new
+idea proposed by \citet{hocking2014visual}. In that benchmark of
+ChIP-seq data sets, there are two different histone mark types:
+H3K4me3 (sharp peak pattern) and H3K36me3 (broad peak pattern). The
+best peak detection algorithm for these H3K4me3 data was macs
+\citep{MACS}, and the best for H3K36me3 was HMCan \citep{HMCan}. Both
+of these algorithms are unsupervised, but were calibrated using the
+annotated region labels to choose the best scalar significance
+threshold hyperparameter via grid search. \citet{picking2012} also
+attempted to train hyperparameters of unsupervised peak detectors, and
+found that optimal values do not generalize between data sets. 
+
+In contrast, we show in this paper that our supervised multi-parameter
+\ref{PeakSeg} model can be trained for accurate peak detection on test
+data that has the same type of peak pattern.
 
 \subsection{Maximum likelihood segmentation models}
 
@@ -194,6 +216,23 @@ two important differences. The pDPA is more complicated to implement,
 but is also computationally faster than the DPA. For segmenting a
 sequence of $d$ data points, the pDPA takes on average $O(d\log d)$
 time whereas the DPA takes $O(d^2)$ time. 
+
+\begin{figure*}[b!]
+  \centering
+  \includegraphics[width=\textwidth]{figure-Segmentor-PeakSeg}
+  %\input{figure-Segmentor-PeakSeg}
+  \vskip -0.5cm
+  \caption{Example profile $\mathbf y$ (grey), with green horizontal
+    lines for the segmentation mean $\mathbf m$, and green vertical
+    lines to emphasize change-points. For this particular profile
+    $\mathbf y$, the unconstrained and contrained models are
+    equivalent $\mathbf{\hat m}^s(\mathbf y) = \mathbf{\tilde
+      m}^s(\mathbf y)$ for $s\in\{1, 3\}$ segments but not for
+    $s\in\{5, 7\}$. For the constrained models, the even numbered
+    segments are interpreted as peaks (\ref{eq:peaks}), whose accuracy
+    can be quantified using the annotated region labels (\ref{eq:error}).}
+  \label{fig:profiles}
+\end{figure*}
 
 In constrast to the unconstrained segmentation model of
 \citet{Segmentor}, our proposed \ref{PeakSeg} model has an additional
@@ -226,37 +265,19 @@ for peak detection.
 
 \subsection{Unconstrained maximum likelihood segmentation}
 
-\begin{figure*}[b!]
-  \centering
-  \includegraphics[width=\textwidth]{figure-Segmentor-PeakSeg}
-  %\input{figure-Segmentor-PeakSeg}
-  \vskip -0.5cm
-  \caption{Example profile $\mathbf y$ (grey), with green horizontal
-    lines for the segmentation mean $\mathbf m$, and green vertical
-    lines to emphasize change-points. For this particular profile
-    $\mathbf y$, the unconstrained and contrained models are
-    equivalent $\mathbf{\hat m}^s(\mathbf y) = \mathbf{\tilde
-      m}^s(\mathbf y)$ for $s\in\{1, 3\}$ segments but not for
-    $s\in\{5, 7\}$. For the constrained models, the even numbered
-    segments are interpreted as peaks (\ref{eq:peaks}), whose accuracy
-    can be quantified using the annotated region labels (\ref{eq:error}).}
-  \label{fig:profiles}
-\end{figure*}
-
-After fixing a maximum number of segments $1 \leq s_{\text{max}}\leq d$,
-the unconstrained maximum likelihood segmentation problem is defined
-for any $s\in\{1, 2, \dots, s_{\max}\}$ as
-\begin{equation}
-  \label{argmin:unconstrained}
-  \begin{aligned}
-    \mathbf{\hat m}^s(\mathbf y)  =\ 
-    &\argmin_{\mathbf m\in\RR^{d}} && 
-    \rho
-    (\mathbf m, \mathbf y) \\
-    \\
-    &\text{such that} && \Segments(\mathbf m)=s,
-  \end{aligned}
-\end{equation}
+For a sequence of $d$ data points to segment, we fix a maximum number
+of segments $1 \leq s_{\text{max}}\leq d$, and define the
+unconstrained maximum likelihood segmentation problem for
+any $s\in\{1, 2, \dots, s_{\max}\}$ as
+\begin{align*}
+  \label{unconstrained}
+  \mathbf{\hat m}^s(\mathbf y)  =\ 
+  &\argmin_{\mathbf m\in\RR^{d}} && 
+  \rho
+  \tag{\textbf{Unconstrained}}
+  (\mathbf m, \mathbf y) \\
+  &\text{such that} && \Segments(\mathbf m)=s,
+\end{align*}
 where the Poisson loss function is
 \begin{equation}
   \rho(\mathbf m, \mathbf y)= \sum_{j=1}^d m_j - y_j \log m_j.
@@ -275,12 +296,12 @@ d^2)$ time using dynamic programming (DP) algorithms \citep{bellman},
 or in $O(s_{\text{max}} d \log d)$ time using pruned DP
 \citep{pruned-dp, Segmentor}.
 
-We refer to (\ref{argmin:unconstrained}) as the unconstrained problem
-since $\mathbf{\hat m}^s(\mathbf y)$ is the most likely segmentation
-of all possible models with $s$ segments. Several unconstrained models
-are shown on the left of Figure~\ref{fig:profiles}, and for example
-the second segment of the model with $s=3$ segments appears to capture
-the peak in the data. 
+This problem is ``\ref{unconstrained}'' in the sense that
+$\mathbf{\hat m}^s(\mathbf y)$ is the most likely segmentation of all
+possible models with $s$ piecewise constant segments ($s-1$
+change-points). Several unconstrained models are shown on the left of
+Figure~\ref{fig:profiles}, and for example the second segment of the
+model with $s=3$ segments appears to capture the peak in the data.
 % In general, we would like to use the 2nd, 4th,
 % ... segments as peaks, and the 1st, 3rd, ... segments as
 % background. 

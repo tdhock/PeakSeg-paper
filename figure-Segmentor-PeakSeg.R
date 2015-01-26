@@ -100,7 +100,8 @@ segs.regions <-
   theme(panel.margin=grid::unit(0, "cm"))+
   facet_grid(segments ~ model, scales="free", labeller=function(var, val){
     if(var=="model"){
-      paste0(val, " ", var)
+      more <- ifelse(val=="constrained", " (PeakSeg)", "")
+      paste0(val, " ", var, more)
     }else{
       paste("s =", val)
     }
