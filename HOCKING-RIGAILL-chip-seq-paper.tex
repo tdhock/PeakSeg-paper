@@ -26,12 +26,14 @@
 
 \usepackage{icml2015}
 
-\icmltitlerunning{Learning penalties for peak detection in count data}
+\icmltitlerunning{PeakSeg: constrained optimal segmentation and
+  supervised penalty learning for peak detection in count data}
 
 \begin{document}
 
 \twocolumn[
-\icmltitle{Learning penalties for peak detection in count data}
+\icmltitle{PeakSeg: constrained optimal segmentation and
+  supervised penalty learning for peak detection in count data}
 
 % It is OKAY to include author information, even for blind
 % submissions: the style file will automatically remove it for you
@@ -141,7 +143,10 @@ accurate peak detection across several data sets and patterns.
     data set-specific peak pattern encoded in the annotated region
     labels (peakStart/peakEnd mean there should be exactly 1 peak
     start/end somewhere in the region, and noPeaks means there should
-    be no overlapping peaks).}
+    be no overlapping peaks). Peaks detected by several algorithms are
+    shown as line segments with an open circle, and for these data
+    (\ref{PeakSeg}) with $p=2$ peaks achieves zero errors for both
+    pattern types.}
   \label{fig:dp-peaks-train}
 \end{figure*}
 
