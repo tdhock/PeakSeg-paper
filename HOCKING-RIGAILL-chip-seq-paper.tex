@@ -556,27 +556,26 @@ We downloaded 7 benchmark data sets, which included a total of 12,826
 manually annotated regions across 2,752 separate segmentation
 problems\footnote{\url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}}.
 Since these genomic windows are relatively small, we set the maximum
-number of segments $s_{\text{max}}=19$, and for each profile $\mathbf
-y$ we applied the constrained DP algorithm. It took a total of about
-6.5 days to run the constrained DP all the problems in the
-benchmark. For the largest profile we considered ($d=263,169$ weighted
-data points after compression), the DP algorithm computed the 10 models
-in about 155 minutes.
+number of segments $s_{\text{max}}=19$, meaning a maximum of $p=9$
+peaks. Running the cDPA on all of the data sets in the benchmark took
+a total of about 6.5 days. For the largest profile we considered
+($d=263,169$ weighted data points after compression), the cDPA took
+about 155 minutes.
 
-As discussed in Section~\ref{sec:dp-fails}, the constrained DP algorithm is a
-heuristic for solving the \ref{PeakSeg} problem. To assess whether or
-not this is a problem in real data sets, we checked for how many
-segmentation problems the constrained DP returned the full sequence of
-10 models. For the vast majority of segmentation problems
-(2,738/2,752=99.5\%), the constrained DP returned all 10 models
-$\mathbf{\tilde m}^1(\mathbf y), \dots, \mathbf{\tilde m}^{19}(\mathbf
-y)$. For the other 14 problems, the algorithm did not return at least
-one of the segmentations. Of these 14 segmentation problems, 11 had at
-least one model with zero annotation error. We concluded that although
-the constrained DP is technically a heuristic algorithm for solving
-\ref{PeakSeg}, it is still useful in the vast majority of real data
-sets.
-
+As discussed in Section~\ref{sec:dp-fails}, the cDPA is a heuristic
+for solving the \ref{PeakSeg} problem. To assess whether or not this
+is a problem in real data sets, we checked for how many segmentation
+problems the cDPA returned the full sequence of 10 models
+$\mathbf{\tilde m}^1(\mathbf y),\mathbf{\tilde m}^3(\mathbf y), \dots,
+\mathbf{\tilde m}^{19}(\mathbf y)$. For the vast majority of
+segmentation problems (2738/2752=99.5\%), the constrained DP returned
+all 10 models. For the other 14 problems, the algorithm did not return
+at least one of the ten models. Of these 14 problems with missing
+models, 11 problems still had at least one perfect peak detection
+model with zero annotation error~(\ref{eq:error}). We concluded that
+although the cDPA is technically a heuristic algorithm for
+solving \ref{PeakSeg}, it is still a useful peak detector in the vast
+majority of real data sets.
 
 We compared the proposed PeakSeg algorithm to the two previous
 state-of-the-art peak detectors on this benchmark, macs and

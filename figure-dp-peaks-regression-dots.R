@@ -91,9 +91,9 @@ both <-
          algorithm=ifelse(algorithm %in% names(alg.rep),
            alg.rep[as.character(algorithm)], as.character(algorithm)),
          algo.type=ifelse(grepl("hmcan|macs", algorithm),
-           "heuristics", "constrained optimization"),
-         algo.type=factor(algo.type, c("constrained optimization",
-           "heuristics")),
+           "baselines", "PeakSeg"),
+         algo.type=factor(algo.type, c("PeakSeg",
+           "baselines")),
          learning=ifelse(grepl("[.]0$", algorithm), "unsupervised",
            ifelse(grepl("[.]1$", algorithm), "grid\nsearch",
                   ifelse(grepl("best", algorithm), "cheating",
@@ -252,9 +252,9 @@ ggplot()+
                      breaks=names(algo.colors))+
   scale_x_continuous("test error difference from best possible DP model",
                      breaks=seq(0, 100, by=20))
-pdf("figure-dp-peaks-regression-dots-diff.pdf", h=3, w=8)
-print(dots)
-dev.off()
+##pdf("figure-dp-peaks-regression-dots-diff.pdf", h=3, w=8)
+##print(dots)
+##dev.off()
 
 un.both <- both %>%
   filter(grepl("[.][0]$", algo)) %>%
