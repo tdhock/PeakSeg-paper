@@ -161,8 +161,9 @@ labeled data of the same pattern type. Importantly, and in contrast to
 existing unsupervised approaches which can only be trained using grid
 search, we propose efficient discrete and convex optimization
 algorithms for model training. Our method is the first peak detector
-that uses supervised learning, and achieves accurate peak detection
-across several data sets and patterns.
+with an efficient supervised learning algorithm, and the first method
+that achieves state-of-the-art peak detection across several 
+patterns in the benchmark of \citet{hocking2014visual}.
 
 A second contribution of this paper is a detailed study of the peak
 detection accuracy of several unsupervised and supervised segmentation
@@ -197,20 +198,21 @@ contains several published comparison studies \citep{evaluation2010,
   rye2010manually, chip-seq-bench}. 
 
 However, supervised peak detection model training is a relatively new
-idea proposed by \citet{hocking2014visual}. In that benchmark of
-ChIP-seq data sets, there are two different histone mark types:
-H3K4me3 (sharp peak pattern) and H3K36me3 (broad peak pattern). The
-best peak detection algorithm for these H3K4me3 data was macs
-\citep{MACS}, and the best for H3K36me3 was HMCan \citep{HMCan}. Both
-of these algorithms are unsupervised, but were calibrated using the
-annotated region labels to choose the best scalar significance
-threshold hyperparameter via grid search. \citet{picking2012} also
-attempted to train hyperparameters of unsupervised peak detectors, and
-found that optimal values do not generalize between data sets. 
+idea. \citet{hocking2014visual} proposed a benchmark of labeled
+ChIP-seq data sets, with two different histone mark types: H3K4me3
+(sharp peak pattern) and H3K36me3 (broad peak pattern). The best peak
+detection algorithm in these H3K4me3 data was macs \citep{MACS}, and
+the best for H3K36me3 was HMCan \citep{HMCan}. Both of these
+algorithms are unsupervised, but were calibrated using the annotated
+region labels to choose the best scalar significance threshold
+hyperparameter via grid search.
 
-In contrast, we show in this paper that our supervised multi-parameter
-\ref{PeakSeg} model can be trained for accurate peak detection on test
-data that has the same type of peak pattern.
+\citet{DFilter} also attempted to train hyperparameters of
+unsupervised peak detectors, and \citet{picking2012} found that
+optimal values do not generalize between data sets. In contrast, we
+show that our supervised \ref{PeakSeg} model can be trained for
+accurate peak detection on test data that has the same type of peak
+pattern.
 
 \subsection{Maximum likelihood segmentation models}
 
@@ -711,8 +713,12 @@ predicted peaks $\mathbf P\left[ \mathbf{\tilde m}^{\hat s}(\mathbf y)
   \end{tabular}
   \end{minipage}
 
-  \caption{Penalty functions considered in this paper are of the form
-    $h(s, d_i) \lambda_i $, and are named according to model complexity
+  \caption{Penalties for model selection (\ref{eq:optimal_segments}) 
+    are of the form
+    $h(s, d_i) \lambda_i $ 
+    for data to segment $\mathbf y_i\in\RR^{d_i}$ 
+    and models with $s$ segments. 
+    Names show model complexity
     $h(s, d_i)$ (left) and number of parameters to learn in $\lambda_i$ (right).
     For example, the AIC/BIC.41 model has a penalty of
     $s \exp(\beta + \mathbf w^\intercal \mathbf x_i)$, 
@@ -744,10 +750,13 @@ predicted peaks $\mathbf P\left[ \mathbf{\tilde m}^{\hat s}(\mathbf y)
 We downloaded 7 benchmark data sets, which included a total of 12,826
 manually annotated regions across 2,752 separate segmentation
 problems\footnote{\url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}}.
-Each data set contains labels grouped into windows of nearby regions
-(from 4 to 30 windows per data set). For each data set, we randomly
-divided the annotated windows into half train and half test.  As shown
-in Table~\ref{tab:penalties}, we considered 3 kinds of model training:
+Data sets span two different data/pattern types (sharp H3K4me3, broad
+H3K36me3), four annotators (AM, TDH, PGP, XJ), and two cell
+type groups (immune, other). Each data set contains labels grouped
+into windows of nearby regions (from 4 to 30 windows per data
+set). For each data set, we randomly divided the annotated windows
+into half train and half test.  As shown in Table~\ref{tab:penalties},
+we considered 3 kinds of model training:
 \begin{itemize}
 \item \textbf{Unsupervised} uses the default parameters of each
   algorithm, ignoring the labeled data in the train set.
@@ -763,7 +772,7 @@ To run the cDPA on the benchmark data set, we first set the maximum
 number of segments $s_{\text{\text{max}}}=19$, meaning a maximum of $p=9$
 peaks. Running the cDPA on all of the data sets in the benchmark took
 a total of about 6.5 days. For the largest profile we considered
-($d=263,169$ weighted data points after compression), the cDPA took
+($d=263,169$ data points), the cDPA took
 about 155 minutes. The source code for benchmarking 
 is at\\
 \url{https://github.com/tdhock/PeakSeg-paper}
@@ -864,20 +873,17 @@ detector trained on various different data sets.
 \section{Conclusions and future work}
 \label{sec:conclusions}
 
-We proposed to use the solution of a constrained optimal segmentation
-problem \ref{PeakSeg} as a ChIP-seq peak detector. For
-$d$ data points and $s_{\text{\text{max}}}$ segments, we proposed to use
-dynamic programming to compute the solutions in $O(s_{\text{\text{max}}} d^2)$
-time. Furthermore, we proposed to use annotated region data as
-supervision in a penalty learning problem (\ref{eq:relax}). This
-approach yields state-of-the-art test error rates for peak detection
-in a benchmark that includes both H3K4me3 and H3K36me3 data
-sets.
+We proposed the \ref{PeakSeg} constrained maximum likelihood
+segmentation model as a peak detector in ChIP-seq count data. We
+proposed a constrained dynamic programming algorithm that efficiently
+computes a sequence of segmentations that satisfy the \ref{PeakSeg}
+constraint. Furthermore, we proposed to use annotated region data as
+supervision in a penalty learning problem. Whereas unsupervised
+baseline methods are only effective for a single data type, our
+approach yields state-of-the-art peak detection in a benchmark that
+includes both H3K4me3 and H3K36me3 data sets.
 
-Although it has been previously proposed to train a peak detector
-using a set of positive control peak regions \citep{DFilter}, PeakSeg
-is the first algorithm that can be trained with both positive and
-negative control regions. PeakSeg is also the first algorithm to
+PeakSeg is also the first algorithm to
 exhibit state-of-the-art accuracy on both sharp H3K4me3 and broad
 H3K36me3 ChIP-seq profiles in the benchmark of
 \citet{hocking2014visual}. In the future, even better accuracy may be
