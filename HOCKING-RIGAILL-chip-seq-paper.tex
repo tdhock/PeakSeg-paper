@@ -190,6 +190,23 @@ Previous work can be divided into roughly three categories:
 unsupervised ChIP-seq peak detectors, maximum likelihood segmentation
 models, and optimal penalty functions for segmentation.
 
+\begin{figure*}[b!]
+  \centering
+  \includegraphics[width=\textwidth]{figure-Segmentor-PeakSeg}
+  %\input{figure-Segmentor-PeakSeg}
+  \vskip -0.5cm
+  \caption{Example profile $\mathbf y$ (grey), with green horizontal
+    lines for the segmentation mean $\mathbf m$, and green vertical
+    lines to emphasize change-points. For this particular profile
+    $\mathbf y$, the unconstrained and contrained models are
+    equivalent $\mathbf{\hat m}^s(\mathbf y) = \mathbf{\tilde
+      m}^s(\mathbf y)$ for $s\in\{1, 3\}$ segments but not for
+    $s\in\{5, 7\}$. For the constrained models, the even-numbered
+    segments are interpreted as peaks (\ref{eq:peaks}), whose accuracy
+    can be quantified using the annotated region labels (\ref{eq:error}).}
+  \label{fig:Segmentor-PeakSeg}
+\end{figure*}
+
 \subsection{Unsupervised ChIP-seq peak detectors}
 
 There are literally dozens of unsupervised algorithms for peak
@@ -227,23 +244,6 @@ but is also computationally faster than the DPA. For segmenting a
 sequence of $d$ data points, the pDPA takes on average $O(d\log d)$
 time whereas the DPA takes $O(d^2)$ time. 
 
-\begin{figure*}[b!]
-  \centering
-  \includegraphics[width=\textwidth]{figure-Segmentor-PeakSeg}
-  %\input{figure-Segmentor-PeakSeg}
-  \vskip -0.5cm
-  \caption{Example profile $\mathbf y$ (grey), with green horizontal
-    lines for the segmentation mean $\mathbf m$, and green vertical
-    lines to emphasize change-points. For this particular profile
-    $\mathbf y$, the unconstrained and contrained models are
-    equivalent $\mathbf{\hat m}^s(\mathbf y) = \mathbf{\tilde
-      m}^s(\mathbf y)$ for $s\in\{1, 3\}$ segments but not for
-    $s\in\{5, 7\}$. For the constrained models, the even-numbered
-    segments are interpreted as peaks (\ref{eq:peaks}), whose accuracy
-    can be quantified using the annotated region labels (\ref{eq:error}).}
-  \label{fig:Segmentor-PeakSeg}
-\end{figure*}
-
 In constrast to the unconstrained segmentation model of
 \citet{Segmentor}, our proposed \ref{PeakSeg} model has an additional
 constraint. Rather than searching all possible change-points to find
@@ -263,13 +263,13 @@ still very useful and accurate in practice on real data
 \subsection{Penalty functions for segmentation}
 
 For each segmentation problem, the proposed cDPA returns a sequence of
-models with $s\in\{1, 3, \dots, s_{\text{\text{max}}}\}$ segments. The model
-selection problem is choosing a sample-specific number of segments $s$
-that maximizes the number of true positive peak detections while
-minimizing the number of false positives. For example, in the sample
-of Figure~\ref{fig:Segmentor-PeakSeg}, an ideal model selection
-procedure would choose $s\in\{3, 5\}$ segments, since those models
-have zero errors (\ref{eq:error}).
+models with $s\in\{1, 3, \dots, s_{\text{\text{max}}}\}$ segments. The
+model selection problem is choosing a sample-specific number of
+segments $s$ that maximizes the number of true positive peak
+detections while minimizing the number of false positives. For
+example, in Figure~\ref{fig:Segmentor-PeakSeg}, an ideal model
+selection procedure would choose $s\in\{3, 5\}$ segments, since those
+models have zero errors (\ref{eq:error}).
 
 There are many unsupervised penalty functions for model selection. For
 example, the classical AIC \citep{Akaike73} and BIC \citep{Schwarz78} are based
@@ -919,7 +919,7 @@ We proposed the \ref{PeakSeg} constrained maximum likelihood
 segmentation model as a peak detector in ChIP-seq count data. We
 proposed a constrained dynamic programming algorithm that efficiently
 computes a sequence of segmentations that satisfy the \ref{PeakSeg}
-constraint. Furthermore, we proposed to use annotated region data as
+constraint. Furthermore, we proposed to use annotated region labels as
 supervision in a penalty learning problem. Whereas unsupervised
 baseline methods are only effective for a single data type, our
 approach yields state-of-the-art peak detection in a benchmark that
