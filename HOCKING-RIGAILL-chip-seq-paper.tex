@@ -236,7 +236,7 @@ time whereas the DPA takes $O(d^2)$ time.
     $\mathbf y$, the unconstrained and contrained models are
     equivalent $\mathbf{\hat m}^s(\mathbf y) = \mathbf{\tilde
       m}^s(\mathbf y)$ for $s\in\{1, 3\}$ segments but not for
-    $s\in\{5, 7\}$. For the constrained models, the even numbered
+    $s\in\{5, 7\}$. For the constrained models, the even-numbered
     segments are interpreted as peaks (\ref{eq:peaks}), whose accuracy
     can be quantified using the annotated region labels (\ref{eq:error}).}
   \label{fig:Segmentor-PeakSeg}
@@ -282,7 +282,7 @@ $R_i$ that can be used to compute the annotation error
 (\ref{eq:error}). Thus, rather than taking a particular unsupervised
 penalty function for granted, we can use the training data to learn
 the penalty function with minimum error. In particular in
-Section~\ref{sec:supervised} we propose using the max margin interval
+Section~\ref{sec:supervised-multi} we propose using the max margin interval
 regression algorithm of \citet{HOCKING-penalties}, which was
 originally proposed for learning a penalty function for optimal
 change-point detection.
@@ -321,13 +321,12 @@ The model complexity is the number of piecewise constant segments
 \end{equation}
 where $I$ is the indicator function. 
 
-Although it
-is a non-convex optimization problem, the sequence of segmentations
-$\mathbf{\hat m}^1(\mathbf y), \dots, \mathbf{\hat
-  m}^{s_{\text{\text{max}}}}(\mathbf y)$ can be computed in $O(s_{\text{\text{max}}}
-d^2)$ time using dynamic programming (DP) algorithms \citep{bellman},
-or in $O(s_{\text{\text{max}}} d \log d)$ time using pruned DP
-\citep{pruned-dp, Segmentor}.
+Although it is a non-convex optimization problem, the sequence of
+segmentations $\mathbf{\hat m}^1(\mathbf y), \dots, \mathbf{\hat
+  m}^{s_{\text{\text{max}}}}(\mathbf y)$ can be computed in
+$O(s_{\text{\text{max}}} d^2)$ time using dynamic programming
+\citep{bellman}, or in $O(s_{\text{\text{max}}} d \log d)$
+time using pruned dynamic programming \citep{pruned-dp, Segmentor}.
 
 This problem is ``\ref{unconstrained}'' in the sense that
 $\mathbf{\hat m}^s(\mathbf y)$ is the most likely segmentation of all
@@ -410,17 +409,18 @@ have up, up, down changes).
 \section{Algorithms}
 \label{sec:algorithms}
 
-In this section we propose algorithms for computing the \ref{PeakSeg}
-model, and for choosing the number of segments $s$. We first review
-the existing standard dynamic programming algorithm (DPA) for
-segmentation, then propose a new constrained dynamic programming
+In this section we propose efficient algorithms for computing the
+\ref{PeakSeg} model, and for choosing the number of segments $s$. We
+first review the existing standard dynamic programming algorithm (DPA)
+for segmentation, then propose a new constrained dynamic programming
 algorithm (cDPA) that can be used to recover a sequence of
 \ref{PeakSeg} models, $\mathbf{\tilde m}^1(\mathbf y), \dots,
 \mathbf{\tilde m}^{s_{\text{\text{max}}}}(\mathbf y)$
 (Section~\ref{sec:constrained-dp}). Then, we show how the max margin
 interval regression algorithm of \citet{HOCKING-penalties} can be used
 to learn a penalty function for choosing the number of segments
-$s\in\{1, \dots, s_{\text{\text{max}}}\}$ (Section~\ref{sec:supervised}).
+$s\in\{1, \dots, s_{\text{\text{max}}}\}$
+(Section~\ref{sec:supervised-multi}).
 
 \subsection{The standard DPA}
 
@@ -570,7 +570,117 @@ $, we would recover the best solution $[13][14][10, 1]$.
 
 
 \subsection{Unsupervised penalty learning}
-\label{sec:supervised}
+\label{sec:unsupervised}
+
+% After computing the constrained maximum likelihood segmentations for
+% each sample $i\in\{1,\dots, n\}$, the only question that remains is:
+% how many segments?
+
+For a profile $\mathbf y\in\RR^d$ and a penalty $\lambda\in\RR_+$, the
+optimal number of segments is
+\begin{equation}
+  \label{eq:optimal_segments}
+  s^*(\lambda, \mathbf y) =
+  \argmin_{s\in\{1,3,\dots, s_{\text{\text{max}}}\}}
+  \rho\left[
+    \mathbf{\tilde m}^s(\mathbf y),
+    \mathbf y
+  \right]
+  + h(s, d) \lambda,
+\end{equation}
+where $h(s, d_i)$ is a model complexity function that is given. In
+this paper we consider two types of model complexity $h$ functions:
+AIC/BIC and oracle (Table~\ref{tab:penalties}). 
+
+There are several unsupervised penalties that are based on theoretical
+assumptions about the data (distribution, independence) which may or
+may not be true in practice. One can use asymptotic arguments to get a
+penalty such as the AIC \citep{Akaike73}, BIC \citep{Schwarz78}, or
+mBIC \citep{mBIC}. For example, the AIC corresponds to a penalty of
+$\lambda=2$ and a model complexity of $h(s, d)=s$. More recently,
+\citet{cleynen2013segmentation} applyied finite sample model selection
+theory to obtain a more complicated model complexity $h$
+(Table~\ref{tab:penalties}) and a heuristic for computing the penalty
+$\lambda$. All of these penalty functions are completely unsupervised
+since they ignore the annotated region labels in the training data
+set.
+
+These models are named *.0 in Table~\ref{tab:penalties} and
+Figure~\ref{fig:test-error}.
+
+\subsection{Supervised single-parameter penalty learning}
+\label{sec:supervised-single}
+
+\citet{cleynen2013segmentation} proposed to use the un\-supervised
+heuristic of \citet{Lav05} for calibrating the penalty constant
+$\beta$ in equation (6) of their paper. Instead, we propose to use the
+annotated region labels as a super\-vised method for calibrating the
+penalty constant $\beta$. Note that their $\beta$ is the same as our
+$\lambda$ in (\ref{eq:optimal_segments}). 
+
+More specifically, we defined a grid of 200 penalty values evenly
+spaced on the log scale between $10^{-2}$ and $10^4$, then used grid
+search to select the value that minimizes the annotation error
+(\ref{eq:error}) on the train set.
+
+These models are named *.1 in Table~\ref{tab:penalties} and
+Figure~\ref{fig:test-error}.
+
+\subsection{Supervised multi-parameter penalty learning}
+\label{sec:supervised-multi}
+
+For supervised learning of multi-parameter penalty functions, we can
+use the max margin interval regression algorithm of
+\citet{HOCKING-penalties}.
+We define sample-specific features $\mathbf x_i\in\RR^m$ and penalty
+values $\log \lambda_i = f(\mathbf x_i) = \beta + \mathbf w^\intercal
+\mathbf x_i$, which is an affine function with parameters
+$\beta\in\RR,\mathbf w\in\RR^m$ that will be learned. 
+For each sample
+$i\in\{1,\dots, n\}$ we select $s^*[\exp f(\mathbf x_i), \mathbf y_i]$
+segments.
+
+% The learning algorithm amounts to minimizing a
+% smooth convex loss $\ell_i:\RR\rightarrow\RR_+$ which depends on the
+% annotated region data $R_i$,
+% \begin{equation}
+%   \label{eq:relax}
+%   \mathbf{\hat w}^\gamma, \hat \beta^\gamma = \argmin_{\mathbf w\in\RR^m, \beta\in\RR}
+%   \gamma ||\mathbf w||_1 +
+%   \sum_{i=1}^n
+%   \ell_i\left[  \beta+ \mathbf w^\intercal \mathbf x_i \right],
+% \end{equation}
+% where $\gamma\in\RR_+$ is the degree of regularization. Since
+% $\ell_i$ is smooth and convex, this problem can be easily solved using
+% proximal gradient algorithms such as FISTA \citep{fista}.
+
+As shown in Table~\ref{tab:penalties}, we considered learning models
+with 3 and 41 parameters:
+
+\begin{itemize}
+\item \textbf{3}: we used an $m=2$-dimensional feature
+  vector $\mathbf x_i = \left[\begin{array}{cc} \log\max \mathbf y_i &
+      \log d_i
+\end{array}\right]$ where $d_i$ is the number of base pairs for 
+sample/chromosome $i$.  This corresponds to a penalty $\lambda_i =
+e^\beta (\max\mathbf y_i)^{w_1} d_i^{w_2}$. We fit the model by
+solving the un-regularized interval regression problem of
+\citet{HOCKING-penalties}.
+\item \textbf{41}: we defined $m=40$ features using transforms ($x,
+  \log x, \log[x+1], \log\log x$), where $x$ are features such as
+  quartiles of $\mathbf y_i$, mean of $\mathbf y_i$, and
+  number of data points $d_i$. We fit the model by solving
+  the L1-regularized problem of
+  \citet{HOCKING-penalties}.
+\end{itemize}
+
+After learning a penalty function $\hat f$ on the training data, we
+use the following method to make a prediction on a test sample with
+profile $\mathbf y$ and features $\mathbf x$. We compute the predicted
+penalty $\hat \lambda = \exp \hat f(\mathbf x)$, the predicted number
+of segments $\hat s = s^*(\hat \lambda, \mathbf y)$, and finally the
+predicted peaks $\mathbf P\left[ \mathbf{\tilde m}^{\hat s}(\mathbf y)
+\right]$.
 
 \begin{table*}[b!]
 
@@ -602,7 +712,8 @@ $, we would recover the best solution $[13][14][10, 1]$.
   \end{minipage}
 
   \caption{Penalty functions considered in this paper are of the form
-    $h(s, d_i) \lambda_i $.
+    $h(s, d_i) \lambda_i $, and are named according to model complexity
+    $h(s, d_i)$ (left) and number of parameters to learn in $\lambda_i$ (right).
     For example, the AIC/BIC.41 model has a penalty of
     $s \exp(\beta + \mathbf w^\intercal \mathbf x_i)$, 
     where the parameters $\beta,\mathbf w$ 
@@ -626,98 +737,6 @@ $, we would recover the best solution $[13][14][10, 1]$.
   \label{fig:test-error}
 \end{figure*}
 
-% After computing the constrained maximum likelihood segmentations for
-% each sample $i\in\{1,\dots, n\}$, the only question that remains is:
-% how many segments?
-
-There are several unsupervised penalty functions for choosing the
-number of segments $s$. These are based on theoretical
-assumptions about the data (distribution, independence) which may or
-may not be true in practice. For example, one can use asymptotic
-arguments to get a penalty such as the AIC (Akaike73), BIC
-\citep{Schwarz78}, or mBIC \citep{mBIC}. More recently,
-\citet{cleynen2013segmentation} proposed an oracle penalty by applying
-finite sample model selection theory to segmentation models of count
-data. All of these penalty functions are completely unsupervised since
-they ignore the annotated region labels in the training data set.
-
-\subsection{Supervised single-parameter penalty learning}
-\label{sec:supervised}
-
-\citet{cleynen2013segmentation} proposed to use the 
-un\-supervised heuristic of \citet{Lav05} for calibrating the penalty
-constant $\beta$ in equation (6) of their paper. Instead, we propose to
-use the annotated region labels as a super\-vised method for calibrating
-this penalty constant $\beta$. More specifically, we defined a grid of
-200 $\beta$ values evenly spaced on the log scale between $10^{-2}$
-and $10^4$, then used grid search to select the value that minimizes
-the annotation error (\ref{eq:error}) on the train set.
-
-\subsection{Supervised multi-parameter penalty learning}
-\label{sec:supervised}
-
-For supervised learning of multi-parameter linear penalty functions,
-we can use the max margin interval regression algorithm of
-\citet{HOCKING-penalties}. Briefly, for each segmentation problem
-$i\in\{1, \dots, n\}$, we define the predicted number of segments
-\begin{equation}
-  \hat s_i =
-  \argmin_{s\in\{1,3,\dots, s_{\text{\text{max}}}\}}
-  \rho\left[
-    \mathbf{\tilde m}^s(\mathbf y_i),
-    \mathbf y_i
-  \right]
-  + h(s, d_i) \lambda_i,
-\end{equation}
-where $\lambda_i\in\RR_+$ is a positive penalty value that will be
-learned, and $h(s, d_i)$ is a model complexity function that is given
-(Table~\ref{tab:penalties}).
-
-We define sample-specific features $\mathbf x_i\in\RR^m$ and penalty
-values $\log \lambda_i = f(\mathbf x_i) = \beta + \mathbf w^\intercal
-\mathbf x_i$, which is an affine function with parameters
-$\beta\in\RR,\mathbf w\in\RR^m$ that will be learned. 
-
-The learning algorithm amounts to minimizing a
-smooth convex loss $\ell_i:\RR\rightarrow\RR_+$ which depends on the
-annotated region data $R_i$,
-\begin{equation}
-  \label{eq:relax}
-  \mathbf{\hat w}^\gamma, \hat \beta^\gamma = \argmin_{\mathbf w\in\RR^m, \beta\in\RR}
-  \gamma ||\mathbf w||_1 +
-  \sum_{i=1}^n
-  \ell_i\left[  \beta+ \mathbf w^\intercal \mathbf x_i \right],
-\end{equation}
-where $\gamma\in\RR_+$ is the degree of regularization. Since
-$\ell_i$ is smooth and convex, this problem can be easily solved using
-proximal gradient algorithms such as FISTA \citep{fista}.
-
-As shown in Table~\ref{tab:penalties}, we considered learning models
-with 3 and 41 parameters:
-
-\begin{itemize}
-\item \textbf{3}: we used an $m=2$-dimensional feature
-  vector $\mathbf x_i = \left[\begin{array}{cc} \log\max \mathbf y_i &
-      \log d_i
-\end{array}\right]$ where $d_i$ is the number of base pairs for 
-sample/chromosome $i$.  This corresponds to a penalty $\lambda_i =
-e^\beta (\max\mathbf y_i)^{w_1} d_i^{w_2}$. We trained the
-model by solving problem (\ref{eq:relax}) with no regularization $\gamma=0$.
-\item \textbf{41}: we defined $m=40$ features using transforms ($x,
-  \log x, \log[x+1], \log\log x$), where $x$ is: (un)weighted
-  quartiles of $\mathbf y_i$, (un)weighted mean of $\mathbf y_i$, and
-  number of (un)weighted data points $d_i$. We trained the model by solving
-  problem (\ref{eq:relax}), using an internal cross-validation loop to estimate
-  the regularization~$\gamma$.
-\end{itemize}
-
-To make a prediction on a
-test sample with profile $\mathbf y$ and features $\mathbf x$, we
-compute the predicted penalty $\hat \lambda = \exp \hat f(\mathbf x)$,
-the predicted number of segments $\hat s = s^*(\hat \lambda, \mathbf
-y)$, and finally the predicted peaks $\mathbf P\left[ \mathbf{\tilde
-    m}^{\hat s}(\mathbf y) \right]$.
-
 \section{Results: state-of-the-art peak detection
   for two data types}
 \label{sec:results}
@@ -727,16 +746,15 @@ manually annotated regions across 2,752 separate segmentation
 problems\footnote{\url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}}.
 Each data set contains labels grouped into windows of nearby regions
 (from 4 to 30 windows per data set). For each data set, we randomly
-divided the annotated windows into half train and half test. 
-We considered 3 kinds of model training:
+divided the annotated windows into half train and half test.  As shown
+in Table~\ref{tab:penalties}, we considered 3 kinds of model training:
 \begin{itemize}
 \item \textbf{Unsupervised} uses the default parameters of each
   algorithm, ignoring the labeled data in the train set.
 \item \textbf{Grid search} learns a scalar parameter with minimal
   annotation error on the train set.
-\item \textbf{Interval regression} chooses the multi-parameter model
-  that minimizes a convex relaxation of the annotation error on the
-  train set (\ref{eq:relax}).
+\item \textbf{Interval regression} is the efficient multi-parameter
+  penalty learning model of \citet{HOCKING-penalties}.
 \end{itemize}
 
 \subsection{Effectiveness of heuristic cDPA}
