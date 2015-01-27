@@ -268,7 +268,7 @@ selectedPlot <-
   scale_color_manual(values=algo.colors)+
   theme_bw()+
   theme(panel.margin=grid::unit(0, "cm"))+
-  facet_grid(sample.id ~ tit, labeller=function(var, val){
+  facet_grid(. ~ tit, labeller=function(var, val){
     sub("McGill0", "", val)
     paste(val)
   }, scales="free", space="free_y")+

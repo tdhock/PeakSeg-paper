@@ -80,7 +80,25 @@ then the data are interpreted by counting the number of aligned reads
 at each genomic position. In this paper we propose a new method for
 peak calling these data, which is a binary classification problem for
 each genomic position. The positive class is enriched (peaks) and the
-negative class is background noise.
+negative class is background noise. Importantly, peaks and background
+occur in long contiguous segments across the genome, as shown in
+Figure~\ref{fig:dp-peaks-train}.
+
+\begin{figure*}[b!]
+  \centering
+  \includegraphics[width=\textwidth]{figure-dp-peaks-train}
+  \vskip -0.5cm
+  \caption{Different ChIP-seq data types have peaks with different
+    patterns. The goal of supervised peak detection is to learn the
+    data set-specific peak pattern encoded in the annotated region
+    labels (peakStart/peakEnd mean there should be exactly 1 peak
+    start/end somewhere in the region, and noPeaks means there should
+    be no overlapping peaks). Peaks detected by several algorithms are
+    shown as line segments with an open circle, and for these data
+    \ref{PeakSeg} with $p=2$ peaks achieves zero errors for both
+    pattern types.}
+  \label{fig:dp-peaks-train}
+\end{figure*}
 
 More concretely, a single ChIP-seq profile on a genomic region with
 $d$ base pairs can be represented as a vector $\mathbf y= \left[
@@ -90,9 +108,10 @@ $d$ base pairs can be represented as a vector $\mathbf y= \left[
 \right]\in\ZZ_+^d$ of counts of aligned sequence reads. A peak
 detection algorithm can be described as a function $c:\ZZ_+^d
 \rightarrow \{0, 1\}^d$ which returns 0 for background noise and 1 for
-a peak. In contrast to the supervised method proposed in this paper,
-most previous algorithms are unsupervised since they define a peak
-detector $c$ using only the profile data $\mathbf y$.
+a peak. In contrast to the
+supervised method proposed in this paper, most previous algorithms are
+unsupervised since they define a peak detector $c$ using only the
+profile data $\mathbf y$.
 
 \subsection{Supervised peak detection}
 
@@ -132,29 +151,18 @@ pattern-specific mergeDistance parameters: H3K4me3 $\Rightarrow 200$,
 H3K36me3 $\Rightarrow 1000$. However, these parameters may not be
 optimal for any given data set.
 
-The main contribution of this paper is \ref{PeakSeg}, a supervised
-learning algorithm that is effective for several pattern types. Rather
-than taking unsupervised model parameters for granted, we propose to
-train model parameters using labeled data of the same pattern
-type. Our method is the first peak detector that uses supervised
-learning, and achieves accurate peak detection across several data
-sets and patterns.
+\subsection{Contributions and organization}
 
-\begin{figure*}[b!]
-  \centering
-  \includegraphics[width=\textwidth]{figure-dp-peaks-train}
-  \vskip -0.5cm
-  \caption{Different ChIP-seq data types have peaks with different
-    patterns. The goal of supervised peak detection is to learn the
-    data set-specific peak pattern encoded in the annotated region
-    labels (peakStart/peakEnd mean there should be exactly 1 peak
-    start/end somewhere in the region, and noPeaks means there should
-    be no overlapping peaks). Peaks detected by several algorithms are
-    shown as line segments with an open circle, and for these data
-    \ref{PeakSeg} with $p=2$ peaks achieves zero errors for both
-    pattern types.}
-  \label{fig:dp-peaks-train}
-\end{figure*}
+The main contribution of this paper is \ref{PeakSeg}, a peak detection
+model that can be trained using supervised learning, and is effective
+for several pattern types. Rather than taking such unsupervised model
+parameters for granted, we propose to train model parameters using
+labeled data of the same pattern type. Importantly, and in contrast to
+existing unsupervised approaches which can only be trained using grid
+search, we propose efficient discrete and convex optimization
+algorithms for model training. Our method is the first peak detector
+that uses supervised learning, and achieves accurate peak detection
+across several data sets and patterns.
 
 A second contribution of this paper is a detailed study of the peak
 detection accuracy of several unsupervised and supervised segmentation
@@ -167,8 +175,8 @@ detection accuracy.
 The rest of this paper is organized as follows. In
 Section~\ref{sec:related} we discuss related work and in
 Section~\ref{sec:model} we propose the constrained \ref{PeakSeg}
-model. In Section~\ref{sec:algorithms} we propose two efficient
-algorithms, and in Section~\ref{sec:results} we show that they achieve
+model. In Section~\ref{sec:algorithms} we propose an efficient
+algorithm, and in Section~\ref{sec:results} we show
 state-of-the-art peak detection accuracy in a large benchmark database
 of ChIP-seq profiles. We discuss the significance of these results in
 Section~\ref{sec:discussion} and propose some directions for future
@@ -253,7 +261,7 @@ still very useful and accurate in practice on real data
 \subsection{Penalty functions for segmentation}
 
 For each segmentation problem, the proposed cDPA returns a sequence of
-models with $s\in\{1, 3, \dots, s_{\text{max}}\}$ segments. The model
+models with $s\in\{1, 3, \dots, s_{\text{\text{max}}}\}$ segments. The model
 selection problem is choosing a sample-specific number of segments $s$
 that maximizes the number of true positive peak detections while
 minimizing the number of false positives. For example, in the sample
@@ -291,7 +299,7 @@ for peak detection.
 \subsection{Unconstrained maximum likelihood segmentation}
 
 For a sequence of $d$ data points to segment, we fix a maximum number
-of segments $1 \leq s_{\text{max}}\leq d$, and define the
+of segments $1 \leq s_{\text{\text{max}}}\leq d$, and define the
 unconstrained maximum likelihood segmentation problem for
 any $s\in\{1, 2, \dots, s_{\max}\}$ as
 \begin{align*}
@@ -316,9 +324,9 @@ where $I$ is the indicator function.
 Although it
 is a non-convex optimization problem, the sequence of segmentations
 $\mathbf{\hat m}^1(\mathbf y), \dots, \mathbf{\hat
-  m}^{s_{\text{max}}}(\mathbf y)$ can be computed in $O(s_{\text{max}}
+  m}^{s_{\text{\text{max}}}}(\mathbf y)$ can be computed in $O(s_{\text{\text{max}}}
 d^2)$ time using dynamic programming (DP) algorithms \citep{bellman},
-or in $O(s_{\text{max}} d \log d)$ time using pruned DP
+or in $O(s_{\text{\text{max}}} d \log d)$ time using pruned DP
 \citep{pruned-dp, Segmentor}.
 
 This problem is ``\ref{unconstrained}'' in the sense that
@@ -403,37 +411,161 @@ have up, up, down changes).
 \label{sec:algorithms}
 
 In this section we propose algorithms for computing the \ref{PeakSeg}
-model, and for choosing the number of segments $s$. We first propose a
-new constrained dynamic programming algorithm that can be used to
-recover a sequence of \ref{PeakSeg} models, $\mathbf{\tilde
-  m}^1(\mathbf y), \dots, \mathbf{\tilde m}^{s_{\text{max}}}(\mathbf
-y)$ (Section~\ref{sec:constrained-dp}). Then, we show how an existing
-algorithm can be used to learn a penalty function for choosing the
-number of segments $s\in\{1, \dots, s_{\text{max}}\}$
-(Section~\ref{sec:supervised}).
+model, and for choosing the number of segments $s$. We first review
+the existing standard dynamic programming algorithm (DPA) for
+segmentation, then propose a new constrained dynamic programming
+algorithm (cDPA) that can be used to recover a sequence of
+\ref{PeakSeg} models, $\mathbf{\tilde m}^1(\mathbf y), \dots,
+\mathbf{\tilde m}^{s_{\text{\text{max}}}}(\mathbf y)$
+(Section~\ref{sec:constrained-dp}). Then, we show how the max margin
+interval regression algorithm of \citet{HOCKING-penalties} can be used
+to learn a penalty function for choosing the number of segments
+$s\in\{1, \dots, s_{\text{\text{max}}}\}$ (Section~\ref{sec:supervised}).
 
-\subsection{Constrained dynamic programming}
-\label{sec:constrained-dp}
+\subsection{The standard DPA}
 
-We propose to use dynamic programming to compute the sequence of
-maximum likelihood models $\mathbf{\tilde m}^1(\mathbf y), \dots,
-\mathbf{\tilde m}^{s_{\text{max}}}(\mathbf y)$ satisfying this up-down
-constraint.
+As already said, the best segmentation of the Poisson model can be
+recovered using dynamic programming. To describe this algorithm we
+define $\hat{\mathcal{L}}_{s,t}$ as minus the best log-likelihood of
+the segmentation $\hat{m}_{s,t}$.  This best log-likelihood can be
+written as the sum of the log-likelihood of its segment.  For the
+Poisson model the log-likelihood of a segment from $t'$ to $t$ is
+\begin{equation}
+  \label{eq:log-lik-segment}
+  c_{t',t} = (\sum_{j=t'+1}^t y_j) - (\sum_{j=t'+1}^t y_j)
+\log(\frac{\sum_{j=t'+1}^t y_j}{t-t'}).
+\end{equation}
+The key idea behind the DP algorithm is that any subsegmentation
+of an optimal segmentation should be optimal. 
+This can be formally written as the following update rule :
+\begin{equation}
+\widehat{\mathcal{L}}_{s,t}= \min_{t' \leq t} \{ \ \widehat{\mathcal{L}}_{s-1,t'} + c_{t',t} \}. \label{eq:update1}
+\end{equation}
+Using this update rule iteratively for all $s$ from $2$ to
+$s_{\text{max}}$ and for all $t$ from $2$ to $d$ we recover the best
+segmentations in $1$ to $s_{\text{max}}$ in
+$\mathcal{O}(s_{\text{max}}d^2)$ time.  Note that we do not need to
+store in memory the $d(d-1)/2$ matrix of $c_{t',t}$.  That is because
+$c_{t',t}$ is a simple function $\sum_{j=t'+1}^t y_j$ which can be
+computed in $\mathcal{O}(1)$ given the cumulative sum of the
+data-points, $\sum_{j=1}^t y_j$.
 
-\textbf{TODO}: more detailed description of dynamic programming.
+%\begin{algorithm}[H]
+%\begin{algorithmic}[1]
+%\FOR{$d=2$ to $D_{\text{max}}$}
+%\FOR{$\tau'=d$ to $n$}
+%\STATE $ \mathbf{L}_{d,\tau'+1} = \min_{\tau \leq \tau'} \{ \ \mathbf{L}_{d-1,\tau} + C_{\tau, \tau'+1} \ \}$
+%\STATE $ \mathbf{m}_{d,\tau'+1} = \arg \min_{\tau \leq \tau'} \{ \ \mathbf{L}_{d-1,\tau} + C_{\tau, \tau'+1} \ \}$
+%\ENDFOR
+%\ENDFOR
+%\caption{Dynamic Programming for Poisson segmentation model}
+%\end{algorithmic}\label{algo:v1}
+%\end{algorithm}
 
-The algorithm is in $O(s_{\text{max}} d^2)$ time, where $d$ is the
-number of data points, using the compression scheme proposed by
-\citet{Segmentor}. A free/open-source R package implementing the
-dynamic
-programming is available at\\
-\url{https://github.com/tdhock/PeakSegDP}
+\subsection{cDPA: a simple modification}
+ \label{sec:constrained-dp}
 
-\subsection{Constrained DP is a heuristic}
+ In order to enforce the segmentation to obey the constraint of the
+ \ref{PeakSeg} model, we introduce a simple modification of the
+ previous update rule (\ref{eq:update1}). %algorithm %\ref{algo:v1}.
+ Up to now we considered all possible $t'$ smaller than the current
+ $t$. Here we propose to consider only those such that the resulting
+ segmentation can be interpreted as a succession of peaks. To make
+ this idea more precise we introduce the notation $\mathbf{E}_{s,t}$
+ which is the last empirical mean of the best segmentation in $s$ up
+ to $t$.  We also define $M_{t', t} = (\sum_{j=t'+1}^t y_j)/(t-t')$ as
+ the empirical mean of the segment $[t', t]$.
+
+Then if $s$ is even (peak segment) the mean of segment $[t', t]$
+should be larger than the previous one and in the update rule we only
+consider $t'$ such that
+$$ t' \leq t \ | \ \mathbf{E}_{s-1,t'} \leq M_{t', t}.$$
+On the contrary, if $s$ is odd (background segment) the mean of
+segment $[t', t]$ should be smaller than the previous one and we
+consider only $t'$ such that
+$$ t' \leq t \ | \ \mathbf{E}_{s-1,t'} \geq M_{t', t}.$$
+In the end we get the following procedure:
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\FOR{$s=2$ to $s_{\text{max}}$}
+\FOR{$t=s$ to $d$}
+\IF{$d$ is even}
+\STATE $ \widehat{\mathcal{L}}_{s,t} = \underset{t' \leq t| \mathbf{E}_{s-1,t} \leq M_{t', t}} {\min}\{ \ \widehat{\mathcal{L}}_{s-1,t'} + c_{t', t} \ \}$
+\ENDIF
+\IF{$d$ is odd}
+\STATE $ \widehat{\mathcal{L}}_{s,t} = \underset{t' \geq t | \mathbf{E}_{s-1,t'} \leq M_{t', t} }{\min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \}$
+\ENDIF
+\ENDFOR
+\ENDFOR
+\caption{Constrained dynamic programming (cDPA) for Poisson
+  segmentation model}
+\end{algorithmic}\label{algo:v2}
+\end{algorithm}
+
+For simplicity we omitted the update of $\mathbf{E}_{s,t}$ in the
+previous procedure, it can be found by recovering the mean of the best
+last segment.
+
+Our proposed cDPA explores the set of segmentations and return one
+which is compatible with the constraint of the \ref{PeakSeg}
+model. Importantly, this procedure is not guaranteed to recover a
+segmentation. For example for an ever increasing series of data $y_1 <
+\cdots < y_d$ there is no model that satisfies the \ref{PeakSeg} model
+constraints, and the cDPA thus returns no model (TODO: write that
+explicitly?).
+
+\subsection{The cDPA is a heuristic}
 \label{sec:dp-fails}
-\textbf{TODO}: discussion of when the DP does not recover the optimal
-solution. Maybe a figure? Maybe not. Maybe a discussion of how many
-times it returned all 10 models in the real data sets.
+
+Note also that the cDPA is a heuristic in the sense that it is not
+clear which optimization problem it solves.  In particular, it does
+not necessarily recover the best possible (in terms of likelihood)
+segmentation that satistifies the \ref{PeakSeg} model constraints.  We
+illustrate this with the following example with
+$\mathbf y = \left[\begin{array}{cccc} 1 & 10 & 13 & 11
+\end{array}\right]\in\ZZ_+^4
+$.  There are only 3 possible segmentations: $[1][10][14, 11]$,
+$[1][10, 14][13]$ and $[1, 10][14][13]$.  If we use max-likelihood
+estimates for each segment mean, then only the last segmentation obeys
+the \ref{PeakSeg} model constraints. However the cDPA will not recover
+it.  That is because the best segmentation in $2$ segments up to point
+$3$ (recovered by the cDPA for $s=2$) is $[1][10, 14]$. Its likelihood
+is $(1 + 0) + (10+14 + (10+14)\log(24/2)) \approx 84.6 $ which is
+indeed larger than the likelihood of $[1, 10][14]$: $(11 +
+11\log(11/2)) + (14\log(14)) \approx 66.69 $. For $s=3$ the cDPA will
+then consider the segmentations $[1][10] + [14, 13]$ and $[1][10, 14]
++ [13]$ and discard them since they do not satisfy the \ref{PeakSeg}
+model constraints. The cDPA will thus report that it didn't find a
+valid peak model in $s=3$. However there is one: $[1, 10][14][13]$.
+
+Note that if we run the constrained DP in the backward direction, 
+$\mathbf y = \left[\begin{array}{cccc} 13 & 14 & 10 & 1
+\end{array}\right]\in\ZZ_+^4
+$, we would recover the best solution $[13][14][10, 1]$.
+
+
+% \subsection{Constrained dynamic programming}
+% \label{sec:constrained-dp}
+
+% We propose to use dynamic programming to compute the sequence of
+% maximum likelihood models $\mathbf{\tilde m}^1(\mathbf y), \dots,
+% \mathbf{\tilde m}^{s_{\text{\text{max}}}}(\mathbf y)$ satisfying this up-down
+% constraint.
+
+% \textbf{TODO}: more detailed description of dynamic programming.
+
+% The algorithm is in $O(s_{\text{\text{max}}} d^2)$ time, where $d$ is the
+% number of data points, using the compression scheme proposed by
+% \citet{Segmentor}. A free/open-source R package implementing the
+% dynamic
+% programming is available at\\
+% \url{https://github.com/tdhock/PeakSegDP}
+
+% \subsection{Constrained DP is a heuristic}
+% \label{sec:dp-fails}
+% \textbf{TODO}: discussion of when the DP does not recover the optimal
+% solution. Maybe a figure? Maybe not. Maybe a discussion of how many
+% times it returned all 10 models in the real data sets.
 
 
 
@@ -499,13 +631,15 @@ times it returned all 10 models in the real data sets.
 % how many segments?
 
 There are several unsupervised penalty functions for choosing the
-number of segments $s$. For example, one can use asymptotic arguments to
-get a penalty such as the AIC (Akaike73), BIC \citep{Schwarz78}, or
-mBIC \citep{mBIC}. More recently, \citet{cleynen2013segmentation}
-proposed an oracle penalty by applying finite sample model selection
-theory to segmentation models of count data. All of these penalty
-functions are completely unsupervised since they ignore the annotated
-region labels in the training data set.
+number of segments $s$. These are based on theoretical
+assumptions about the data (distribution, independence) which may or
+may not be true in practice. For example, one can use asymptotic
+arguments to get a penalty such as the AIC (Akaike73), BIC
+\citep{Schwarz78}, or mBIC \citep{mBIC}. More recently,
+\citet{cleynen2013segmentation} proposed an oracle penalty by applying
+finite sample model selection theory to segmentation models of count
+data. All of these penalty functions are completely unsupervised since
+they ignore the annotated region labels in the training data set.
 
 \subsection{Supervised single-parameter penalty learning}
 \label{sec:supervised}
@@ -528,7 +662,7 @@ we can use the max margin interval regression algorithm of
 $i\in\{1, \dots, n\}$, we define the predicted number of segments
 \begin{equation}
   \hat s_i =
-  \argmin_{s\in\{1,3,\dots, s_{\text{max}}\}}
+  \argmin_{s\in\{1,3,\dots, s_{\text{\text{max}}}\}}
   \rho\left[
     \mathbf{\tilde m}^s(\mathbf y_i),
     \mathbf y_i
@@ -608,7 +742,7 @@ We considered 3 kinds of model training:
 \subsection{Effectiveness of heuristic cDPA}
 
 To run the cDPA on the benchmark data set, we first set the maximum
-number of segments $s_{\text{max}}=19$, meaning a maximum of $p=9$
+number of segments $s_{\text{\text{max}}}=19$, meaning a maximum of $p=9$
 peaks. Running the cDPA on all of the data sets in the benchmark took
 a total of about 6.5 days. For the largest profile we considered
 ($d=263,169$ weighted data points after compression), the cDPA took
@@ -714,8 +848,8 @@ detector trained on various different data sets.
 
 We proposed to use the solution of a constrained optimal segmentation
 problem \ref{PeakSeg} as a ChIP-seq peak detector. For
-$d$ data points and $s_{\text{max}}$ segments, we proposed to use
-dynamic programming to compute the solutions in $O(s_{\text{max}} d^2)$
+$d$ data points and $s_{\text{\text{max}}}$ segments, we proposed to use
+dynamic programming to compute the solutions in $O(s_{\text{\text{max}}} d^2)$
 time. Furthermore, we proposed to use annotated region data as
 supervision in a penalty learning problem (\ref{eq:relax}). This
 approach yields state-of-the-art test error rates for peak detection
@@ -734,12 +868,12 @@ learning problem (\ref{eq:relax}), perhaps based on Poisson
 segmentation model selection theory \citep{cleynen2013segmentation}.
 
 The current implementation of PeakSeg using dynamic programming has
-one major limitation. The $O(s_{\text{max}} d^2)$ time complexity has
+one major limitation. The $O(s_{\text{\text{max}}} d^2)$ time complexity has
 limited its application to subsets of chromosomes of up to $d=263,169$
 data points. In comparison, the largest chromosome in hg19 (chr1) has
 $d=249,250,621$ base pairs. To apply PeakSeg to larger data sets, we
 are investigating a constrained version of pruned dynamic programming
-\citep{pruned-dp, Segmentor}, which has $O(s_{\text{max}} d\log d)$
+\citep{pruned-dp, Segmentor}, which has $O(s_{\text{\text{max}}} d\log d)$
 time complexity.
 
 Finally, we are interested in segmenting multiple samples $i$ at the
@@ -767,6 +901,9 @@ considerably more difficult segmentation problem.
 %     multi-parameter penalty function.}
 %   \label{tab:supervised-maxlik}
 % \end{table*}
+
+\newpage
+
 
 \bibliographystyle{abbrvnat}
 
