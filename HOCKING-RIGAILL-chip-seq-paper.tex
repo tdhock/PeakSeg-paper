@@ -578,7 +578,7 @@ $, we would recover the best solution $[13][14][10, 1]$.
 % each sample $i\in\{1,\dots, n\}$, the only question that remains is:
 % how many segments?
 
-For a profile $\mathbf y\in\RR^d$ and a penalty $\lambda\in\RR_+$, the
+For a profile $\mathbf y\in\RR^d$ and a penalty constant $\lambda\in\RR_+$, the
 optimal number of segments is
 \begin{equation}
   \label{eq:optimal_segments}
@@ -783,7 +783,7 @@ is a problem in real data sets, we checked for how many segmentation
 problems the cDPA returned the complete sequence of 10 models
 $\mathbf{\tilde m}^1(\mathbf y),\mathbf{\tilde m}^3(\mathbf y), \dots,
 \mathbf{\tilde m}^{19}(\mathbf y)$. For the vast majority of
-segmentation problems (2738/2752=99.5\%), the constrained DP returned
+segmentation problems ($2738/2752=99.5\%$), the constrained DP returned
 all 10 models. For the other 14 problems, the algorithm did not return
 at least one of the ten models. Of these 14 problems with missing
 models, 11 problems still had at least one perfect peak detection
@@ -822,31 +822,73 @@ peaks (same as no penalty). We also tried the modified BIC of
 \subsection{Supervised learning of 1 parameter increases peak
   detection accuracy}
 
-\textbf{TODO}: discussion.
+Does training a single scalar parameter using grid search increase
+peak detection accuracy relative to unsupervised default models? Yes,
+in the vast majority of cases. Figure~\ref{fig:test-error} shows that
+supervised *.1 models have generally lower test error than the
+corresponding unsupervised *.0 models.
 
-\subsection{Supervised learning of several parameters further 
-  increases peak detection accuracy}
+Among models with only 1 parameter trained using grid search, it is
+clear that oracle.1 is the most accurate. It achieves close to
+state-of-the-art peak detection accuracy on every data set. In
+contrast, the baseline macs.1 is only effective for H3K4me3 data, and
+the baseline hmcan.broad.1 is only effective for H3K36me3 data.
 
-\textbf{TODO}: discussion of unsupervised vs 1-parameter vs multi-parameter
-learning.
+\subsection{Supervised learning of several parameters can further
+  increase peak detection accuracy}
 
-% \begin{center}
-%   \input{table-dp-peaks-regression}
-% \end{center}
+Does supervised multi-parameter model training improve over
+single-parameter models? A little, if there are sufficient training
+data. Figure~\ref{fig:test-error} shows that multi-parameter models
+(*.3 and *.41) tend to be at least as accurate as the corresponding
+single-parameter *.1 model. The only exceptions are the H3K36me3\_TDH
+data sets, for which there are few training data (only 2 groups of
+labeled regions per train/test split). For these data, the *.3 and
+*.41 models sometimes overfit relative to the corresponding *.1 model.
 
 \section{Discussion}
 \label{sec:discussion}
 
 \subsection{Supervised versus unsupervised learning}
 
-\textbf{TODO}: discuss machine learning for recognizing different
-patterns, versus using several different unsupervised algorithms for
-specific data sets. E.g. car/face detector versus generic object
-detector trained on various different data sets.
+Baseline unsupervised peak detectors in the bioinformatics literature
+are each designed to recognize a specific peak pattern. For example we
+observed that the macs algorithm was effective for the sharp peak
+pattern in H3K4me3 data, and the hmcan.broad algorithm was effective
+for the broad peak pattern in H3K36me3.
 
-\subsection{Oracle penalty versus AIC/BIC penalty}
+In contrast, we propose a supervised learning approach for peak
+detection. Rather than designing a specific model for each pattern, we
+propose to use a database of labels with a general peak detector that
+can be trained to recognize different patterns. We showed that
+supervised penalty learning with the \ref{PeakSeg} model can be used
+for accurate peak detection in both H3K4me3 and H3K36me3 data.
 
-\textbf{TODO}
+In general, it is clear that the supervised learning methods were more
+accurate than their unsupervised counterparts. The only exception is
+that sometimes when there are few training data, the multi-parameter
+supervised learning methods overfit (Figure~\ref{fig:test-error},
+H3K36me\_TDH data sets). So when there are very few training data, we
+recommend using the oracle.1 supervised model which avoids overfitting
+by learning just 1 parameter using grid search. However, when there
+are many training data, we would recommend using a multi-parameter
+supervised learning method such as oracle.41.
+
+\subsection{Oracle penalty is more accurate than AIC/BIC}
+
+We tested the peak detection accuracy of two types of model complexity
+$h$ functions (Table~\ref{tab:penalties}). Among unsupervised models,
+Figure~\ref{fig:test-error} shows that the oracle.0 model is always
+more accurate than the AIC/BIC.0 model. For the supervised 1-parameter
+models, it is also clear that oracle.1 is more accurate than
+AIC/BIC.1. However, we obtained similar test error rates when we used
+multi-parameter supervised learning with both AIC/BIC and oracle
+penalties.
+
+In general, these data provide convincing evidence that the model
+selection theory of \citet{cleynen2013segmentation} is useful for
+accurate peak detection in real ChIP-seq data sets, especially when
+combined with supervised penalty learning methods.
 
 % \begin{figure*}[t!]
 %   \centering
@@ -883,22 +925,26 @@ baseline methods are only effective for a single data type, our
 approach yields state-of-the-art peak detection in a benchmark that
 includes both H3K4me3 and H3K36me3 data sets.
 
-PeakSeg is also the first algorithm to
-exhibit state-of-the-art accuracy on both sharp H3K4me3 and broad
-H3K36me3 ChIP-seq profiles in the benchmark of
-\citet{hocking2014visual}. In the future, even better accuracy may be
-obtained by engineering better features $\mathbf x_i$ for the penalty
-learning problem (\ref{eq:relax}), perhaps based on Poisson
-segmentation model selection theory \citep{cleynen2013segmentation}.
+There are several avenues of future research that could be pursued to
+increase peak detection accuracy. First, we could replace the Poisson
+assumption of the \ref{PeakSeg} model with a negative binomial
+distribution \citep{cleynen2013segmentation}, which has an additional
+variance parameter. Also, even better accuracy could possibly be
+obtained by engineering better features $\mathbf x_i$, and learning a
+non-linear penalty function. Finally, one could imagine learning model
+complexity functions $h$. For example the oracle penalty of
+\citet{cleynen2013segmentation} has an assumed constant of 1.1
+(Table~\ref{tab:penalties}), which could be learned instead.
 
-The current implementation of PeakSeg using dynamic programming has
-one major limitation. The $O(s_{\text{\text{max}}} d^2)$ time complexity has
-limited its application to subsets of chromosomes of up to $d=263,169$
-data points. In comparison, the largest chromosome in hg19 (chr1) has
-$d=249,250,621$ base pairs. To apply PeakSeg to larger data sets, we
-are investigating a constrained version of pruned dynamic programming
-\citep{pruned-dp, Segmentor}, which has $O(s_{\text{\text{max}}} d\log d)$
-time complexity.
+The current implementation of \ref{PeakSeg} using the cDPA has several
+limitations. First, the $O(s_{\text{\text{max}}} d^2)$ time complexity
+could be easily reduced to $O(s_{\text{\text{max}}} d\log d)$ by using
+a constrained version of pruned dynamic programming \citep{pruned-dp,
+  Segmentor}. Second, we showed that the cDPA is a heuristic for
+computing the \ref{PeakSeg} model (Section~\ref{sec:dp-fails}). On one
+hand, we would like to know what optimization problem the cDPA
+solves. On the other hand, we would like an efficient algorithm that
+exactly computes the \ref{PeakSeg} model.
 
 Finally, we are interested in segmenting multiple samples $i$ at the
 same time, since peaks are often observed in the same genomic location
