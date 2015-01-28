@@ -350,7 +350,7 @@ ggplot()+
   facet_grid(algo.type ~ set.name, labeller=function(var, val){
     gsub("_", "\n", val)
   }, scales="free_y", space="free_y")+
-  scale_y_discrete("algorithm . parameters learned")+
+  scale_y_discrete("model . parameters learned")+
   theme_bw()+
   guides(color=guide_legend())+
   theme(panel.margin=grid::unit(0, "cm"),

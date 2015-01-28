@@ -175,12 +175,13 @@ learning can be used to further increase peak detection accuracy.
 The rest of this paper is organized as follows. In
 Section~\ref{sec:related} we discuss related work and in
 Section~\ref{sec:model} we propose the constrained \ref{PeakSeg}
-model. In Section~\ref{sec:algorithms} we propose an efficient
-algorithm, and in Section~\ref{sec:results} we show
-state-of-the-art peak detection accuracy in a large benchmark database
-of ChIP-seq profiles. We discuss the significance of these results in
-Section~\ref{sec:discussion} and propose some directions for future
-work in Section~\ref{sec:conclusions}.
+model. Sections~\ref{sec:algorithms} and \ref{sec:penalty-learning}
+presents dynamic programming and penalty learning algorithms, which
+achieve state-of-the-art peak detection accuracy in a large benchmark
+database of ChIP-seq profiles (Section~\ref{sec:results}). We discuss
+the significance of these results in Section~\ref{sec:discussion} and
+propose some directions for future work in
+Section~\ref{sec:conclusions}.
 
 \section{Related work}
 \label{sec:related}
@@ -243,12 +244,12 @@ but is also computationally faster than the DPA. For segmenting a
 sequence of $d$ data points, the pDPA takes on average $O(d\log d)$
 time whereas the DPA takes $O(d^2)$ time. 
 
-In constrast to the unconstrained segmentation model of
-\citet{Segmentor}, our proposed \ref{PeakSeg} model has an additional
-constraint. Rather than searching all possible change-points to find
-the optimal segmentation with $s$ segments, we propose to constrain
-the possible change-points to the subset of models that can be
-interpreted as peaks (Section~\ref{sec:constrained}).
+Relative to the unconstrained segmentation model of \citet{Segmentor},
+our proposed \ref{PeakSeg} model has an additional constraint. Rather
+than searching all possible change-points to find the most likely
+model with $s$ segments, we propose to constrain the possible
+change-points to the subset of models that can be interpreted as peaks
+(Section~\ref{sec:constrained}).
 
 Due to the simplicity of its implementation, we propose a constrained
 dynamic programming algorithm (cDPA) that requires a small
@@ -299,10 +300,10 @@ for peak detection.
 
 \subsection{Unconstrained maximum likelihood segmentation}
 
-For a sequence of $d$ data points to segment, we fix a maximum number
-of segments $1 \leq s_{\text{\text{max}}}\leq d$, and define the
-unconstrained maximum likelihood segmentation problem for
-any $s\in\{1, 2, \dots, s_{\max}\}$ as
+For a sequence of $d$ data points $\mathbf y\in\RR^d$ to segment, we
+fix a maximum number of segments $1 \leq s_{\text{\text{max}}}\leq d$,
+and define the unconstrained maximum likelihood segmentation problem
+for any $s\in\{1, 2, \dots, s_{\max}\}$ as
 \begin{align*}
   \label{unconstrained}
   \mathbf{\hat m}^s(\mathbf y)  =\ 
@@ -345,11 +346,9 @@ $j\in\{2, \dots, d\}$ as
   P_j(\mathbf m) = \sum_{k=2}^j \sign( m_{k} - m_{k-1} ),
 \end{equation}
 where $P_1(\mathbf m)=0$ by convention. $P_j(\mathbf m)$ is the
-cumulative sum of signs of changes up to point $j$ in the piecewise constant
-vector $\mathbf m$. 
-
-Then we define a peak detector $c(\mathbf y) = \mathbf P\left[
-  \mathbf{\tilde m}^s(\mathbf y) \right]$, where
+cumulative sum of signs of changes up to point $j$ in the piecewise
+constant vector $\mathbf m$. We define the vector of peak indicators
+as
 \begin{equation}
   \mathbf
 P[\mathbf m] = \left[\begin{array}{ccc} P_1(\mathbf m) & \cdots &
@@ -366,14 +365,14 @@ outputs $P_j(\mathbf m)\in \{0, 1\}$.
 
 For example, if $\mathbf m = \left[\begin{array}{ccccccc}1.1 &
     1.1 & 2 & 2 & 4 & 4 & 3\end{array}\right]$, with two changes up
-followed by one change down, then $P(\mathbf m) =
+followed by one change down, then $\mathbf P(\mathbf m) =
 \left[\begin{array}{ccccccc}0 & 0 & 1 & 1 & 2 & 2 &
     1 \end{array}\right]$.
 
-This is also a practical problem that can be observed in real data
-sets. For example in Figure~\ref{fig:Segmentor-PeakSeg} there is a position $j$ for
-which $P_j\left[ \mathbf{\hat m}^5(\mathbf y) \right]=2$ (since the
-mean changes up, up, down, down). 
+% This is also a practical problem that can be observed in real data
+% sets. For example in Figure~\ref{fig:Segmentor-PeakSeg} there is a position $j$ for
+% which $P_j\left[ \mathbf{\hat m}^5(\mathbf y) \right]=2$ (since the
+% mean changes up, up, down, down). 
 
 Thus we constrain the peak indicator $P_j(\mathbf
 m)\in\{0, 1\}$, which results
@@ -393,8 +392,9 @@ equivalently, the number of peaks $p=(s-1)/2$. Another way to
 interpret the constrained \ref{PeakSeg} problem is that the sequence
 of changes in the segment means $\mathbf m$ must begin with a positive
 change and then alternate: up, down, up, down, ... (and not up, up,
-down). Thus the even-numbered segments may be interpreted as peaks,
-and the odd-numbered segments may be interpreted as background.
+down). Thus the even-numbered segments may be interpreted as peaks
+$P_j(\mathbf m)=1$, and the odd-numbered segments may be interpreted
+as background $P_j(\mathbf m)=0$.
 
 For example, Figure~\ref{fig:dp-peaks-train} shows the $p=2$ peaks
 detected on the second and fourth segments of the \ref{PeakSeg}
@@ -410,18 +410,11 @@ have up, up, down changes).
 \section{Algorithms}
 \label{sec:algorithms}
 
-In this section we propose efficient algorithms for computing the
-\ref{PeakSeg} model, and for choosing the number of segments $s$. We
-first review the existing standard dynamic programming algorithm (DPA)
-for segmentation, then propose a new constrained dynamic programming
-algorithm (cDPA) that can be used to recover a sequence of
-\ref{PeakSeg} models, $\mathbf{\tilde m}^1(\mathbf y), \dots,
-\mathbf{\tilde m}^{s_{\text{\text{max}}}}(\mathbf y)$
-(Section~\ref{sec:constrained-dp}). Then, we show how the max margin
-interval regression algorithm of \citet{HOCKING-penalties} can be used
-to learn a penalty function for choosing the number of segments
-$s\in\{1, \dots, s_{\text{\text{max}}}\}$
-(Section~\ref{sec:supervised-multi}).
+In this section we first review the existing standard dynamic
+programming algorithm (DPA) for segmentation, then propose a new
+constrained dynamic programming algorithm (cDPA). We also give a
+counter-example which shows that the cDPA is a heuristic for solving
+the \ref{PeakSeg} optimization problem.
 
 \subsection{The standard DPA}
 
@@ -569,6 +562,7 @@ $, we would recover the best solution $[13][14][10, 1]$.
 % times it returned all 10 models in the real data sets.
 
 \section{Penalty function learning methods}
+\label{sec:penalty-learning}
 
 For a profile $\mathbf y\in\RR^d$ and a penalty constant $\lambda\in\RR_+$, the
 optimal number of segments is
@@ -612,18 +606,18 @@ There are several unsupervised penalties that are based on theoretical
 assumptions about the data (distribution, independence) which may or
 may not be true in practice. One can use asymptotic arguments to get a
 penalty such as the AIC \citep{Akaike73}, BIC \citep{Schwarz78}, or
-mBIC \citep{mBIC}. For example, the AIC corresponds to a penalty of
-$\lambda=\exp f(\mathbf x)=2$ and a model complexity of $h(s,
-d)=s$. More recently, \citet{cleynen2013segmentation} applyied finite
-sample model selection theory to obtain a more complicated model
-complexity $h$ (Table~\ref{tab:penalties}) and a heuristic for
-computing the penalty $\lambda$.
-All of these penalty functions are completely unsupervised since they
-ignore the annotated region labels in the training data set. 
+mBIC \citep{mBIC}. For example, the AIC corresponds to a constant
+penalty of $\lambda=\exp f(\mathbf x)=2$ and a model complexity of
+$h(s, d)=s$. More recently, \citet{cleynen2013segmentation} applyied
+finite sample model selection theory to obtain a more complicated
+model complexity $h$ (Table~\ref{tab:penalties}) and a heuristic for
+computing the penalty $\lambda$. All of these penalty functions are
+completely unsupervised since they ignore the annotated region labels
+in the training data set.
 
-These
-models are named *.0 in Table~\ref{tab:penalties} and
-Figure~\ref{fig:test-error}.
+In Table~\ref{tab:penalties} and Figure~\ref{fig:test-error}, these
+models are named *.0 since they do not learn any parameters using the
+training data.
 
 \subsection{Supervised single-parameter penalty learning}
 \label{sec:supervised-single}
@@ -641,8 +635,9 @@ evenly spaced on the log scale between $10^{-2}$ and $10^4$, then used
 grid search to select the value that minimizes the annotation error
 (\ref{eq:error}) on the train set.
 
-These models are named *.1 in Table~\ref{tab:penalties} and
-Figure~\ref{fig:test-error}.
+In Table~\ref{tab:penalties} and Figure~\ref{fig:test-error}, these
+models are named *.1 since they each learn 1 parameter using the
+training data.
 
 \subsection{Supervised multi-parameter penalty learning}
 \label{sec:supervised-multi}
