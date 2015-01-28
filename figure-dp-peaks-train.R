@@ -1,4 +1,5 @@
 works_with_R("3.1.2",
+             "tdhock/PeakError@d9196abd9ba51ad1b8f165d49870039593b94732",
              "tdhock/ggplot2@aac38b6c48c016c88123208d497d896864e74bd7",
              "tdhock/PeakSegDP@5bcee97f494dcbc01a69e0fe178863564e9985bc",
              "Rdatatable/data.table@200b5b40dd3b05112688c3a9ca2dd41319c2bbae",
@@ -107,9 +108,13 @@ for(experiment.i in 1:nrow(biggest)){
   counts.file <- file.path("data", chunk.name, "counts.RData")
   load(counts.file)
   if(experiment=="H3K36me3"){
+    chromStart <- c(111795000, 111900000)
+    chromEnd <- c(111840000, 111960000)
     start <- 111550000
     end <- 111970000
   }else{
+    chromStart <- c(175459000)
+    chromEnd <- c(175500000)
     start <- 175000000
     end <- 175505000
   }
@@ -140,35 +145,20 @@ for(experiment.i in 1:nrow(biggest)){
   trained.param <- subset(other.params, grepl("trained", algorithm))
   trained.algo <- as.character(trained.param$algorithm)
 
-  u <- url(sprintf("%s/%s/error/%s.RData", prefix, chunk.name, trained.algo))
-  load(u)
-  close(u)
-  u <- url(sprintf("%s/%s/peaks/%s.RData", prefix, chunk.name, trained.algo))
-  load(u)
-  close(u)
+  label.sample <- "McGill0026"
+  show.peak.list <-
+    list(
+         bad=data.frame(sample.id=label.sample, chromStart, chromEnd),
+      good=do.call(rbind, dp.peak.list))
+  label.regions <- subset(dp.regions, sample.id==label.sample)
+  label.err <- PeakErrorChrom(show.peak.list$bad, label.regions)
+  label.err$sample.id <- label.sample
+  show.region.list <-
+    list(good=dp.regions,
+         bad=label.err)
 
-  show.peak.list <- list(perfect=do.call(rbind, dp.peak.list))
-  show.region.list <- list(perfect=dp.regions)
-  ##for(param.i in 2:1){
-  for(param.i in c()){
-    other.param <- other.params[param.i, ]
-    other.param.name <- other.param$param.name
-    algorithm <- as.character(other.param$algorithm)
-    show.region.list[[algorithm]] <- error %>%
-      filter(sample.id %in% sample.ids,
-             param.name == other.param.name)
-    show.peak.list[[algorithm]] <- peaks[[other.param.name]] %>%
-      filter(sample.id %in% sample.ids)
-  }
-
-  param.desc <-
-    c(PeakSeg="peaks",
-      perfect="foo",
-      macs="log(qvalue)",
-      hmcan="log(finalThreshold)")
   compare.region.list <- list()
   compare.peak.list <- list()
-  label.sample <- "McGill0026"
   compare.label.list <- list()
   for(algorithm.i in seq_along(show.peak.list)){
     peak.df <- show.peak.list[[algorithm.i]]
@@ -176,12 +166,6 @@ for(experiment.i in 1:nrow(biggest)){
     max.count <- sample.max[sample.id]
     algorithm <- names(show.peak.list)[[algorithm.i]]
     short.algo <- sub("[.].*", "", algorithm)
-    this.desc <- param.desc[[short.algo]]
-    ## if(algorithm.i==1){
-    ##   algorithm.i <- 1
-    ## }else{
-    ##   algorithm.i <- algorithm.i +1
-    ## }
     y.mid <- algorithm.i*0.15 + 1.05
     compare.peak.list[[algorithm]] <-
       data.frame(tit, algorithm, y.mid, peak.df)
@@ -193,7 +177,6 @@ for(experiment.i in 1:nrow(biggest)){
       data.frame(tit, fp=sum(fp), fn=sum(fn),
                  algorithm,
                  y.mid,
-                 param.desc=this.desc,
                  param.name=this.param$param.name)
     })
     sample.id <- as.character(region.df$sample.id)
@@ -221,11 +204,12 @@ for(experiment.i in 1:nrow(biggest)){
   algo.colors <-
     c(macs.default="#A6CEE3", macs.trained="#1F78B4", #lite dark blue
       hmcan.broad.default="#A6CEE3", hmcan.broad.trained="#1F78B4", #lite dark blue
+      bad="#1F78B4", #lite dark blue
       "#B2DF8A", "#33A02C", #green
       "#FB9A99", "#E31A1C", #red
       "#FDBF6F", "#FF7F00", #orange
       "#CAB2D6", PeakSeg="#6A3D9A", #purple
-      perfect="#6A3D9A", #purple
+      good="#6A3D9A", #purple
       "#FFFF99", "#B15928") #yellow/brown
   region.list[[experiment.i]] <-
     data.frame(tit, subset(dp.regions, sample.id %in% sample.ids))
@@ -279,9 +263,9 @@ selectedPlot <-
                         values=c(correct=0,
                           "false negative"=3,
                           "false positive"=1))+
-  geom_point(aes(chromStart/1e3, y.mid, color=algorithm),
-             data=peaks,
-             pch=1, size=2)+
+  ## geom_point(aes(chromStart/1e3, y.mid, color=algorithm),
+  ##            data=peaks,
+  ##            pch=1, size=2)+
   geom_segment(aes(chromStart/1e3, y.mid,
                    xend=chromEnd/1e3, yend=y.mid,
                    color=algorithm),
@@ -300,7 +284,7 @@ selectedPlot <-
                      breaks=c(0, 1))+
   guides(color="none")+
   xlab(paste("position on chromosome (kb = kilo bases)"))+
-  scale_fill_manual("annotation", values=ann.colors,
+  scale_fill_manual("label", values=ann.colors,
                     breaks=names(ann.colors))
 
 png("figure-dp-peaks-train.png",

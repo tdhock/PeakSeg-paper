@@ -23,6 +23,12 @@
 \newcommand{\ZZ}{\mathbb Z}
 \newcommand{\NN}{\mathbb N}
 \newcommand{\RR}{\mathbb R}
+\definecolor{good}{HTML}{6A3D9A}
+\definecolor{bad}{HTML}{1F78B4}
+\definecolor{noPeaks}{HTML}{F6F4BF}
+\definecolor{peakStart}{HTML}{FFAFAF}
+\definecolor{peakEnd}{HTML}{FF4C4C}
+\definecolor{peaks}{HTML}{A445EE}
 
 \usepackage{icml2015}
 
@@ -64,7 +70,7 @@
   the critical model selection problem. We show that the 
   super\-vised method is the first algorithm with state-of-the-art peak
   detection across all data sets in a benchmark that includes both
-  sharp (H3K4me3) and broad (H3K36me3) patterns.
+  sharp H3K4me3 and broad H3K36me3 patterns.
 \end{abstract}
 
 \section{Introduction}
@@ -77,26 +83,27 @@ transcription factor binding sites, with many experimental and
 computational steps \citep{practical}. Briefly, each experiment yields
 a set of sequence reads which are aligned to a reference genome, and
 then the data are interpreted by counting the number of aligned reads
-at each genomic position. In this paper we propose a new method for
-peak calling these data, which is a binary classification problem for
-each genomic position. The positive class is enriched (peaks) and the
-negative class is background noise. Importantly, peaks and background
-occur in long contiguous segments across the genome, as shown in
-Figure~\ref{fig:dp-peaks-train}.
+at each genomic position (Figure~\ref{fig:dp-peaks-train}). In this
+paper we propose a new method for peak calling these data, which is a
+binary classification problem for each genomic position. The positive
+class is enriched (peaks) and the negative class is background
+noise. Importantly, peaks and background occur in long contiguous
+segments across the genome.
 
 \begin{figure*}[b!]
   \centering
   \includegraphics[width=\textwidth]{figure-dp-peaks-train}
   \vskip -0.5cm
   \caption{Different ChIP-seq data types have peaks with different
-    patterns. The goal of supervised peak detection is to learn the
-    data set-specific peak pattern encoded in the annotated region
-    labels (peakStart/peakEnd mean there should be exactly 1 peak
-    start/end somewhere in the region, and noPeaks means there should
-    be no overlapping peaks). Peaks detected by several algorithms are
-    shown as line segments with an open circle, and for these data
-    \ref{PeakSeg} with $p=2$ peaks achieves zero errors for both
-    pattern types.}
+    patterns. Positions classified as peaks are drawn as line segments
+    for a \textcolor{good}{good peak model} with zero errors and a
+    \textcolor{bad}{bad peak model} with 7 incorrect regions. The goal
+    of supervised peak detection is to learn the data set-specific
+    peak pattern encoded in the annotated region labels
+    (\colorbox{peakStart}{peakStart}/\colorbox{peakEnd}{peakEnd} mean
+    there should be exactly 1 peak start/end somewhere in the region,
+    and \colorbox{noPeaks}{noPeaks} means there should be no
+    overlapping peaks).}
   \label{fig:dp-peaks-train}
 \end{figure*}
 
@@ -176,7 +183,7 @@ The rest of this paper is organized as follows. In
 Section~\ref{sec:related} we discuss related work and in
 Section~\ref{sec:model} we propose the constrained \ref{PeakSeg}
 model. Sections~\ref{sec:algorithms} and \ref{sec:penalty-learning}
-presents dynamic programming and penalty learning algorithms, which
+present dynamic programming and penalty learning algorithms, which
 achieve state-of-the-art peak detection accuracy in a large benchmark
 database of ChIP-seq profiles (Section~\ref{sec:results}). We discuss
 the significance of these results in Section~\ref{sec:discussion} and
@@ -202,8 +209,10 @@ models, and optimal penalty functions for segmentation.
     equivalent $\mathbf{\hat m}^s(\mathbf y) = \mathbf{\tilde
       m}^s(\mathbf y)$ for $s\in\{1, 3\}$ segments but not for
     $s\in\{5, 7\}$. For the constrained models, the even-numbered
-    segments are interpreted as peaks (\ref{eq:peaks}), whose accuracy
-    can be quantified using the annotated region labels (\ref{eq:error}).}
+    segments are interpreted as peaks, whose accuracy can be
+    quantified using the annotated region labels
+    (\textcolor{peaks}{peaks} means there should be at least 1
+    overlapping peak).}
   \label{fig:Segmentor-PeakSeg}
 \end{figure*}
 
@@ -751,7 +760,7 @@ considered 3 kinds of model training:
   penalty learning model of \citet{HOCKING-penalties}.
 \end{itemize}
 The source code for computing these models on the benchmark data sets 
-is at\\
+is available at\\
 \url{https://github.com/tdhock/PeakSeg-paper}
 
 \subsection{Effectiveness of heuristic cDPA}

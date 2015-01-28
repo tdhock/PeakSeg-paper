@@ -87,7 +87,7 @@ segs.regions <-
   geom_tallrect(aes(xmin=chromStart/1e3, xmax=chromEnd/1e3,
                     fill=annotation),
                 data=error.regions, alpha=1/2)+
-  scale_fill_manual("annotation", values=ann.colors, 
+  scale_fill_manual("label", values=ann.colors, 
                     breaks=names(ann.colors))+
   scale_linetype_manual("error type", 
                         values=c(correct=0,
