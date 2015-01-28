@@ -525,21 +525,25 @@ clear which optimization problem it solves.  In particular, it does
 not necessarily recover the best possible (in terms of likelihood)
 segmentation that satistifies the \ref{PeakSeg} model constraints.  We
 illustrate this with the following example with
-$\mathbf y = \left[\begin{array}{cccc} 1 & 10 & 13 & 11
+$\mathbf y = \left[\begin{array}{cccc} 1 & 10 & 14 & 13
 \end{array}\right]\in\ZZ_+^4
-$.  There are only 3 possible segmentations: $[1][10][14, 11]$,
-$[1][10, 14][13]$ and $[1, 10][14][13]$.  If we use max-likelihood
-estimates for each segment mean, then only the last segmentation obeys
-the \ref{PeakSeg} model constraints. However the cDPA will not recover
-it.  That is because the best segmentation in $2$ segments up to point
-$3$ (recovered by the cDPA for $s=2$) is $[1][10, 14]$. Its likelihood
-is $(1 + 0) + (10+14 + (10+14)\log(24/2)) \approx 84.6 $ which is
-indeed larger than the likelihood of $[1, 10][14]$: $(11 +
-11\log(11/2)) + (14\log(14)) \approx 66.69 $. For $s=3$ the cDPA will
-then consider the segmentations $[1][10] + [14, 13]$ and $[1][10, 14]
-+ [13]$ and discard them since they do not satisfy the \ref{PeakSeg}
-model constraints. The cDPA will thus report that it didn't find a
-valid peak model in $s=3$. However there is one: $[1, 10][14][13]$.
+$. For $s=3$ segments there are only 3 possible segmentations:
+$[1][10][14, 13]$, $[1][10, 14][13]$ and $[1, 10][14][13]$. If we use
+max-likelihood estimates for each segment mean, then only the last
+segmentation obeys the \ref{PeakSeg} model constraints. However the
+cDPA will not recover it.
+
+That is because the best segmentation recovered by the cDPA for $s=2$
+segments up to point $3$ is $[1][10, 14]$.
+% Its likelihood
+% is $(1 + 0) + (10+14 + (10+14)\log(24/2)) \approx 84.6 $ which is
+% indeed larger than the likelihood of $[1, 10][14]$: $(11 +
+% 11\log(11/2)) + (14\log(14)) \approx 66.69 $. 
+For $s=3$ the cDPA will then consider the segmentations $[1][10][14,
+13]$ and $[1][10, 14][13]$ and discard them since they do not satisfy
+the \ref{PeakSeg} model constraints. The cDPA will thus report that it
+didn't find a valid peak model in $s=3$. However there is one: $[1,
+10][14][13]$.
 
 Note that if we run the constrained DP in the backward direction, 
 $\mathbf y = \left[\begin{array}{cccc} 13 & 14 & 10 & 1
@@ -738,7 +742,7 @@ solving the un-regularized interval regression problem of
 \end{figure*}
 
 \section{Results: state-of-the-art peak detection
-  for two data types}
+  for two patterns}
 \label{sec:results}
 
 We downloaded 7 benchmark data sets, which included a total of 12,826
