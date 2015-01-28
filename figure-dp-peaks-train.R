@@ -36,7 +36,11 @@ biggest <- zero.error %>%
   group_by(experiment) %>%
   mutate(rank=rank(-advantage)) %>%
   filter(rank==1)
+biggest$chunk.name[2] <- "H3K36me3_AM_immune/8"
 data.frame(biggest)
+
+zero.error %>%
+  filter(chunk.name=="H3K36me3_AM_immune/8")
 
 ## We will make a plot for the window for which we have the biggest
 ## advantage, for each mark type.
@@ -102,6 +106,20 @@ for(experiment.i in 1:nrow(biggest)){
   ## Download count signal data.
   counts.file <- file.path("data", chunk.name, "counts.RData")
   load(counts.file)
+  if(experiment=="H3K36me3"){
+    start <- 111550000
+    end <- 111970000
+  }else{
+    start <- 175000000
+    end <- 175505000
+  }
+  dp.regions <- dp.regions %>%
+    mutate(chromStart=ifelse(chromStart < start, start, chromStart),
+           chromEnd=ifelse(chromEnd < end, chromEnd, end))
+  counts <- subset(counts,
+                   start < chromStart &
+                   chromEnd < end)
+  
   sample.counts <- counts %>%
     filter(sample.id %in% sample.ids) %>%
     group_by(sample.id) %>%
@@ -129,9 +147,10 @@ for(experiment.i in 1:nrow(biggest)){
   load(u)
   close(u)
 
-  show.peak.list <- list(PeakSeg=do.call(rbind, dp.peak.list))
-  show.region.list <- list(PeakSeg=dp.regions)
-  for(param.i in 2:1){
+  show.peak.list <- list(perfect=do.call(rbind, dp.peak.list))
+  show.region.list <- list(perfect=dp.regions)
+  ##for(param.i in 2:1){
+  for(param.i in c()){
     other.param <- other.params[param.i, ]
     other.param.name <- other.param$param.name
     algorithm <- as.character(other.param$algorithm)
@@ -143,7 +162,8 @@ for(experiment.i in 1:nrow(biggest)){
   }
 
   param.desc <-
-    c(PeakSeg="maxPeaks",
+    c(PeakSeg="peaks",
+      perfect="foo",
       macs="log(qvalue)",
       hmcan="log(finalThreshold)")
   compare.region.list <- list()
@@ -162,7 +182,7 @@ for(experiment.i in 1:nrow(biggest)){
     ## }else{
     ##   algorithm.i <- algorithm.i +1
     ## }
-    y.mid <- -algorithm.i*0.2 - 0.1
+    y.mid <- algorithm.i*0.15 + 1.05
     compare.peak.list[[algorithm]] <-
       data.frame(tit, algorithm, y.mid, peak.df)
     ## Also make regions.
@@ -183,7 +203,10 @@ for(experiment.i in 1:nrow(biggest)){
     compare.region.list[[algorithm]] <-
       data.frame(tit, algorithm, y.mid, region.df) %>%
         select(tit, sample.id, y.mid,
-               chromStart, chromEnd, annotation, status)
+               chromStart, chromEnd, annotation, status) %>%
+    mutate(chromStart=ifelse(chromStart < start, start, chromStart),
+           chromEnd=ifelse(chromEnd < end, chromEnd, end))
+
   }
   error.list[[experiment.i]] <- do.call(rbind, compare.region.list)
   
@@ -192,7 +215,7 @@ for(experiment.i in 1:nrow(biggest)){
     filter(sample.id==label.sample,
            annotation=="peakStart")
   text.list[[experiment.i]] <- do.call(rbind, compare.label.list) %>%
-    mutate(chromStart=first$chromStart[2],
+    mutate(chromStart=first$chromStart[1],
            sample.id=label.sample)
 
   algo.colors <-
@@ -202,6 +225,7 @@ for(experiment.i in 1:nrow(biggest)){
       "#FB9A99", "#E31A1C", #red
       "#FDBF6F", "#FF7F00", #orange
       "#CAB2D6", PeakSeg="#6A3D9A", #purple
+      perfect="#6A3D9A", #purple
       "#FFFF99", "#B15928") #yellow/brown
   region.list[[experiment.i]] <-
     data.frame(tit, subset(dp.regions, sample.id %in% sample.ids))
@@ -218,13 +242,13 @@ counts <- do.call(rbind, count.list)
 regions <- do.call(rbind, region.list)
 maxes <- do.call(rbind, max.list)
 scales <-
-  data.frame(chromStart=c(175450, 20000),
+  data.frame(chromStart=c(175450, 111750),
              y=-0.1,
              sample.id="McGill0026",
              tit=c("H3K4me3 data (sharp pattern)",
                "H3K36me3 data (broad pattern)")) %>%
   mutate(chromEnd=chromStart+50)
-rect.h <- 0.04
+rect.h <- 0.06
 selectedPlot <- 
   ggplot()+
   geom_tallrect(aes(xmin=chromStart/1e3, xmax=chromEnd/1e3,
@@ -236,15 +260,12 @@ selectedPlot <-
             data=counts, color="grey50")+
   geom_text(aes(chromStart/1e3, 1, label=sprintf("max=%d", count)),
             vjust=1, hjust=0, data=maxes, size=3)+
-  geom_text(aes(chromStart, y, label="50 kb "),
+  geom_text(aes(chromStart, y, label="scale: 50 kb "),
                data=scales, hjust=1, vjust=0.5, size=3)+
   geom_segment(aes(chromStart, y, xend=chromEnd, yend=y),
                data=scales, size=2)+
   geom_text(aes(chromStart/1e3, y.mid,
-                label=ifelse(algorithm=="PeakSeg", sprintf("%s, %s=%s ",
-                  algorithm, param.desc,
-                  substr(param.name, 1, 5),
-                  fp, fn), paste0(algorithm, " "))),
+                label=paste0(algorithm, " ")),
             data=txt, 
             ##vjust=0.25, size=2,
             size=2.5,
@@ -278,7 +299,7 @@ selectedPlot <-
                      },
                      breaks=c(0, 1))+
   guides(color="none")+
-  xlab(paste("position on chromosome (kilo base pairs)"))+
+  xlab(paste("position on chromosome (kb = kilo bases)"))+
   scale_fill_manual("annotation", values=ann.colors,
                     breaks=names(ann.colors))
 

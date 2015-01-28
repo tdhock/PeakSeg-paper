@@ -94,7 +94,7 @@ segs.regions <-
                           "false negative"=3,
                           "false positive"=1))+
   scale_y_continuous(breaks=seq(0, 50, by=25), minor_breaks=NULL)+
-  scale_x_continuous("position on chr11 (kilo base pairs)",
+  scale_x_continuous("position on chr11 (kilo bases)",
                      breaks=seq(118080, 118120, by=20))+
   theme_bw()+
   theme(panel.margin=grid::unit(0, "cm"))+
