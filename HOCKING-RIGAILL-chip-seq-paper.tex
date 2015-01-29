@@ -520,9 +520,9 @@ Note also that for both the even and odd update it might very well be that the s
 This means that no segmentation in $s$ segments to point $t$ satistifying the peak constraint was found.
 To cope with this case we simply set
 $\underset{t' \in \emptyset }{\min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \} = NULL$
-and $\underset{t' \in \emptyset }{\arg \min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \} = NULL$
+and $\underset{t' \in \emptyset }{\arg \min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \} = NULL.$
 
-Hence this procedure is not guaranteed to recover a
+Hence procedure \ref{algo:v2} is not guaranteed to recover a
 segmentation. In particular for an ever increasing series of data $y_1 <
 \cdots < y_d$ there is no model in more than 3 segments 
 that satisfies the \ref{PeakSeg} model
