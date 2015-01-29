@@ -532,13 +532,14 @@ In the end we get the following algorithm:
 \end{algorithmic}\label{algo:v2}
 \end{algorithm}
 
-Note that we do not need to precompute the
-$d(d-1)/2$ values of $c_{(t',t]}$ and $M_{(t', t]}$. That is because
-the optimal cost $c_{(t',t]}$ and empirical mean $M_{(t', t]}$ are
-simple functions of $\sigma_{(t', t]} =\sum_{j=t'+1}^t y_j$ which can be computed in
+Note that we do not need to precompute the $d(d-1)/2$ values of
+$c_{(t',t]}$ and $M_{(t', t]}$. That is because the optimal cost
+$c_{(t',t]}$ and empirical mean $M_{(t', t]}$ are simple functions of
+$\sigma_{(t', t]} =\sum_{j=t'+1}^t y_j$ which can be computed in
 $\mathcal{O}(1)$ given the cumulative sum of the data-points,
-$\sum_{j=1}^t y_j$. Hence the memory complexity of the cDPA is in
-$\mathcal{O}(s_{\text{max}} d)$.
+$\sum_{j=1}^t y_j$. Hence the computational requirements of the cDPA
+are the same as the DPA: $\mathcal{O}(s_{\text{max}} d)$ memory and
+$\mathcal O(s_{\text{max}} d^2)$ time.
 
 Note also that for both the even and odd update it might very well be
 that the set of possible changes $T$ is empty.  This means that no
