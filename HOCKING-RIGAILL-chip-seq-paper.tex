@@ -483,22 +483,28 @@ On the contrary, if $s$ is odd (background segment) the mean of
 segment $[t', t]$ should be smaller than the previous one and we
 consider only $t'$ such that
 $$ t' \leq t \ | \ \mathbf{E}_{s-1,t'} \geq M_{t', t}.$$
-In the end we get the algorithm \ref{algo:v2}. 
-
+In the end we get the following algorithm:
 
 \begin{algorithm}[H]
 \begin{algorithmic}[1]
-\REQUIRE $s_{max}$, $y_j$ (a vector of size $d$)
+\REQUIRE $\mathbf y\in\RR^d$, $s_{\text{max}} \leq d$.
 \FOR{$s=2$ to $s_{\text{max}}$}
 \FOR{$t=s$ to $d$}
 \IF{$d$ is even}
-\STATE $ \widehat{\mathcal{L}}_{s,t} = \underset{t' \leq t| \mathbf{E}_{s-1,t} \leq M_{t', t}} {\min}\{ \ \widehat{\mathcal{L}}_{s-1,t'} + c_{t', t} \ \}$
-\STATE $ \widehat{m}_{s,t} = \underset{t' \leq t| \mathbf{E}_{s-1,t} \leq M_{t', t}} {\arg \min}\{ \ \widehat{\mathcal{L}}_{s-1,t'} + c_{t', t} \ \}$
+\STATE $T \gets \{  t' \leq t \mid \mathbf{E}_{s-1,t} \leq M_{t', t} \}$
 \ENDIF
 \IF{$d$ is odd}
-\STATE $ \widehat{\mathcal{L}}_{s,t} = \underset{t' \geq t | \mathbf{E}_{s-1,t'} \geq M_{t', t} }{\min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \}$
-\STATE $ \widehat{m}_{s,t} = \underset{t' \geq t | \mathbf{E}_{s-1,t'} \geq M_{t', t} }{\arg \min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \}$
+\STATE $T \gets \{ t' \leq t \mid \mathbf{E}_{s-1,t'} \geq M_{t', t} \}$
 \ENDIF
+\STATE $ t^* = 
+\underset{
+  t'\in T
+}{\arg \min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \}$
+\STATE $ \widehat{\mathcal{L}}_{s,t} = 
+\underset{
+  t'\in T
+}{\min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \}$
+\STATE $ \widehat{m}_{s,t} = $
 \STATE $\mathbf{E}_{s,t} = M_{\widehat{m}_{s,t}, t}$
 \ENDFOR
 \ENDFOR
