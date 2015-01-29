@@ -323,7 +323,7 @@ for any $s\in\{1, 2, \dots, s_{\max}\}$ as
   &\text{such that} && \Segments(\mathbf m)=s,
 \end{align*}
 where the Poisson loss function is
-\begin{equation}
+\begin{equation}\label{eq:rho}
   \rho(\mathbf m, \mathbf y)= \sum_{j=1}^d m_j - y_j \log m_j.
 \end{equation} 
 The model complexity is the number of piecewise constant segments
@@ -431,12 +431,12 @@ As already said, the best segmentation of the Poisson model can be
 recovered using dynamic programming. To describe this algorithm we
 define $\hat{\mathcal{L}}_{s,t}$ as minus the best log-likelihood of
 the segmentation $\hat{m}_{s,t}$.  This best log-likelihood can be
-written as the sum of the log-likelihood of its segment.  For the
-Poisson model the log-likelihood of a segment from $t'$ to $t$ is
+written as the sum of the best log-likelihood of its segment.  For the
+Poisson model, taking the best possible value of $m$ in equation \ref{eq:rho}, we get that the best log-likelihood of a segment from $t'$ to $t$ is
 \begin{equation}
   \label{eq:log-lik-segment}
-  c_{t',t} = (\sum_{j=t'+1}^t y_j) - (\sum_{j=t'+1}^t y_j)
-\log(\frac{\sum_{j=t'+1}^t y_j}{t-t'}).
+  c_{t',t} = \sum_{j=t'+1}^t y_j - \sum_{j=t'+1}^t y_j
+\log\left(\frac{\sum_{j=t'+1}^t y_j}{t-t'}\right).
 \end{equation}
 The key idea behind the DP algorithm is that any subsegmentation
 of an optimal segmentation should be optimal. 
@@ -447,11 +447,7 @@ This can be formally written as the following update rule :
 Using this update rule iteratively for all $s$ from $2$ to
 $s_{\text{max}}$ and for all $t$ from $2$ to $d$ we recover the best
 segmentations in $1$ to $s_{\text{max}}$ in
-$\mathcal{O}(s_{\text{max}}d^2)$ time.  Note that we do not need to
-store in memory the $d(d-1)/2$ matrix of $c_{t',t}$.  That is because
-$c_{t',t}$ is a simple function $\sum_{j=t'+1}^t y_j$ which can be
-computed in $\mathcal{O}(1)$ given the cumulative sum of the
-data-points, $\sum_{j=1}^t y_j$.
+$\mathcal{O}(s_{\text{max}}d^2)$ time.  
 
 %\begin{algorithm}[H]
 %\begin{algorithmic}[1]
@@ -487,35 +483,51 @@ On the contrary, if $s$ is odd (background segment) the mean of
 segment $[t', t]$ should be smaller than the previous one and we
 consider only $t'$ such that
 $$ t' \leq t \ | \ \mathbf{E}_{s-1,t'} \geq M_{t', t}.$$
-In the end we get the following procedure:
+In the end we get the algorithm \ref{algo:v2}. 
+
+
 \begin{algorithm}[H]
 \begin{algorithmic}[1]
+\REQUIRE $s_{max}$, $y_j$ (a vector of size $d$)
 \FOR{$s=2$ to $s_{\text{max}}$}
 \FOR{$t=s$ to $d$}
 \IF{$d$ is even}
 \STATE $ \widehat{\mathcal{L}}_{s,t} = \underset{t' \leq t| \mathbf{E}_{s-1,t} \leq M_{t', t}} {\min}\{ \ \widehat{\mathcal{L}}_{s-1,t'} + c_{t', t} \ \}$
+\STATE $ \widehat{m}_{s,t} = \underset{t' \leq t| \mathbf{E}_{s-1,t} \leq M_{t', t}} {\arg \min}\{ \ \widehat{\mathcal{L}}_{s-1,t'} + c_{t', t} \ \}$
 \ENDIF
 \IF{$d$ is odd}
-\STATE $ \widehat{\mathcal{L}}_{s,t} = \underset{t' \geq t | \mathbf{E}_{s-1,t'} \leq M_{t', t} }{\min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \}$
+\STATE $ \widehat{\mathcal{L}}_{s,t} = \underset{t' \geq t | \mathbf{E}_{s-1,t'} \geq M_{t', t} }{\min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \}$
+\STATE $ \widehat{m}_{s,t} = \underset{t' \geq t | \mathbf{E}_{s-1,t'} \geq M_{t', t} }{\arg \min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \}$
 \ENDIF
+\STATE $\mathbf{E}_{s,t} = M_{\widehat{m}_{s,t}, t}$
 \ENDFOR
 \ENDFOR
+\RETURN $\widehat{m}_{s,t}$ and $\widehat{\mathcal{L}}_{s,t}$ (two $d$ by $s_{max}$ matrices)
 \caption{Constrained dynamic programming (cDPA) for Poisson
   segmentation model}
 \end{algorithmic}\label{algo:v2}
 \end{algorithm}
 
-For simplicity we omitted the update of $\mathbf{E}_{s,t}$ in the
-previous procedure, it can be found by recovering the mean of the best
-last segment.
+Note that in procedure \ref{algo:v2} we do not need to precompute and
+store in memory the $d(d-1)/2$ $c_{t',t}$ and $M_{t', t}$.  
+That is because
+$c_{t',t}$ and $M_{t', t}$ are simple functions of $\sum_{j=t'+1}^t y_j$ which can be
+computed in $\mathcal{O}(1)$ given the cumulative sum of the
+data-points, $\sum_{j=1}^t y_j$. Hence the memory complexity of \ref{algo:v2}
+is in $\mathcal{O}(s_{max} d)$.
 
-Our proposed cDPA explores the set of segmentations and return one
-which is compatible with the constraint of the \ref{PeakSeg}
-model. Importantly, this procedure is not guaranteed to recover a
-segmentation. For example for an ever increasing series of data $y_1 <
-\cdots < y_d$ there is no model that satisfies the \ref{PeakSeg} model
-constraints, and the cDPA thus returns no model (TODO: write that
-explicitly?).
+Note also that for both the even and odd update it might very well be that the set of possible $t'$ is empty.
+This means that no segmentation in $s$ segments to point $t$ satistifying the peak constraint was found.
+To cope with this case we simply set
+$\underset{t' \in \emptyset }{\min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \} = NULL$
+and $\underset{t' \in \emptyset }{\arg \min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \} = NULL$
+
+Hence this procedure is not guaranteed to recover a
+segmentation. For an ever increasing series of data $y_1 <
+\cdots < y_d$ there is no model in more than 3 segments 
+that satisfies the \ref{PeakSeg} model
+constraints, and the cDPA thus returns no model. Indeed in that case for any segmentation
+the empirical mean of the third segment is necesarily larger than the empiricial mean of the second segment (which is in contradiction with our constraint).
 
 \subsection{The cDPA is a heuristic}
 \label{sec:dp-fails}
