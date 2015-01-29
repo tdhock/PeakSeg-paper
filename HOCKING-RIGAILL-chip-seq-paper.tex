@@ -499,7 +499,8 @@ consider only $t'$ such that
   \label{eq:odd}
    t' < t \ | \ \mathcal{E}_{s-1,t'} > M_{(t', t]}.
 \end{equation}
-In the end we get the following algorithm:
+In the end we get the following algorithm:\footnote{Implemented as C
+  code in the R package\\ \url{https://github.com/tdhock/PeakSegDP}}
 
 \begin{algorithm}[H]
 \begin{algorithmic}[1]
@@ -650,7 +651,7 @@ data, we use the following method to make a prediction on a test
 sample with profile $\mathbf y$ and features $\mathbf x$. We compute
 the predicted penalty $\hat \lambda = \exp \hat f(\mathbf x)$, the
 predicted number of segments $\hat s = s^*(\hat \lambda, \mathbf y)$,
-and finally the predicted peaks $\mathbf P\left[ \mathbf{\tilde
+and the predicted peaks $\mathbf P\left[ \mathbf{\tilde
     m}^{\hat s}(\mathbf y) \right]$.
 
 \subsection{Unsupervised penalty learning}
@@ -666,7 +667,7 @@ may not be true in practice. One can use asymptotic arguments to get a
 penalty such as the AIC \citep{Akaike73}, BIC \citep{Schwarz78}, or
 mBIC \citep{mBIC}. For example, the AIC corresponds to a constant
 penalty of $\lambda=\exp f(\mathbf x)=2$ and a model complexity of
-$h(s, d)=s$. More recently, \citet{cleynen2013segmentation} applyied
+$h(s, d)=s$. More recently, \citet{cleynen2013segmentation} applied
 finite sample model selection theory to obtain a more complicated
 model complexity $h$ (Table~\ref{tab:penalties}) and a heuristic for
 computing the penalty $\lambda$. All of these penalty functions are
@@ -700,14 +701,12 @@ training data.
 \subsection{Supervised multi-parameter penalty learning}
 \label{sec:supervised-multi}
 
-For supervised learning of multi-parameter penalty functions, we can
-use the max margin interval regression algorithm of
-\citet{HOCKING-penalties}.  We define sample-specific penalty values
-$\log \lambda_i = f(\mathbf x_i)= \beta + \mathbf w^\intercal \mathbf
-x_i$, which is an affine function with parameters $\beta\in\RR,\mathbf
-w\in\RR^m$ that will be learned. As shown in
-Table~\ref{tab:penalties}, we considered learning models with 3 and 41
-parameters:
+For supervised learning of multi-parameter penalties, we
+define sample-specific penalty values $\log \lambda_i = f(\mathbf
+x_i)= \beta + \mathbf w^\intercal \mathbf x_i$, which is an affine
+function with parameters $\beta\in\RR,\mathbf w\in\RR^m$ that will be
+learned. As shown in Table~\ref{tab:penalties}, we considered learning
+models with 3 and 41 parameters:
 
 \begin{itemize}
 \item \textbf{3}: we used an $m=2$-dimensional feature
@@ -792,14 +791,15 @@ solving the un-regularized interval regression problem of
 
 We downloaded 7 benchmark data sets, which included a total of 12,826
 manually annotated regions across 2,752 separate segmentation
-problems\footnote{\url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}}.
+problems.\footnote{\url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}}
 Data sets span two different data/pattern types (sharp H3K4me3, broad
 H3K36me3), four annotators (AM, TDH, PGP, XJ), and two cell type
 groups (immune, other). Each data set contains labels grouped into
 windows of nearby regions (from 4 to 30 windows per data set). For
 each data set, we performed 6 random splits of windows into half
-train, half test.  As shown in Table~\ref{tab:penalties}, we
-considered 3 kinds of model training:
+train, half test.  We
+considered 3 kinds of model training:\footnote{Source code for computing models and benchmarks at\\
+  \url{https://github.com/tdhock/PeakSeg-paper} }
 \begin{itemize}
 \item \textbf{Unsupervised} uses the default parameters of each
   algorithm, ignoring the labeled data in the train set.
@@ -808,9 +808,6 @@ considered 3 kinds of model training:
 \item \textbf{Interval regression} is the efficient multi-parameter
   penalty learning model of \citet{HOCKING-penalties}.
 \end{itemize}
-The source code for computing these models on the benchmark data sets 
-is available at\\
-\url{https://github.com/tdhock/PeakSeg-paper}
 
 \subsection{Effectiveness of heuristic cDPA}
 \label{sec:heuristic-effectiveness}
