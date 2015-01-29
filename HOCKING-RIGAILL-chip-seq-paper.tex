@@ -487,24 +487,26 @@ In the end we get the following algorithm:
 
 \begin{algorithm}[H]
 \begin{algorithmic}[1]
-\REQUIRE $\mathbf y\in\RR^d$, $s_{\text{max}} \leq d$.
+\REQUIRE $\mathbf y\in\RR^d$, $s_{\text{max}}\in\{2, \dots, d\}$.
+\STATE \textbf{TODO:} initialize $\widehat{\mathcal L}_1, t$ ?
 \FOR{$s=2$ to $s_{\text{max}}$}
 \FOR{$t=s$ to $d$}
-\IF{$d$ is even}
+\IF{$s$ is even}
 \STATE $T \gets \{  t' \leq t \mid \mathbf{E}_{s-1,t} \leq M_{t', t} \}$
-\ENDIF
-\IF{$d$ is odd}
+\ELSE
 \STATE $T \gets \{ t' \leq t \mid \mathbf{E}_{s-1,t'} \geq M_{t', t} \}$
 \ENDIF
+\IF{$|T| = 0$}
+\STATE $\widehat{ \mathcal L}_{s,t} \gets \infty$
+\ELSE
 \STATE $ t^* = 
 \underset{
   t'\in T
-}{\arg \min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \}$
+}{\arg \min} \{ \ \widehat{\mathcal{L}}_{s-1,t'} + c_{t',t} \ \}$
 \STATE $ \widehat{\mathcal{L}}_{s,t} = 
-\underset{
-  t'\in T
-}{\min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \}$
-\STATE $ \widehat{m}_{s,t} = $
+\widehat{\mathcal{L}}_{s-1,t^*} + c_{t^*,t} $
+\STATE $ \widehat{m}_{s,t} = $ \textbf{TODO}
+\ENDIF
 \STATE $\mathbf{E}_{s,t} = M_{\widehat{m}_{s,t}, t}$
 \ENDFOR
 \ENDFOR
