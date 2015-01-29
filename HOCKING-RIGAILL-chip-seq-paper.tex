@@ -427,27 +427,38 @@ the \ref{PeakSeg} optimization problem.
 
 \subsection{The standard DPA}
 
-As already said, the best segmentation of the Poisson model can be
-recovered using dynamic programming. To describe this algorithm we
-define $\widehat{\mathcal{L}}_{s,t}$ as minus the best log-likelihood of
-the segmentation $\widehat{m}_{s,t}$.  This best log-likelihood can be
-written as the sum of the best log-likelihood of its segment.  For the
-Poisson model, taking the best possible value of $m$ in equation \ref{eq:rho}, we get that the best log-likelihood of a segment from $t'$ to $t$ is
+The \ref{unconstrained} model can be computed exactly using a dynamic
+programming algorithm (DPA).
+% To describe this algorithm we
+% define $\widehat{\mathcal{L}}_{s,t}$ as minus the best log-likelihood of
+% the segmentation $\widehat{m}_{s,t}$.  This best log-likelihood can be
+% written as the sum of the best log-likelihood of its segment.  
+Let $t,t'$ be indices such that $0\leq t' < t \leq d$, and let the
+interval $(t', t]$ denote a segment. Then $\sigma_{(t', t]} =
+\sum_{j=t'+1}^t y_j$ is the cumulative sum and $M_{(t', t]} =
+\sigma_{(t', t]}/(t-t')$ is the mean over the segment $(t', t]$. The optimal
+Poisson loss (\ref{eq:rho}) for the is 
 \begin{equation}
   \label{eq:log-lik-segment}
-  c_{t',t} = \sum_{j=t'+1}^t y_j - \sum_{j=t'+1}^t y_j
-\log\left(\frac{\sum_{j=t'+1}^t y_j}{t-t'}\right).
+  c_{(t',t]} = \sigma_{(t', t]}\left[1 - 
+  \log\left(M_{(t', t]}\right)\right].
 \end{equation}
-The key idea behind the DP algorithm is that any subsegmentation
-of an optimal segmentation should be optimal. 
-This can be formally written as the following update rule :
+Let ${\mathcal L}_{s, t}$ be the optimal Poisson loss of the
+model with $s$ segments up to data point $t$. The key idea behind the
+DPA is that any subsegmentation of an optimal segmentation
+should be optimal. This can be formally written as a search for the best
+change-point $t'$
 \begin{equation}
-\widehat{\mathcal{L}}_{s,t}= \min_{t' \leq t} \{ \ \widehat{\mathcal{L}}_{s-1,t'} + c_{t',t} \}. \label{eq:update1}
+{\mathcal{L}}_{s,t}= \min_{t' < t}
+{\mathcal{L}}_{s-1,t'} +
+ c_{(t',t]},
+ \label{eq:update1}
 \end{equation}
-Using this update rule iteratively for all $s$ from $2$ to
-$s_{\text{max}}$ and for all $t$ from $2$ to $d$ we recover the best
-segmentations in $1$ to $s_{\text{max}}$ in
-$\mathcal{O}(s_{\text{max}}d^2)$ time.  
+meaning that the best loss in $s$ segments can be written in terms of
+the best loss in $s-1$ segments. Using this update
+rule iteratively for all $s$ from $2$ to $s_{\text{max}}$ and for all
+$t$ from $2$ to $d$ we recover the best segmentations in $1$ to
+$s_{\text{max}}$ in $\mathcal{O}(s_{\text{max}}d^2)$ time.
 
 %\begin{algorithm}[H]
 %\begin{algorithmic}[1]
@@ -462,80 +473,86 @@ $\mathcal{O}(s_{\text{max}}d^2)$ time.
 %\end{algorithm}
 
 \subsection{cDPA: a simple modification}
- \label{sec:constrained-dp}
+\label{sec:constrained-dp}
 
- In order to enforce the segmentation to obey the constraint of the
- \ref{PeakSeg} model, we introduce a simple modification of the
- previous update rule (\ref{eq:update1}). %algorithm %\ref{algo:v1}.
- Up to now we considered all possible $t'$ smaller than the current
- $t$. Here we propose to consider only those such that the resulting
- segmentation can be interpreted as a succession of peaks. To make
- this idea more precise we introduce the notation $\mathbf{E}_{s,t}$
- which is the last empirical mean of the best segmentation in $s$ up
- to $t$.  We also define $M_{t', t} = (\sum_{j=t'+1}^t y_j)/(t-t')$ as
- the empirical mean of the segment $[t', t]$.
+In order to force the segmentation to obey the constraint of the
+\ref{PeakSeg} model, we introduce a simple modification of the
+previous update rule (\ref{eq:update1}). %algorithm %\ref{algo:v1}.
+Up to now we considered all possible change-points $t'$ smaller than
+the current $t$. Here we propose to consider only those such that the
+resulting segmentation can be interpreted as a succession of
+peaks. To make this idea more precise we introduce the notation
+$\mathcal{E}_{s,t}$ which is the last empirical mean of the best
+segmentation in $s$ segments up to $t$.  
 
-Then if $s$ is even (peak segment) the mean of segment $[t', t]$
+Then if $s$ is even (peak segment) the mean of segment $(t', t]$
 should be larger than the previous one and in the update rule we only
 consider $t'$ such that
-$$ t' \leq t \ | \ \mathbf{E}_{s-1,t'} \leq M_{t', t}.$$
+\begin{equation}
+  \label{eq:even}
+   t' < t \ | \ \mathcal{E}_{s-1,t'} < M_{(t', t]}.
+\end{equation}
 On the contrary, if $s$ is odd (background segment) the mean of
-segment $[t', t]$ should be smaller than the previous one and we
+segment $(t', t]$ should be smaller than the previous one and we
 consider only $t'$ such that
-$$ t' \leq t \ | \ \mathbf{E}_{s-1,t'} \geq M_{t', t}.$$
+\begin{equation}
+  \label{eq:odd}
+   t' < t \ | \ \mathcal{E}_{s-1,t'} > M_{(t', t]}.
+\end{equation}
 In the end we get the following algorithm:
 
 \begin{algorithm}[H]
 \begin{algorithmic}[1]
 \REQUIRE $\mathbf y\in\RR^d$, $s_{\text{max}}\in\{2, \dots, d\}$.
-\STATE \textbf{TODO:} initialize $\widehat{\mathcal L}_1, t$ ?
+%\STATE \textbf{TODO:} initialize ${\mathcal L}_1, t$ ?
 \FOR{$s=2$ to $s_{\text{max}}$}
 \FOR{$t=s$ to $d$}
 \IF{$s$ is even}
-\STATE $T \gets \{  t' \leq t \mid \mathbf{E}_{s-1,t} \leq M_{t', t} \}$
+\STATE $T \gets \{  t' < t \mid \mathcal{E}_{s-1,t'} < M_{(t', t]} \}$
 \ELSE
-\STATE $T \gets \{ t' \leq t \mid \mathbf{E}_{s-1,t'} \geq M_{t', t} \}$
+\STATE $T \gets \{ t' < t \mid \mathcal{E}_{s-1,t'} > M_{(t', t]} \}$
 \ENDIF
 \IF{$|T| = 0$}
-\STATE $\widehat{ \mathcal L}_{s,t} \gets \infty$
+\STATE ${ \mathcal L}_{s,t} \gets \infty$
 \ELSE
-\STATE $ t^* = 
+\STATE $ \mathcal T_{s, t}\gets t^* \gets
 \underset{
   t'\in T
-}{\arg \min} \{ \ \widehat{\mathcal{L}}_{s-1,t'} + c_{t',t} \ \}$
-\STATE $ \widehat{\mathcal{L}}_{s,t} = 
-\widehat{\mathcal{L}}_{s-1,t^*} + c_{t^*,t} $
-\STATE $ \widehat{m}_{s,t} = $ \textbf{TODO}
+}{\arg \min}\  {\mathcal{L}}_{s-1,t'} + c_{(t',t]}$
+\STATE $ {\mathcal{L}}_{s,t} \gets 
+{\mathcal{L}}_{s-1,t^*} + c_{(t^*,t]} $
+\STATE $\mathcal{E}_{s,t} \gets M_{(t^*, t]}$
 \ENDIF
-\STATE $\mathbf{E}_{s,t} = M_{\widehat{m}_{s,t}, t}$
 \ENDFOR
 \ENDFOR
-\RETURN $\widehat{m}_{s,t}$ and $\widehat{\mathcal{L}}_{s,t}$ (two $d$ by $s_{max}$ matrices)
-\caption{Constrained dynamic programming (cDPA) for Poisson
-  segmentation model}
+\RETURN $s_{\text{max}}\times d$ matrix $\mathcal T_{s, t}$ of optimal change points.
+\caption{Constrained dynamic programming (cDPA) 
+%for Poisson  segmentation model
+}
 \end{algorithmic}\label{algo:v2}
 \end{algorithm}
 
-Note that in procedure \ref{algo:v2} we do not need to precompute and
-store in memory the $d(d-1)/2$ $c_{t',t}$ and $M_{t', t}$.  
-That is because
-$c_{t',t}$ and $M_{t', t}$ are simple functions of $\sum_{j=t'+1}^t y_j$ which can be
-computed in $\mathcal{O}(1)$ given the cumulative sum of the
-data-points, $\sum_{j=1}^t y_j$. Hence the memory complexity of \ref{algo:v2}
-is in $\mathcal{O}(s_{max} d)$.
+Note that we do not need to precompute the
+$d(d-1)/2$ values of $c_{(t',t]}$ and $M_{(t', t]}$. That is because
+the optimal cost $c_{(t',t]}$ and empirical mean $M_{(t', t]}$ are
+simple functions of $\sigma_{(t', t]} =\sum_{j=t'+1}^t y_j$ which can be computed in
+$\mathcal{O}(1)$ given the cumulative sum of the data-points,
+$\sum_{j=1}^t y_j$. Hence the memory complexity of the cDPA is in
+$\mathcal{O}(s_{\text{max}} d)$.
 
-Note also that for both the even and odd update it might very well be that the set of possible $t'$ is empty.
-This means that no segmentation in $s$ segments to point $t$ satistifying the peak constraint was found.
-To cope with this case we simply set
-$\underset{t' \in \emptyset }{\min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \} = NULL$
-and $\underset{t' \in \emptyset }{\arg \min} \{ \ \widehat{\mathcal{L}}_{s,t'} + c_{t',t} \ \} = NULL.$
+Note also that for both the even and odd update it might very well be
+that the set of possible changes $T$ is empty.  This means that no
+segmentation in $s$ segments to point $t$ satistifying the
+\ref{PeakSeg} model constraint was found.  To cope with this case we
+simply set ${\mathcal L}_{s, t} = \infty$.
 
-Hence procedure \ref{algo:v2} is not guaranteed to recover a
-segmentation. In particular for an ever increasing series of data $y_1 <
-\cdots < y_d$ there is no model in more than 3 segments 
-that satisfies the \ref{PeakSeg} model
-constraints, and the cDPA thus returns no model. Indeed in that case for any segmentation
-the empirical mean of the third segment is necesarily larger than the empiricial mean of the second segment (which is in contradiction with our constraint).
+Hence the cDPA is not guaranteed to recover a segmentation. In
+particular for an ever increasing series of data $y_1 < \cdots < y_d$
+the constrained optimal segmentation $\mathbf{\tilde m}^3(\mathbf y)$ is
+undefined, and the cDPA thus returns no model.
+% Indeed in that case for any segmentation the empirical mean of
+% the third segment is necesarily larger than the empiricial mean of the
+% second segment (which is in contradiction with our constraint).
 
 \subsection{The cDPA is a heuristic}
 \label{sec:dp-fails}
