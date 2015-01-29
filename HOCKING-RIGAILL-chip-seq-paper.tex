@@ -550,7 +550,7 @@ simply set ${\mathcal L}_{s, t} = \infty$.
 Hence the cDPA is not guaranteed to recover a segmentation. In
 particular for an ever increasing series of data $y_1 < \cdots < y_d$
 the constrained optimal segmentation $\mathbf{\tilde m}^3(\mathbf y)$ is
-undefined, and the cDPA thus returns no model.
+undefined, and the cDPA thus returns no model. 
 % Indeed in that case for any segmentation the empirical mean of
 % the third segment is necesarily larger than the empiricial mean of the
 % second segment (which is in contradiction with our constraint).
@@ -558,12 +558,17 @@ undefined, and the cDPA thus returns no model.
 \subsection{The cDPA is a heuristic}
 \label{sec:dp-fails}
 
-Note also that the cDPA is a heuristic in the sense that it is not
-clear which optimization problem it solves.  In particular, it does
-not necessarily recover the best possible (in terms of likelihood)
-segmentation that satistifies the \ref{PeakSeg} model constraints.  We
-illustrate this with the following example with
-$\mathbf y = \left[\begin{array}{cccc} 1 & 10 & 14 & 13
+In this section we give a simple counter-example which shows that the
+cDPA is not guaranteed to compute the \ref{PeakSeg} model. This is
+mostly a theoretical issue, since in real data sets the cDPA is very
+effective (Section~\ref{sec:heuristic-effectiveness}).
+
+The cDPA is a heuristic in the sense that it is not
+clear which optimization problem it solves. In particular, it does not
+necessarily recover maximum likelihood segmentation that satistifies
+the \ref{PeakSeg} model constraints. We illustrate this with the
+following example with $\mathbf y = \left[\begin{array}{cccc} 1 & 10 &
+    14 & 13
 \end{array}\right]\in\ZZ_+^4
 $. For $s=3$ segments there are only 3 possible segmentations:
 $[1][10][14, 13]$, $[1][10, 14][13]$ and $[1, 10][14][13]$. If we use
@@ -806,6 +811,7 @@ is available at\\
 \url{https://github.com/tdhock/PeakSeg-paper}
 
 \subsection{Effectiveness of heuristic cDPA}
+\label{sec:heuristic-effectiveness}
 
 To run the cDPA on the benchmark data set, we first set the maximum
 number of segments $s_{\text{\text{max}}}=19$, meaning a maximum of $9$
