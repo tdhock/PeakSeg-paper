@@ -548,9 +548,11 @@ segmentation in $s$ segments to point $t$ satistifying the
 simply set ${\mathcal L}_{s, t} = \infty$.
 
 Hence the cDPA is not guaranteed to recover a segmentation. In
-particular for an ever increasing series of data $y_1 < \cdots < y_d$
-the constrained optimal segmentation $\mathbf{\tilde m}^3(\mathbf y)$ is
-undefined, and the cDPA thus returns no model. 
+particular for an ever increasing series of data $y_1 < \cdots < y_d$,
+for example $\mathbf y = \left[ \begin{array}{ccc} 1 & 2 &
+    3 \end{array}\right]$ the constrained optimal segmentation
+$\mathbf{\tilde m}^3(\mathbf y)$ is undefined, and the cDPA thus
+returns no model.
 % Indeed in that case for any segmentation the empirical mean of
 % the third segment is necesarily larger than the empiricial mean of the
 % second segment (which is in contradiction with our constraint).
