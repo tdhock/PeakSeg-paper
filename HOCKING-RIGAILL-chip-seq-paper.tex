@@ -194,8 +194,9 @@ Section~\ref{sec:conclusions}.
 \label{sec:related}
 
 Previous work can be divided into roughly three categories:
-unsupervised ChIP-seq peak detectors, maximum likelihood segmentation
-models, and optimal penalty functions for segmentation.
+unsupervised ChIP-seq peak detectors from the bioinformatics
+literature, maximum likelihood segmentation models, and model
+selection methods.
 
 \begin{figure*}[b!]
   \centering
@@ -269,7 +270,7 @@ problem (Section~\ref{sec:dp-fails}). However, we show that it is
 still very useful and accurate in practice on real data
 (Section~\ref{sec:results}).
 
-\subsection{Penalty functions for segmentation}
+\subsection{Model selection methods}
 
 For each segmentation problem, the proposed cDPA returns a sequence of
 models with $s\in\{1, 3, \dots, s_{\text{\text{max}}}\}$ segments. The
@@ -436,8 +437,8 @@ programming algorithm (DPA).
 Let $t,t'$ be indices such that $0\leq t' < t \leq d$, and let the
 interval $(t', t]$ denote a segment. Then $\sigma_{(t', t]} =
 \sum_{j=t'+1}^t y_j$ is the cumulative sum and $M_{(t', t]} =
-\sigma_{(t', t]}/(t-t')$ is the mean over the segment $(t', t]$. The optimal
-Poisson loss (\ref{eq:rho}) for the is 
+\sigma_{(t', t]}/(t-t')$ is the mean over the segment $(t', t]$. The
+optimal Poisson loss (\ref{eq:rho}) for that segment is
 \begin{equation}
   \label{eq:log-lik-segment}
   c_{(t',t]} = \sigma_{(t', t]}\left[1 - 
@@ -475,7 +476,7 @@ $s_{\text{max}}$ in $\mathcal{O}(s_{\text{max}}d^2)$ time.
 \subsection{cDPA: a simple modification}
 \label{sec:constrained-dp}
 
-In order to force the segmentation to obey the constraint of the
+In order to force the segmentation to obey the constraints of the
 \ref{PeakSeg} model, we introduce a simple modification of the
 previous update rule (\ref{eq:update1}). %algorithm %\ref{algo:v1}.
 Up to now we considered all possible change-points $t'$ smaller than
@@ -669,10 +670,10 @@ mBIC \citep{mBIC}. For example, the AIC corresponds to a constant
 penalty of $\lambda=\exp f(\mathbf x)=2$ and a model complexity of
 $h(s, d)=s$. More recently, \citet{cleynen2013segmentation} applied
 finite sample model selection theory to obtain a more complicated
-model complexity $h$ (Table~\ref{tab:penalties}) and a heuristic for
-computing the penalty $\lambda$. All of these penalty functions are
-completely unsupervised since they ignore the annotated region labels
-in the training data set.
+model complexity function $h$ (Table~\ref{tab:penalties}) and a
+heuristic for computing the penalty $\lambda$. All of these penalty
+functions are completely unsupervised since they ignore the annotated
+region labels in the training data set.
 
 In Table~\ref{tab:penalties} and Figure~\ref{fig:test-error}, these
 models are named *.0 since they do not learn any parameters using the
@@ -682,7 +683,7 @@ training data.
 \label{sec:supervised-single}
 
 \citet{cleynen2013segmentation} proposed to use the un\-supervised
-heuristic of \citet{Lav05} for calibrating the penalty constant
+heuristic of \citet{arlot2009data} for calibrating the penalty constant
 $\beta$ in equation (6) of their paper. Instead, we propose to use the
 annotated region labels as a super\-vised method for calibrating the
 penalty constant $\beta$. This corresponds to learning a constant
