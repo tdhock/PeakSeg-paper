@@ -200,7 +200,7 @@ Our work is based and inspired by roughly three types of contributions:
 %Previous work can be divided into roughly three categories:
 unsupervised ChIP-seq peak detectors from the bioinformatics
 literature, maximum likelihood segmentation algorithms, and model
-selection criteria developped for segmentation.
+selection criteria.
 
 \begin{figure*}[b!]
   \centering
@@ -274,7 +274,7 @@ problem (Section~\ref{sec:dp-fails}). However, we show that it is
 still very useful and accurate in practice on real data
 (Section~\ref{sec:results}).
 
-\subsection{Model selection methods}
+\subsection{Model selection criteria}
 
 For each segmentation problem, the proposed cDPA returns a sequence of
 models with $s\in\{1, 3, \dots, s_{\text{\text{max}}}\}$ segments. The
@@ -580,16 +580,17 @@ returns no model.
 \label{sec:dp-fails}
 
 In this section we give a simple counter-example which shows that the
-cDPA is not guaranteed to recover a valid \ref{PeakSeg} model even if there is one. 
-This is mostly a theoretical issue, since in real data sets the cDPA is very
-effective (Section~\ref{sec:heuristic-effectiveness}) and found a solution in most cases.
+cDPA is not guaranteed to recover a valid \ref{PeakSeg} model even if
+there is one.  This is mostly a theoretical issue, since 
+the cDPA is empirically able to compute \ref{PeakSeg} models in the vast
+majority of real data sets
+(Section~\ref{sec:heuristic-effectiveness}).
 
-The cDPA is a heuristic in the sense that it is not
-clear which optimization problem it solves. In particular, it does not
-necessarily recover maximum likelihood segmentation that satistifies
-the \ref{PeakSeg} model constraints. We illustrate this with the
-following example with $\mathbf y = \left[\begin{array}{cccc} 1 & 10 &
-    14 & 13
+The cDPA is a heuristic in the sense that it is not clear which
+optimization problem it solves. In particular, it does not necessarily
+recover the maximum likelihood segmentation that satistifies the
+\ref{PeakSeg} model constraints. We illustrate this using the following simple
+example with $\mathbf y = \left[\begin{array}{cccc} 1 & 10 & 14 & 13
 \end{array}\right]\in\ZZ_+^4
 $. For $s=3$ segments there are only 3 possible segmentations:
 $[1][10][14, 13]$, $[1][10, 14][13]$ and $[1, 10][14][13]$. If we use
