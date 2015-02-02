@@ -142,7 +142,7 @@ In supervised peak detection \citep{hocking2014visual}, there
 are $n$ labeled samples, and each sample $i\in\{1, \dots, n\}$ has a
 profile $\mathbf y_i\in\ZZ_+^d$ and a set of annotated region labels $R_i$ 
 ("no peak", "peak", ...).
-From these it is possible to define a non-convex annotation error function
+which defines a non-convex annotation error function
 \begin{equation}
   \label{eq:error}
   E[c(\mathbf y_i),  R_i] =
@@ -511,31 +511,39 @@ consider only $t'$ such that
 \end{equation}
 In the end we get the following algorithm:\footnote{Implemented as C
   code in the R package\\ \url{https://github.com/tdhock/PeakSegDP}}
+\newcommand{\SWITCH}[1]{\STATE \textbf{switch} (#1)\begin{ALC@g}}
+\newcommand{\ENDSWITCH}{\end{ALC@g}\STATE \textbf{end switch}}
+\newcommand{\CASE}[2]{\STATE \textbf{case} #1\textbf{: } #2}%\begin{ALC@g}}
+\newcommand{\ENDCASE}{}%\end{ALC@g}}
+\newcommand{\DEFAULT}[1]{\STATE \textbf{default: } \begin{ALC@g}}
+\newcommand{\ENDDEFAULT}{\end{ALC@g}\STATE \textbf{end default} }
+\newcommand{\FORFOR}[2]{\STATE \textbf{For} #1 \textbf{do} and \textbf{For} #2 \textbf{do} \begin{ALC@g}}
+\newcommand{\ENDFORFOR}{\end{ALC@g}\STATE \textbf{End for} and \textbf{End for}  }
 
 \begin{algorithm}[H]
 \begin{algorithmic}[1]
 \REQUIRE $\mathbf y\in\RR^d$, $s_{\text{max}}\in\{2, \dots, d\}$.
 %\STATE \textbf{TODO:} initialize ${\mathcal L}_1, t$ ?
-\FOR{$s=2$ to $s_{\text{max}}$}
-\FOR{$t=s$ to $d$}
-\IF{$s$ is even}
-\STATE $T \gets \{  t' < t \mid \mathcal{E}_{s-1,t'} < M_{(t', t]} \}$
-\ELSE
-\STATE $T \gets \{ t' < t \mid \mathcal{E}_{s-1,t'} > M_{(t', t]} \}$
-\ENDIF
-\IF{$|T| = 0$}
-\STATE ${ \mathcal L}_{s,t} \gets \infty$
-\ELSE
+\FORFOR{($s=2$ to $s_{\text{max}}$)}{($t=s$ to $d$)}
+\SWITCH{$s$}
+\CASE{even}{$T \gets \{ t' < t \mid \mathcal{E}_{s-1,t'} < M_{(t', t]} \}$}
+\ENDCASE
+\CASE{ odd}{$T \gets \{ t' < t \mid \mathcal{E}_{s-1,t'} > M_{(t', t]} \}$}
+\ENDCASE
+\ENDSWITCH
+
+\SWITCH{$T$}
+\CASE{$\emptyset$}{${ \mathcal L}_{s,t} \gets \infty$}
+\ENDCASE
+\DEFAULT{}
 \STATE $ \mathcal T_{s, t}\gets t^* \gets
-\underset{
-  t'\in T
-}{\arg \min}\  {\mathcal{L}}_{s-1,t'} + c_{(t',t]}$
+\underset{ t'\in T}{\arg \min}\  {\mathcal{L}}_{s-1,t'} + c_{(t',t]}$
 \STATE $ {\mathcal{L}}_{s,t} \gets 
 {\mathcal{L}}_{s-1,t^*} + c_{(t^*,t]} $
 \STATE $\mathcal{E}_{s,t} \gets M_{(t^*, t]}$
-\ENDIF
-\ENDFOR
-\ENDFOR
+\ENDDEFAULT
+\ENDSWITCH
+\ENDFORFOR
 \RETURN $s_{\text{max}}\times d$ matrix $\mathcal T_{s, t}$ of optimal change points.
 \caption{Constrained dynamic programming (cDPA) 
 %for Poisson  segmentation model
