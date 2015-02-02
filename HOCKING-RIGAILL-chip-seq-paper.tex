@@ -120,6 +120,22 @@ supervised method proposed in this paper, most previous algorithms are
 unsupervised since they define a peak detector $c$ using only the
 profile data $\mathbf y$.
 
+
+\subsection{Different ChIP-seq peak patterns}
+
+There are several different kinds of peak patterns that have been
+observed and labeled in different ChIP-seq data sets. For example,
+Figure~\ref{fig:dp-peaks-train} shows H3K4me3 data with a sharp peak
+pattern, and H3K36me3 data with a broad peak pattern. Current peak
+detectors are unsupervised learning algorithms that are designed for
+specific patterns. For example, the MACS algorithm was designed for
+the sharp pattern in H3K4me3 data \citep{MACS}.
+
+Another example is HMCan \citep{HMCan}, whose authors suggest fixed
+pattern-specific mergeDistance parameters: H3K4me3 $\Rightarrow 200$,
+H3K36me3 $\Rightarrow 1000$. However, these parameters may not be
+optimal for any given data set.
+
 \subsection{Supervised peak detection}
 
 In supervised peak detection \citep{hocking2014visual}, there
@@ -143,20 +159,6 @@ find a peak caller~$c$ with minimal error on some test profiles:
 More specifically, we suppose that the training data and the test data
 exhibit the same pattern type.
 
-\subsection{Different ChIP-seq peak patterns}
-
-There are several different kinds of peak patterns that have been
-observed and labeled in different ChIP-seq data sets. For example,
-Figure~\ref{fig:dp-peaks-train} shows H3K4me3 data with a sharp peak
-pattern, and H3K36me3 data with a broad peak pattern. Current peak
-detectors are unsupervised learning algorithms that are designed for
-specific patterns. For example, the MACS algorithm was designed for
-the sharp pattern in H3K4me3 data \citep{MACS}.
-
-Another example is HMCan \citep{HMCan}, whose authors suggest fixed
-pattern-specific mergeDistance parameters: H3K4me3 $\Rightarrow 200$,
-H3K36me3 $\Rightarrow 1000$. However, these parameters may not be
-optimal for any given data set.
 
 \subsection{Contributions and organization}
 
@@ -193,10 +195,11 @@ Section~\ref{sec:conclusions}.
 \section{Related work}
 \label{sec:related}
 
-Previous work can be divided into roughly three categories:
+Our work is based and inspired by roughly three types of contributions:
+%Previous work can be divided into roughly three categories:
 unsupervised ChIP-seq peak detectors from the bioinformatics
-literature, maximum likelihood segmentation models, and model
-selection methods.
+literature, maximum likelihood segmentation algorithms, and model
+selection criteria used for segmentation.
 
 \begin{figure*}[b!]
   \centering
@@ -445,14 +448,19 @@ optimal Poisson loss (\ref{eq:rho}) for that segment is
   \log\left(M_{(t', t]}\right)\right].
 \end{equation}
 Let ${\mathcal L}_{s, t}$ be the optimal Poisson loss of the
-model with $s$ segments up to data point $t$. The key idea behind the
-DPA is that any subsegmentation of an optimal segmentation
-should be optimal. This can be formally written as a search for the best
+model with $s$ segments up to data point $t$ and ${\mathcal T}_{s, t}$ the corresponding optimal last change. The key idea behind the
+DPA is that 
+if we consider an optimal segmentation in $s$ up to $t$ and consider
+the subsegmentation obtained by discarding the last segment $({\mathcal T}_{s, t}, t]$ then
+the resulting segmentation is also optimal in the sense that its loss is equal to ${\mathcal L}_{s-1, {\mathcal T}_{s, t}}.$
+%any subsegmentation of an optimal segmentation
+%should be optimal. 
+This can be formally written as a search for the best
 change-point $t'$
 \begin{equation}
 {\mathcal{L}}_{s,t}= \min_{t' < t}
 {\mathcal{L}}_{s-1,t'} +
- c_{(t',t]},
+ c_{(t',t]}, 
  \label{eq:update1}
 \end{equation}
 meaning that the best loss in $s$ segments can be written in terms of
@@ -563,9 +571,9 @@ returns no model.
 \label{sec:dp-fails}
 
 In this section we give a simple counter-example which shows that the
-cDPA is not guaranteed to compute the \ref{PeakSeg} model. This is
-mostly a theoretical issue, since in real data sets the cDPA is very
-effective (Section~\ref{sec:heuristic-effectiveness}).
+cDPA is not guaranteed to recover a valid \ref{PeakSeg} model even if there is one. 
+This is mostly a theoretical issue, since in real data sets the cDPA is very
+effective (Section~\ref{sec:heuristic-effectiveness}) and found a solution in most cases.
 
 The cDPA is a heuristic in the sense that it is not
 clear which optimization problem it solves. In particular, it does not
@@ -662,7 +670,7 @@ and the predicted peaks $\mathbf P\left[ \mathbf{\tilde
 % each sample $i\in\{1,\dots, n\}$, the only question that remains is:
 % how many segments?
 
-There are several unsupervised penalties that are based on theoretical
+There are several unsupervised penalty functions that are based on theoretical
 assumptions about the data (distribution, independence) which may or
 may not be true in practice. One can use asymptotic arguments to get a
 penalty such as the AIC \citep{Akaike73}, BIC \citep{Schwarz78}, or
