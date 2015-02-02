@@ -140,8 +140,9 @@ optimal for any given data set.
 
 In supervised peak detection \citep{hocking2014visual}, there
 are $n$ labeled samples, and each sample $i\in\{1, \dots, n\}$ has a
-profile $\mathbf y_i\in\ZZ_+^d$ and a set of annotated region labels $R_i$
-which defines a non-convex annotation error function
+profile $\mathbf y_i\in\ZZ_+^d$ and a set of annotated region labels $R_i$ 
+("no peak", "peak", ...).
+From these it is possible to define a non-convex annotation error function
 \begin{equation}
   \label{eq:error}
   E[c(\mathbf y_i),  R_i] =
@@ -164,7 +165,7 @@ exhibit the same pattern type.
 
 The main contribution of this paper is \ref{PeakSeg}, a peak detection
 model that can be trained using supervised learning, and is effective
-for several pattern types. Rather than taking such unsupervised model
+for several pattern types (sharp and broad peaks). Rather than taking such unsupervised model
 parameters for granted, we propose to train model parameters using
 labeled data of the same pattern type. Importantly, and in contrast to
 existing unsupervised approaches which can only be trained using grid
@@ -199,7 +200,7 @@ Our work is based and inspired by roughly three types of contributions:
 %Previous work can be divided into roughly three categories:
 unsupervised ChIP-seq peak detectors from the bioinformatics
 literature, maximum likelihood segmentation algorithms, and model
-selection criteria used for segmentation.
+selection criteria developped for segmentation.
 
 \begin{figure*}[b!]
   \centering
@@ -814,7 +815,7 @@ considered 3 kinds of model training:\footnote{Source code for computing models 
   algorithm, ignoring the labeled data in the train set.
 \item \textbf{Grid search} learns a scalar parameter with minimal
   annotation error on the train set.
-\item \textbf{Interval regression} is the efficient multi-parameter
+\item \textbf{Interval regression} is the multi-parameter
   penalty learning model of \citet{HOCKING-penalties}.
 \end{itemize}
 
