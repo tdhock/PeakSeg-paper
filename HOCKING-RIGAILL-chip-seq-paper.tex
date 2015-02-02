@@ -731,11 +731,11 @@ models with 3 and 41 parameters:
 \item \textbf{3}: we used an $m=2$-dimensional feature
   vector $\mathbf x_i = \left[\begin{array}{cc} \log\max \mathbf y_i &
       \log d_i
-\end{array}\right]$ where $d_i$ is the number of base pairs for 
-sample/chromosome $i$.  This corresponds to a penalty $\lambda_i =
-e^\beta (\max\mathbf y_i)^{w_1} d_i^{w_2}$. We fit the model by
-solving the un-regularized interval regression problem of
-\citet{HOCKING-penalties}.
+\end{array}\right]$ where $\mathbf y_i\in\RR^{d_i}$ 
+is one sample $i$ of count data to segment.
+This corresponds to a penalty $\lambda_i = e^\beta (\max\mathbf
+y_i)^{w_1} d_i^{w_2}$. We fit the model by solving the un-regularized
+interval regression problem of \citet{HOCKING-penalties}.
 \item \textbf{41}: we defined $m=40$ features using transforms ($x,
   \log x, \log[x+1], \log\log x$), where $x$ are features such as
   quartiles of $\mathbf y_i$, mean of $\mathbf y_i$, and
