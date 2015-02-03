@@ -60,7 +60,7 @@
 ]
 
 \begin{abstract}
-  Peak detection is a central problem in ChIP-seq data analysis, and
+  Peak detection is a central problem in genomic data analysis, and
   current algorithms for this task are unsupervised and mostly
   effective for a single data type and pattern (e.g. H3K4me3 data with
   a sharp peak pattern). We propose PeakSeg, a new constrained maximum
@@ -68,27 +68,28 @@
   inference algorithm: constrained dynamic programming. We investigate
   un\-super\-vised and super\-vised learning of penalties for
   the critical model selection problem. We show that the 
-  super\-vised method is the first algorithm with state-of-the-art peak
+  super\-vised method has state-of-the-art peak
   detection across all data sets in a benchmark that includes both
   sharp H3K4me3 and broad H3K36me3 patterns.
 \end{abstract}
 
 \section{Introduction}
 
-\subsection{Unsupervised ChIP-seq peak detection}
+\subsection{Peak detection in ChIP-seq data}
 
 Chromatin immunoprecipitation sequencing (ChIP-seq) is a biological
 experiment for genome-wide profiling of histone modifications and
 transcription factor binding sites, with many experimental and
 computational steps \citep{practical}. Briefly, each experiment yields
 a set of sequence reads which are aligned to a reference genome, and
-then the data are interpreted by counting the number of aligned reads
-at each genomic position (Figure~\ref{fig:dp-peaks-train}). In this
-paper we propose a new method for peak calling these data, which is a
-binary classification problem for each genomic position. The positive
-class is enriched (peaks) and the negative class is background
-noise. Importantly, peaks and background occur in long contiguous
-segments across the genome.
+then the number of aligned reads are counted at each genomic position
+(Figure~\ref{fig:dp-peaks-train}). These data can be interpreted using
+one of the many available peak detection algorithms
+\citep{evaluation2010, rye2010manually, chip-seq-bench}, which each
+essentially work as a binary classifier for each genomic position. The
+positive class is enriched (peaks) and the negative class is
+background noise. Importantly, peaks and background occur in long
+contiguous segments across the genome.
 
 \begin{figure*}[b!]
   \centering
@@ -115,44 +116,42 @@ $d$ base pairs can be represented as a vector $\mathbf y= \left[
 \right]\in\ZZ_+^d$ of counts of aligned sequence reads. A peak
 detection algorithm can be described as a function $c:\ZZ_+^d
 \rightarrow \{0, 1\}^d$ which returns 0 for background noise and 1 for
-a peak. In contrast to the
-supervised method proposed in this paper, most previous algorithms are
-unsupervised since they define a peak detector $c$ using only the
-profile data $\mathbf y$.
+a peak. 
 
-
-\subsection{Different ChIP-seq peak patterns}
+\subsection{Unsupervised versus supervised peak detection}
 
 There are several different kinds of peak patterns that have been
-observed and labeled in different ChIP-seq data sets. For example,
+observed in different ChIP-seq data sets. For example,
 Figure~\ref{fig:dp-peaks-train} shows H3K4me3 data with a sharp peak
-pattern, and H3K36me3 data with a broad peak pattern. Current peak
-detectors are unsupervised learning algorithms that are designed for
-specific patterns. For example, the MACS algorithm was designed for
-the sharp pattern in H3K4me3 data \citep{MACS}.
+pattern, and H3K36me3 data with a broad peak pattern. Current
+state-of-the-art peak detectors from the bioinformatics literature are
+unsupervised learning algorithms that are designed for specific
+patterns. For example, the MACS algorithm was designed for the sharp
+pattern in H3K4me3 data \citep{MACS}. Another example is HMCan
+\citep{HMCan}, whose authors suggest fixed pattern-specific
+mergeDistance parameters: H3K4me3 $\Rightarrow 200$, H3K36me3
+$\Rightarrow 1000$. In fact, each unsupervised peak detection
+algorithm has several numeric parameters, each with defaults that may
+or may not be optimal for a particular data set. Rather than taking an
+unsupervised model and default parameters for granted, we propose a
+new supervised peak detection model that can be efficiently trained to
+recognize different peak patterns.
 
-Another example is HMCan \citep{HMCan}, whose authors suggest fixed
-pattern-specific mergeDistance parameters: H3K4me3 $\Rightarrow 200$,
-H3K36me3 $\Rightarrow 1000$. However, these parameters may not be
-optimal for any given data set.
-
-\subsection{Supervised peak detection}
-
-In supervised peak detection \citep{hocking2014visual}, there
-are $n$ labeled samples, and each sample $i\in\{1, \dots, n\}$ has a
-profile $\mathbf y_i\in\ZZ_+^d$ and a set of annotated region labels $R_i$ 
-("no peak", "peak", ...).
-which defines a non-convex annotation error function
+In supervised peak detection \citep{hocking2014visual}, there are $n$
+labeled samples, and each sample $i\in\{1, \dots, n\}$ has a profile
+$\mathbf y_i\in\ZZ_+^d$ and a set of annotated region labels $R_i$
+(``noPeaks,'' ``peaks,'' etc. as in Figures~1 and 2). These labels
+define a non-convex annotation error function
 \begin{equation}
   \label{eq:error}
   E[c(\mathbf y_i),  R_i] =
   \text{FP}[c(\mathbf y_i), R_i] +
-  \text{FN}[c(\mathbf y_i), R_i].
+  \text{FN}[c(\mathbf y_i), R_i]
 \end{equation}
-The annotation error counts the number of false positive (FP) and
-false negative (FN) regions (Figure~\ref{fig:dp-peaks-train}), so it
-takes values in the non-negative integers. The goal of learning is to
-find a peak caller~$c$ with minimal error on some test profiles:
+which counts the number of false positive (FP) and false negative (FN)
+regions, so it takes values in the non-negative integers. The goal of
+learning is to find a peak caller~$c$ with minimal error on some test
+profiles:
 \begin{equation}
   \label{eq:min_error}
   \minimize_c \sum_{i\in\text{test}} E[c(\mathbf y_i),  R_i].
@@ -165,15 +164,15 @@ exhibit the same pattern type.
 
 The main contribution of this paper is \ref{PeakSeg}, a peak detection
 model that can be trained using supervised learning, and is effective
-for several pattern types (sharp and broad peaks). Rather than taking such unsupervised model
-parameters for granted, we propose to train model parameters using
-labeled data of the same pattern type. Importantly, and in contrast to
-existing unsupervised approaches which can only be trained using grid
-search, we propose efficient discrete and convex optimization
-algorithms for model training. Our method is the first peak detector
-with an efficient supervised learning algorithm, and the first method
-that achieves state-of-the-art peak detection across several 
-patterns in the benchmark of \citet{hocking2014visual}.
+for several pattern types (sharp and broad peaks). Rather than taking
+unsupervised model parameters for granted, we propose to train model
+parameters using labeled data of the same pattern type. Importantly,
+and in contrast to existing unsupervised approaches which can only be
+trained using grid search, we propose efficient discrete and convex
+optimization algorithms for model training. Our method is the first
+peak detector with an efficient supervised learning algorithm, and the
+first method that achieves state-of-the-art peak detection across
+several patterns in the benchmark of \citet{hocking2014visual}.
 
 A second contribution of this paper is a detailed study of the peak
 detection accuracy of several unsupervised and supervised penalty
@@ -196,11 +195,12 @@ Section~\ref{sec:conclusions}.
 \section{Related work}
 \label{sec:related}
 
-Our work is based and inspired by roughly three types of contributions:
+Our work is based on and inspired by roughly three types of related
+work:
 %Previous work can be divided into roughly three categories:
 unsupervised ChIP-seq peak detectors from the bioinformatics
-literature, maximum likelihood segmentation algorithms, and model
-selection criteria.
+literature, maximum likelihood segmentation models, 
+and criteria for model selection.
 
 \begin{figure*}[b!]
   \centering
@@ -411,7 +411,7 @@ $P_j(\mathbf m)=1$, and the odd-numbered segments may be interpreted
 as background $P_j(\mathbf m)=0$.
 
 For example, the good peaks in Figure~\ref{fig:dp-peaks-train} are the
-the second and fourth segments of the \ref{PeakSeg} solution for $s=5$
+second and fourth segments of the \ref{PeakSeg} solution for $s=5$
 segments.
 
 Figure~\ref{fig:Segmentor-PeakSeg} shows a profile where the constraint is
@@ -448,12 +448,14 @@ optimal Poisson loss (\ref{eq:rho}) for that segment is
   c_{(t',t]} = \sigma_{(t', t]}\left[1 - 
   \log\left(M_{(t', t]}\right)\right].
 \end{equation}
-Let ${\mathcal L}_{s, t}$ be the optimal Poisson loss of the
-model with $s$ segments up to data point $t$ and ${\mathcal T}_{s, t}$ the corresponding optimal last change. The key idea behind the
-DPA is that 
-if we consider an optimal segmentation in $s$ up to $t$ and consider
-the subsegmentation obtained by discarding the last segment $({\mathcal T}_{s, t}, t]$ then
-the resulting segmentation is also optimal in the sense that its loss is equal to ${\mathcal L}_{s-1, {\mathcal T}_{s, t}}.$
+Let ${\mathcal L}_{s, t}$ be the optimal Poisson loss of the model
+with $s$ segments up to data point $t$, and let ${\mathcal T}_{s, t}$
+be the corresponding optimal last change. The key idea behind the DPA
+is that if we consider an optimal segmentation in $s$ up to $t$ and
+consider the subsegmentation obtained by discarding the last segment
+$({\mathcal T}_{s, t}, t]$ then the resulting segmentation is also
+optimal in the sense that its loss is equal to ${\mathcal L}_{s-1,
+  {\mathcal T}_{s, t}}.$
 %any subsegmentation of an optimal segmentation
 %should be optimal. 
 This can be formally written as a search for the best
@@ -560,11 +562,10 @@ $\sum_{j=1}^t y_j$. Hence the computational requirements of the cDPA
 are the same as the DPA: $\mathcal{O}(s_{\text{max}} d)$ memory and
 $\mathcal O(s_{\text{max}} d^2)$ time.
 
-Note also that for both the even and odd update it might very well be
-that the set of possible changes $T$ is empty.  This means that no
-segmentation in $s$ segments to point $t$ satistifying the
-\ref{PeakSeg} model constraint was found.  To cope with this case we
-simply set ${\mathcal L}_{s, t} = \infty$.
+Note also that for both the even and odd update the set of possible
+changes $T$ might very well be empty. This means that no segmentation
+in $s$ segments to point $t$ satistifying the \ref{PeakSeg} model
+constraint was found, so we simply set ${\mathcal L}_{s, t} = \infty$.
 
 Hence the cDPA is not guaranteed to recover a segmentation. In
 particular for an ever increasing series of data $y_1 < \cdots < y_d$,
@@ -893,7 +894,7 @@ Among models with only 1 parameter trained using grid search, it is
 clear that oracle.1 is the most accurate. It achieves close to
 state-of-the-art peak detection accuracy on every data set. In
 contrast, the baseline macs.1 is only effective for H3K4me3 data, and
-the baseline hmcan.broad.1 is only effective for H3K36me3 data.
+the baseline \mbox{hmcan.broad.1} is only effective for H3K36me3 data.
 
 \subsection{Supervised learning of several parameters can further
   increase peak detection accuracy}
