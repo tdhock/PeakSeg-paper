@@ -226,18 +226,14 @@ and criteria for model selection.
 There are literally dozens of unsupervised algorithms for peak
 detection in ChIP-seq data sets, and the bioinformatics literature
 contains several published comparison studies \citep{evaluation2010,
-  rye2010manually, chip-seq-bench}. 
-
-However, supervised peak detection model training is a relatively new
-idea. \citet{hocking2014visual} proposed a benchmark of labeled
-ChIP-seq data sets, with two different histone mark types: H3K4me3
-(sharp peak pattern) and H3K36me3 (broad peak pattern). The best peak
-detection algorithm in these H3K4me3 data was macs \citep{MACS}, and
-the best for H3K36me3 was HMCan \citep{HMCan}. Both of these
-algorithms are unsupervised, but were calibrated using the annotated
-region labels to choose the best scalar significance threshold
-hyperparameter via grid search.
-
+  rye2010manually, chip-seq-bench}. \citet{hocking2014visual}
+proposed a benchmark of labeled ChIP-seq data sets, with two different
+histone mark types: H3K4me3 (sharp peak pattern) and H3K36me3 (broad
+peak pattern). The best peak detection algorithm in these H3K4me3 data
+was macs \citep{MACS}, and the best for H3K36me3 was HMCan
+\citep{HMCan}. Both of these algorithms are unsupervised, but were
+calibrated using the annotated region labels to choose the best scalar
+significance threshold hyperparameter via grid search.
 \citet{DFilter} also attempted to train hyperparameters of
 unsupervised peak detectors, and \citet{picking2012} found that
 optimal values do not generalize between data sets. In contrast, we
@@ -318,15 +314,16 @@ For a sequence of $d$ data points $\mathbf y\in\RR^d$ to segment, we
 fix a maximum number of segments $1 \leq s_{\text{\text{max}}}\leq d$,
 and define the unconstrained maximum likelihood segmentation problem
 for any $s\in\{1, 2, \dots, s_{\max}\}$ as
-\begin{align*}
+\begin{align}
   \label{unconstrained}
   \mathbf{\hat m}^s(\mathbf y)  =\ 
   &\argmin_{\mathbf m\in\RR^{d}} && 
   \rho
-  \tag{\textbf{Unconstrained}}
+  %\tag{\textbf{Unconstrained}}
   (\mathbf m, \mathbf y) \\
   &\text{such that} && \Segments(\mathbf m)=s,
-\end{align*}
+  \nonumber
+\end{align}
 where the Poisson loss function is
 \begin{equation}\label{eq:rho}
   \rho(\mathbf m, \mathbf y)= \sum_{j=1}^d m_j - y_j \log m_j.
@@ -344,12 +341,13 @@ $O(s_{\text{\text{max}}} d^2)$ time using dynamic programming
 \citep{bellman}, or in $O(s_{\text{\text{max}}} d \log d)$
 time using pruned dynamic programming \citep{pruned-dp, Segmentor}.
 
-This problem is ``\ref{unconstrained}'' in the sense that
-$\mathbf{\hat m}^s(\mathbf y)$ is the most likely segmentation of all
-possible models with $s$ piecewise constant segments ($s-1$
+We refer to (\ref{unconstrained}) as the ``unconstrained'' model
+since $\mathbf{\hat m}^s(\mathbf y)$ is the most likely segmentation
+of all possible models with $s$ piecewise constant segments ($s-1$
 change-points). Several unconstrained models are shown on the left of
-Figure~\ref{fig:Segmentor-PeakSeg}, and for example the second segment of the
-model with $s=3$ segments appears to capture the peak in the data.
+Figure~\ref{fig:Segmentor-PeakSeg}, and for example the second segment
+of the model with $s=3$ segments appears to capture the peak in the
+data.
 % In general, we would like to use the 2nd, 4th,
 % ... segments as peaks, and the 1st, 3rd, ... segments as
 % background. 
@@ -587,10 +585,8 @@ the cDPA is empirically able to compute \ref{PeakSeg} models in the vast
 majority of real data sets
 (Section~\ref{sec:heuristic-effectiveness}).
 
-The cDPA is a heuristic in the sense that it is not clear which
-optimization problem it solves. In particular, it does not necessarily
-recover the maximum likelihood segmentation that satistifies the
-\ref{PeakSeg} model constraints. We illustrate this using the following simple
+The cDPA is a heuristic since it is not guaranteed to compute the
+\ref{PeakSeg} model. We illustrate this using the following 
 example with $\mathbf y = \left[\begin{array}{cccc} 1 & 10 & 14 & 13
 \end{array}\right]\in\ZZ_+^4
 $. For $s=3$ segments there are only 3 possible segmentations:

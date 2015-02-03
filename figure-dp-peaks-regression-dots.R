@@ -29,7 +29,7 @@ regression.set.i <- dp.peaks.regression %>%
   group_by(set.name, set.i) %>%
   summarise(errors=sum(errors),
             regions=sum(regions)) %>%
-  mutate(algorithm="PeakSeg")
+  mutate(algorithm="PeakSeg (cDPA)")
 both.cols <- c("set.name", "set.i", "algorithm", "errors", "regions")
 
 un <- unsupervised.error %>%
@@ -91,8 +91,8 @@ both <-
          algorithm=ifelse(algorithm %in% names(alg.rep),
            alg.rep[as.character(algorithm)], as.character(algorithm)),
          algo.type=ifelse(grepl("hmcan|macs", algorithm),
-           "baselines", "PeakSeg"),
-         algo.type=factor(algo.type, c("PeakSeg",
+           "baselines", "PeakSeg (cDPA)"),
+         algo.type=factor(algo.type, c("PeakSeg (cDPA)",
            "baselines")),
          learning=ifelse(grepl("[.]0$", algorithm), "unsupervised",
            ifelse(grepl("[.]1$", algorithm), "grid\nsearch",
