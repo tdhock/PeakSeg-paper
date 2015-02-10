@@ -36,14 +36,15 @@
 \begin{document}
 
 \title{PeakSeg: ChIP-seq \textbf{Peak} detection using constrained
-  optimal \textbf{Seg}mentation} 
+  optimal \textbf{Seg}mentation
+and supervised penalty learning}  
 
 \author{
   Toby Dylan Hocking\\
   toby.hocking@mail.mcgill.ca\\
   joint work with Guillem Rigaill and Guillaume Bourque}
 
-\date{13 December 2014}
+\date{13 February 2014}
 
 \maketitle
 
@@ -179,36 +180,50 @@ maxIter 20
 
 \begin{frame}
   \frametitle{Comparison on annotated McGill benchmark data set}
-  Hocking et al, 2014, arxiv:1409.6209.
+  Hocking et al, 2014, arXiv:1409.6209.\\
   \begin{itemize}
-  \item Manually annotate regions with or without peaks.
+  \item Manually annotate regions with or without peaks.\\
+    \url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}
   \item Tune 1 parameter that affects the number of peaks.
   \item Choose the parameter that minimizes the annotation error.
   \end{itemize}
   Results:
   \begin{itemize}
-  \item MACS best for H3K4me3 (peak profiles),
-  \item HMCan.broad best for H3K36me3 (broad profiles).
-  \item Same results across 4 annotators (PhD students, postdocs).
+  \item MACS best for H3K4me3 (sharp peak pattern),
+  \item HMCan.broad best for H3K36me3 (broad peak pattern).
   \item 10--20\% test error rates.
+  \item Same results across 4 annotators (PhD students, postdocs).
   \end{itemize}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Can we do better? Yes!}
-  We propose a new \textbf{supervised} peak detection
-  algorithm.
+  \frametitle{Two annotators provide consistent labels, but different
+    precision}
+  \includegraphics[width=1.1\textwidth]{figure-several-annotators}
+
   \begin{itemize}
-  \item Input: several ChIP-seq profiles, manually annotated regions.
-  \item New method: constrained optimal segmentation.
+  \item TDH peakStart/peakEnd more precise than AM peaks.
+  \item AM noPeaks more precise than TDH no label.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Can we do better than unsupervised peak detectors? Yes!}
+  We propose \textbf{PeakSeg}, a new model with efficient algorithms
+  for supervised peak detection.
+  \begin{itemize}
+  \item Input: \alert<1>{several ChIP-seq profiles},
+    \alert<2>{manually annotated regions}.
+  \item New methods for peak detection: 
     \begin{itemize}
-      \item only 1 parameter to tune (using annotated regions),
-      \item share information across several profiles.
+    \item \alert<1>{Constrained optimal segmentation}.
+    \item Efficient \alert<2>{supervised learning using manually annotated
+      regions}.
     \end{itemize}
   \item Output: predicted peaks for each profile.
   %\item and consistent peak boundaries across samples.
   \end{itemize}
-  State-of-the-art peak detection accuracy (on both peak H3K4me3 and
+  State-of-the-art peak detection accuracy (on both sharp H3K4me3 and
   broad H3K36me3 profiles).
 \end{frame}
 
@@ -418,7 +433,7 @@ maxIter 20
   We can use the same method for peak detection!
 \end{frame}
 
-\section{Results on the McGill benchmark data set}
+\section{Results on the McGill benchmark data set, conclusions}
 
 \begin{frame}
   \frametitle{Benchmark: 7 annotated region data sets}
@@ -432,8 +447,9 @@ maxIter 20
   \end{itemize}
   Used the DP algorithm on a subset of the data.
   \begin{itemize}
-  \item Compute PeakSeg models $\mathbf{\tilde m}^0(\mathbf y), \dots,
-    \mathbf{\tilde m}^{9}(\mathbf y)$.
+  \item Compute 10 PeakSeg models $\mathbf{\tilde m}^1(\mathbf
+    y),\mathbf{\tilde m}^3(\mathbf y), \dots, \mathbf{\tilde
+      m}^{19}(\mathbf y)$.
   \item For the biggest window, DP took 3 hours.\\
     ($d=88,509$ data points, 3.5  megabases)
   \item macs takes about 90 minutes for one whole genome.
@@ -496,6 +512,9 @@ Predicted number of segments for profile $i\in\{1, \dots, n\}$:
 \begin{frame}
   \frametitle{Unsupervised constrained optimization algorithm works
     for both H3K36me3 and H3K4me3 data types}
+
+  ...except in the H3K4me3\_XJ\_immune data set.
+
   \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots-unsupervised}
   
   Six train/test splits (open circles) and mean (shaded circle).
@@ -503,6 +522,9 @@ Predicted number of segments for profile $i\in\{1, \dots, n\}$:
 
 \begin{frame}
   \frametitle{Training 1 parameter with grid search reduces test error}
+
+  ...except for macs, good defaults for 3/4 H3K4me3 data sets.
+
   \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots-grid}
 
   Six train/test splits (open circles) and mean (shaded circle).
@@ -511,33 +533,77 @@ Predicted number of segments for profile $i\in\{1, \dots, n\}$:
 \begin{frame}
   \frametitle{Training several parameters with interval regression 
     further reduces test error}
+
+  ...except when there are few train data (H3K36me3\_TDH).
+
   \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots}
 
   Six train/test splits (open circles) and mean (shaded circle).
 \end{frame}
-
-\section{Conclusions and future work}
 
 \begin{frame}
   \frametitle{Conclusions and future work}
   PeakSeg: \textbf{Peak} detection via constrained optimal
   \textbf{Seg}mentation.
   \begin{itemize}
-  \item First supervised peak detection algorithm.
-  \item State-of-the-art peak detection, on both H3K4me3 and H3K36me3
+  \item First peak detector with efficient multi-parameter supervised
+    learning algorithm.
+  \item State-of-the-art peak detection for both H3K4me3 and H3K36me3
     profiles.
-  \item First algorithm to work for both data types.
   \end{itemize}
   Future work:
   \begin{itemize}
   \item Constrained version of Pruned Dynamic Programming (Rigaill
-    arXiv:1004.0887) to compute PeakSeg in $O(d\log d)$ time, for
-    entire chromosomes (hg19 chr1 has $d=249,250,621$ bases).
+    arXiv:1004.0887) to compute PeakSeg in $O(d\log d)$ time.
+  \item Apply to whole genome (not just annotated windows).
   \item Better test error using other features $\mathbf x$?
   \item Detecting the same peaks across several profiles?
   \end{itemize}
 \end{frame}
 
+\section{Google Summer of Code}
+
+\begin{frame}
+  \frametitle{Google Summer of Code (GSOC)}
+Student gets \$5000 for writing open source code for
+    3 months.
+    \begin{description}
+    \item[Feb] \textbf{Admins} for open source organizations
+      e.g. R, Bioconductor apply to Google.
+    \item[Mar] \textbf{Mentors} suggest projects for each org.\\
+      \textbf{Students} submit project proposals to Google.\\
+      Google gives funding for $n$ students to an org.
+    \item[April] The top $n$ students get \$500 and begin coding.
+    \item[July] Midterm evaluation, pass = \$2250.
+    \item[Aug] Final evaluation, pass = \$2250.
+    \item[November] Orgs get \$500/student mentored.
+    \end{description}
+
+  I have participated as an \textbf{admin} and \textbf{mentor} for the
+  R project.
+\end{frame}
+
+\begin{frame}
+  \frametitle{What makes a good GSOC project?}
+  Coding projects should:
+  \begin{itemize}
+  \item Result in free/open-source software.
+  \item Be 3 months of full time work for a student.
+  \item Include writing documentation and tests.
+  \item Not include original research.
+  \end{itemize}
+  Examples: 
+  \begin{itemize}
+  \item Louis/Mathieu can be \textbf{admins} for MUGQIC org.
+  \item Warren/Stephan can be \textbf{mentors} for a project to write
+    a new R package for methylation analysis.
+  \item Robert/Dan can be \textbf{mentors} for a project to implement
+    new features in Gemini.
+  \item Any undergrad/master/PhD candidates (at McGill or not)
+    can be \textbf{students}.
+  \end{itemize}
+  
+\end{frame}
 
 \begin{frame}
   \frametitle{Thanks for your attention!}
@@ -552,12 +618,6 @@ Predicted number of segments for profile $i\in\{1, \dots, n\}$:
 
   Supplementary slides appear after this one.
 
-\end{frame}
-
-
-\begin{frame}
-  \frametitle{Same profile, two annotators}
-  \includegraphics[width=1.1\textwidth]{figure-several-annotators}
 \end{frame}
 
 \begin{frame}

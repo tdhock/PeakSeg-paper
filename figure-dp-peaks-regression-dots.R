@@ -258,9 +258,10 @@ ggplot()+
 
 un.both <- both %>%
   filter(grepl("[.][0]$", algo)) %>%
-  mutate(algo.type=sub(" ", "\n", algo.type))
+  mutate(algo.type=sub(" ", "\n", algo.type),
+         algo.fac=factor(algo.type, c("PeakSeg\n(cDPA)", "baselines")))
 un.mean <- un.both %>%
-  group_by(set.name, algo, algo.type, learning) %>%
+  group_by(set.name, algo, algo.fac, learning) %>%
   summarise(mean=mean(percent))
 un.best <- un.mean %>%
   group_by(set.name) %>%
@@ -275,7 +276,7 @@ ggplot()+
              data=un.mean, alpha=0.25, size=4)+
   geom_point(aes(percent, algo, color=learning),
              data=un.both, pch=1)+
-  facet_grid(algo.type ~ set.name, labeller=function(var, val){
+  facet_grid(algo.fac ~ set.name, labeller=function(var, val){
     gsub("_", "\n", val)
   }, scales="free_y", space="free_y")+
   scale_y_discrete("algorithm . parameters learned")+

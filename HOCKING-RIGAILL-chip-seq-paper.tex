@@ -137,11 +137,11 @@ unsupervised model and default parameters for granted, we propose a
 new supervised peak detection model that can be efficiently trained to
 recognize different peak patterns.
 
-In supervised peak detection \citep{hocking2014visual}, there are $n$
-labeled samples, and each sample $i\in\{1, \dots, n\}$ has a profile
-$\mathbf y_i\in\ZZ_+^d$ and a set of annotated region labels $R_i$
-(``noPeaks,'' ``peaks,'' etc. as in Figures~1 and 2). These labels
-define a non-convex annotation error function
+In supervised peak detection, there are $n$ labeled samples, and each
+sample $i\in\{1, \dots, n\}$ has a profile $\mathbf y_i\in\ZZ_+^d$ and
+a set of annotated region labels $R_i$ (``noPeaks,'' ``peaks,''
+etc. as in Figures~1 and 2). These labels define a non-convex
+annotation error function
 \begin{equation}
   \label{eq:error}
   E[c(\mathbf y_i),  R_i] =
@@ -430,8 +430,8 @@ the \ref{PeakSeg} optimization problem.
 
 \subsection{The standard DPA}
 
-The \ref{unconstrained} model can be computed exactly using a dynamic
-programming algorithm (DPA).
+The unconstrained model (\ref{unconstrained}) can be computed exactly
+using a dynamic programming algorithm (DPA).
 % To describe this algorithm we
 % define $\widehat{\mathcal{L}}_{s,t}$ as minus the best log-likelihood of
 % the segmentation $\widehat{m}_{s,t}$.  This best log-likelihood can be
