@@ -80,7 +80,7 @@ for(show.model.i in seq_along(show.models)){
   geom_point(aes(seg2.chromStart/1e3, loss, size=feasible),
              data=data.table(show.model, what="loss"),
              color="green")+
-  scale_size_manual(values=c(yes=2, no=1))+
+  scale_size_manual(values=c(yes=2, no=0.5))+
   theme_bw()+
   theme(panel.margin=grid::unit(0, "cm"))+
   facet_grid(what ~ ., scales="free")+
