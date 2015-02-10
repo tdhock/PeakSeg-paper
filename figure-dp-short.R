@@ -18,8 +18,8 @@ sample.counts <- counts.list[[sample.id]]
 cell.type <- as.character(sample.counts$cell.type[1])
 
 sample.counts$weight <- with(sample.counts, chromEnd-chromStart)
-n <- nrow(sample.counts)
-l <- 800
+n <- 2900
+l <- 400
 seg2.starts <- as.integer(seq(1, n, l=l)[-c(1, l)])
 loss.list <- list()
 mean.mat <- matrix(NA, length(seg2.starts), 2)
@@ -54,9 +54,9 @@ feasible <- model.dt %>%
   filter(feasible=="yes")
 
 show.models <-
-  c(10, 80,
+  c(50, 100,
     which.min(model.dt$loss),
-    240, 350, 500, 620)
+    382, 395)
 show.loss.list <- split(loss.dt, loss.dt$model.i)
 show.model.list <- split(model.dt, model.dt$model.i)
 png.list <- list()
@@ -87,7 +87,7 @@ for(show.model.i in seq_along(show.models)){
   ylab("")+
   xlab(paste("position on chromosome (kb = kilo bases)"))
 
-  png(png.name <- sprintf("figure-dp-%d.png", show.model.i),
+  png(png.name <- sprintf("figure-dp-short-%d.png", show.model.i),
       units="in", res=200, width=6, height=4)
   print(selectedPlot)
   dev.off()
@@ -100,9 +100,9 @@ pngs <- do.call(c, png.list)
 png.tex <- sprintf("
 \\begin{frame}
 \\frametitle{Computation of optimal loss $\\mathcal L_{s, t}$
- for $s=2$ segments up to last data point $t = d$}
+  for $s=2$ segments up to data point $t < d$}
   \\includegraphics[width=\\textwidth]{%s}
 \\end{frame}
 ", pngs)
 
-cat(png.tex, file="figure-dp.tex")
+cat(png.tex, file="figure-dp-short.tex")
