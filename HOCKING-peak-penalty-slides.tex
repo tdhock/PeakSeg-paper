@@ -296,135 +296,6 @@ where the peak indicator $P_1(\mathbf m)=0$ and for $j>1$,
 
 \end{frame}
 
-\input{figure-dp-first}
-
-\input{figure-dp-short}
-
-\input{figure-dp}
-
-\begin{frame}
-  \frametitle{Dynamic programming is faster than grid search for $s>
-    2$ segments}
-
-  Computation time in number of data points $d$:
-
-  \vskip 1cm
-
-  \begin{tabular}{ccc}
-    segments $s$ & grid search & dynamic programming \\
-    \hline
-    1 & $O(d)$ & $O(d)$ \\
-    2 & $O(d^2)$ & $O(d^2)$ \\
-    3 & $O(d^3)$ & $O(d^2)$ \\
-    4 & $O(d^4)$ & $O(d^2)$ \\
-    $\vdots$ &     $\vdots$ &     $\vdots$ 
-  \end{tabular}
-
-  \vskip 1cm
-
-  For example $d = 5735$ data points to segment.\\
-  $d^2 = 32890225$\\
-  $d^3 = 188625440375$\\
-  $\vdots$
-\end{frame}
-
-\input{figure-dp-third}
-
-% \begin{frame}
-%   \frametitle{Maximum likelihood segmentation models}
-%   \includegraphics[width=\textwidth]{figure-Segmentor-nopeaks-notext}
-
-%   Poisson likelihood, implemented in Segmentor3IsBack R package
-%   (Cleynen et al. 2014).
-
-%   %50,000 base pairs and 3,463 weighted data segments.
-% \end{frame}
-
-
-% \begin{frame}
-%   \frametitle{Part of one H3K4me3 ChIP-seq profile}
-%   \includegraphics[width=\textwidth]{figure-PeakSeg-neither}
-
-%   Noisy ChIP-seq data only.
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{PeakSeg models from 0 to 3 peaks}
-%   \includegraphics[width=\textwidth]{figure-PeakSeg-seg}
-
-%   Data and segmentation.
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{PeakSeg models from 0 to 3 peaks}
-%   \includegraphics[width=\textwidth]{figure-PeakSeg}
-
-%   Data, segmentation, and peaks.
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{PeakSeg models from 0 to 3 peaks}
-%   \includegraphics[width=\textwidth]{figure-PeakSeg-peaks}
-
-%   Data and peaks.
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{PeakSeg models from 0 to 3 peaks}
-%   \includegraphics[width=\textwidth]{figure-PeakSeg-regions}
-
-%   Peaks and annotated regions.
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{PeakSeg on several samples}
-%   \begin{itemize}
-%   \item Let there be $n$ samples of aligned read counts
-%   $\mathbf y_1\in\ZZ_+^d, \dots, \mathbf y_n\in\ZZ_+^d$
-%   on a chromosome with $d$ base pairs.
-% \item For each sample, compute a sequence of models with
-%   $p\in\{0,\dots, p_{\text{max}}\}$ peaks.
-%   \item Sample 1: $\mathbf {\tilde m}^0(\mathbf y_1), 
-%     \dots, 
-%     \mathbf{\tilde m}^{p_{\text{max}}}(\mathbf y_1)$,
-%   \\ $\vdots$
-%   \item Sample $n$: $\mathbf {\tilde m}^0(\mathbf y_n), 
-%     \dots, 
-%     \mathbf{\tilde m}^{p_{\text{max}}}(\mathbf y_n)$.
-%   \item Parallelizable on samples and chromosomes.
-%   \end{itemize}
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{H3K4me3 data, PeakSeg models with 1 peak}
-%   \includegraphics[width=\textwidth]{figure-PeakSeg1-4samples}
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{H3K4me3 data, PeakSeg models with 2 peaks}
-%   \includegraphics[width=\textwidth]{figure-PeakSeg2-4samples}
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{H3K4me3 data, PeakSeg models with 3 peaks}
-%   \includegraphics[width=\textwidth]{figure-PeakSeg3-4samples}
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{H3K36me3 data, PeakSeg model with 1 peak}
-%   \includegraphics[width=\textwidth]{figure-H3K36me3-sub-PeakSeg-1}
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{H3K36me3 data, PeakSeg model with 2 peaks}
-%   \includegraphics[width=\textwidth]{figure-H3K36me3-sub-PeakSeg-2}
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{H3K36me3 data, PeakSeg model with 3 peaks}
-%   \includegraphics[width=\textwidth]{figure-H3K36me3-sub-PeakSeg-3}
-% \end{frame}
-
 \begin{frame}
   \frametitle{PeakSeg accuracy can be quantified using labels}
   \includegraphics[width=\textwidth]{figure-Segmentor-PeakSeg-constrained-regions}
@@ -662,54 +533,49 @@ Student gets \$5000 for writing open source code for
 
   \vskip 1cm
 
-  Source code for slides online!\\
+  Source code for slides, figures, paper online!\\
   \small
-  \url{https://github.com/tdhock/PeakSeg-paper/HOCKING-PeakSeg-slides.tex}
+  \url{https://github.com/tdhock/PeakSeg-paper}
   \vskip 1cm
 
   Supplementary slides appear after this one.
 
 \end{frame}
 
+
+\input{figure-dp-first}
+
+\input{figure-dp-short}
+
+\input{figure-dp}
+
 \begin{frame}
-  \frametitle{Definition of Peaks model complexity function}
-  $S_1(\mathbf m)=0$, direction of change before base $j\in\{2, \dots, d\}$:
-  \begin{equation*}
-    \label{eq:S_j}
-    S_j(\mathbf m) = \sign( m_{j} - m_{j-1} ),
-  \end{equation*}
+  \frametitle{Dynamic programming is faster than grid search for $s>
+    2$ segments}
 
-  Number of peaks at base $j\in\{1, \dots, d\}$:
-  \begin{equation*}
-    \label{eq:P_j}
-    P_j(\mathbf m) = \sum_{k=1}^j S_k(\mathbf m).
-  \end{equation*}
+  Computation time in number of data points $d$:
 
-  Peaks must be larger than background:
-  \begin{equation*}
-    \label{eq:C_j}
-    C_j(\mathbf m) =
-    \begin{cases}
-      \infty & \text{ if } P_j(\mathbf m) < 0,\\
-      0 & \text{ otherwise.}
-    \end{cases}
-  \end{equation*}
-  
-  Finally,
-  \begin{equation*}
-    \label{eq:Peaks}
-    \Peaks(\mathbf m) =
-    \sum_{j=1}^d 
-    C_j(\mathbf m) +
-    S_j(\mathbf m)_+.
-  \end{equation*}
-  
+  \vskip 1cm
+
+  \begin{tabular}{ccc}
+    segments $s$ & grid search & dynamic programming \\
+    \hline
+    1 & $O(d)$ & $O(d)$ \\
+    2 & $O(d^2)$ & $O(d^2)$ \\
+    3 & $O(d^3)$ & $O(d^2)$ \\
+    4 & $O(d^4)$ & $O(d^2)$ \\
+    $\vdots$ &     $\vdots$ &     $\vdots$ 
+  \end{tabular}
+
+  \vskip 1cm
+
+  For example $d = 5735$ data points to segment.\\
+  $d^2 = 32890225$\\
+  $d^3 = 188625440375$\\
+  $\vdots$
 \end{frame}
 
-% \begin{frame}
-%   \frametitle{Same peaks detected using 3 different representations}
-%   \includegraphics[width=0.9\textwidth]{figure-PeakSeg-first-last}
-% \end{frame}
+\input{figure-dp-third}
 
 \begin{frame}
   \frametitle{Step 1: compute annotation error functions}
