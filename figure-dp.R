@@ -105,7 +105,7 @@ for(show.model.i in seq_along(show.models)){
   theme(panel.margin=grid::unit(0, "cm"))+
   facet_grid(what ~ ., scales="free")+
   ylab("")+
-  xlab(paste("position on chromosome t' (kb = kilo bases)"))
+  xlab(paste("position on chromosome (kb = kilo bases)"))
 
   png(png.name <- sprintf("figure-dp-%d.png", show.model.i),
       units="in", res=200, width=6, height=3)

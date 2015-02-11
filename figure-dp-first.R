@@ -41,6 +41,10 @@ for(model.i in seq_along(show.loss.list)){
   show.loss <- show.loss.list[[model.i]]
   selectedPlot <- 
   ggplot()+
+    geom_vline(aes(xintercept=seg.chromEnd/1e3), data=show.loss,
+               color="grey")+
+    geom_text(aes(seg.chromEnd/1e3, max(sample.counts$coverage), label="t "),
+              data=show.loss, hjust=1, vjust=1, color="grey")+
   geom_step(aes(chromStart/1e3, coverage),
             data=sample.counts,
             color="grey50")+
@@ -48,6 +52,7 @@ for(model.i in seq_along(show.loss.list)){
                    xend=seg.chromEnd/1e3, yend=seg.mean),
                color="green",
                data=show.loss)+
+                 theme_bw()+
   ylab("count of aligned reads")+
   xlab(paste("position on chromosome (kb = kilo bases)"))
 

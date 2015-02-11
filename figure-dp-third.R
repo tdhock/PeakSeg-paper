@@ -160,7 +160,7 @@ for(show.model.i in seq_along(show.models)){
   scale_y_continuous("",
                      breaks=c(seq(0, 30, by=10),
                        (13:17)*-10000))+
-  xlab(paste("position on chromosome t' (kb = kilo bases)"))
+  xlab(paste("position on chromosome (kb = kilo bases)"))
 
   png(png.name <- sprintf("figure-dp-third-%d.png", show.model.i),
       units="in", res=200, width=6, height=3)
