@@ -129,7 +129,9 @@ png.tex <- sprintf("
 
 $$
 \\mathcal L_{2, t} =
-\\min_{t' < t}
+\\min_{
+  t' < t
+}
 \\underbrace{
   \\mathcal L_{1, t'}
 }_{
