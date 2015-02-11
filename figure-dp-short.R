@@ -19,7 +19,7 @@ cell.type <- as.character(sample.counts$cell.type[1])
 
 sample.counts$weight <- with(sample.counts, chromEnd-chromStart)
 n <- 2900
-l <- 400
+l <- 100
 seg2.starts <- as.integer(seq(1, n, l=l)[-c(1, l)])
 loss.list <- list()
 mean.mat <- matrix(NA, length(seg2.starts), 2)
@@ -57,9 +57,16 @@ show.models <-
   c(50, 100,
     which.min(model.dt$loss),
     382, 395)
+show.models <-
+  c(12, 25,
+    which.min(model.dt$loss),
+    95, 98)
 show.loss.list <- split(loss.dt, loss.dt$model.i)
 show.model.list <- split(model.dt, model.dt$model.i)
 png.list <- list()
+last.base <- max(model.dt$seg2.chromStart/1e3)
+best.loss <- min(model.dt$loss)
+t.dt <- data.table(last.base, best.loss, what="loss")
 for(show.model.i in seq_along(show.models)){
   model.i <- show.models[[show.model.i]]
   show.model <- show.model.list[[model.i]]
@@ -73,12 +80,29 @@ for(show.model.i in seq_along(show.models)){
                    xend=seg.chromEnd/1e3, yend=seg.mean),
                color="green",
                data=data.frame(show.loss, what="profile"))+
-  geom_line(aes(seg2.chromStart/1e3, loss),
-            data=data.table(model.dt, what="loss"))+
+    geom_vline(aes(xintercept=last.base), data=t.dt,
+               color="grey")+
+    geom_text(aes(last.base, best.loss, label="t "),
+              data=t.dt, hjust=1, vjust=0, color="grey")+
+  ## geom_line(aes(seg2.chromStart/1e3, loss),
+  ##           data=data.table(model.dt, what="loss"))+
   geom_point(aes(seg2.chromStart/1e3, loss, size=feasible),
-             data=data.table(model.dt, what="loss"))+
+             data=data.table(model.dt, what="loss"),
+             pch=1)+
   geom_point(aes(seg2.chromStart/1e3, loss, size=feasible),
              data=data.table(show.model, what="loss"),
+             pch=1, 
+             color="green")+
+  geom_vline(aes(xintercept=seg2.chromStart/1e3),
+             data=show.model,
+             linetype="dotted",
+             color="green")+
+  geom_text(aes(seg2.chromStart/1e3,
+                max(sample.counts$coverage),
+                label="t' "),
+             hjust=1,
+             vjust=1,
+             data=data.table(show.model, what="profile"),
              color="green")+
   scale_size_manual(values=c(yes=2, no=0.5))+
   theme_bw()+
@@ -88,7 +112,7 @@ for(show.model.i in seq_along(show.models)){
   xlab(paste("position on chromosome (kb = kilo bases)"))
 
   png(png.name <- sprintf("figure-dp-short-%d.png", show.model.i),
-      units="in", res=200, width=6, height=4)
+      units="in", res=200, width=6, height=3)
   print(selectedPlot)
   dev.off()
 
@@ -102,6 +126,23 @@ png.tex <- sprintf("
 \\frametitle{Computation of optimal loss $\\mathcal L_{s, t}$
   for $s=2$ segments up to data point $t < d$}
   \\includegraphics[width=\\textwidth]{%s}
+
+$$
+\\mathcal L_{2, t} =
+\\min_{t' < t}
+\\underbrace{
+  \\mathcal L_{1, t'}
+}_{
+  \\text{optimal loss in 1 segment up to $t'$}
+}
++
+\\underbrace{
+  c_{(t', t]}
+}_{
+  \\text{optimal loss of 2nd segment $(t', t]$}
+}
+$$
+
 \\end{frame}
 ", pngs)
 
