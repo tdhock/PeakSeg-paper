@@ -5,7 +5,7 @@ HOCKING-RIGAILL-chip-seq-paper.pdf: HOCKING-RIGAILL-chip-seq-paper.tex refs.bib 
 	pdflatex HOCKING-RIGAILL-chip-seq-paper
 	pdflatex HOCKING-RIGAILL-chip-seq-paper
 
-HOCKING-peak-penalty-slides.pdf: HOCKING-peak-penalty-slides.tex figure-dp-peaks-regression-dots.pdf figure-dp.tex figure-dp-short.tex figure-dp-first.tex
+HOCKING-peak-penalty-slides.pdf: HOCKING-peak-penalty-slides.tex figure-dp-peaks-regression-dots.pdf figure-dp.tex figure-dp-short.tex figure-dp-first.tex  figure-dp-third.tex
 	pdflatex HOCKING-peak-penalty-slides
 	pdflatex HOCKING-peak-penalty-slides
 figure-dp.tex: figure-dp.R 
@@ -13,6 +13,8 @@ figure-dp.tex: figure-dp.R
 figure-dp-short.tex: figure-dp-short.R 
 	R --no-save < $<
 figure-dp-first.tex: figure-dp-first.R 
+	R --no-save < $<
+figure-dp-third.tex: figure-dp-third.R 
 	R --no-save < $<
 figure-Segmentor-PeakSeg.png: figure-Segmentor-PeakSeg.R
 	R --no-save < $<

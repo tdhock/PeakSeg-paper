@@ -236,6 +236,34 @@ maxIter 20
 
 \input{figure-dp}
 
+\begin{frame}
+  \frametitle{Dynamic programming is faster than grid search for $s>
+    2$ segments}
+
+  Computation time in number of data points $d$:
+
+  \vskip 1cm
+
+  \begin{tabular}{ccc}
+    segments $s$ & grid search & dynamic programming \\
+    \hline
+    1 & $O(d)$ & $O(d)$ \\
+    2 & $O(d^2)$ & $O(d^2)$ \\
+    3 & $O(d^3)$ & $O(d^2)$ \\
+    4 & $O(d^4)$ & $O(d^2)$ \\
+    $\vdots$ &     $\vdots$ &     $\vdots$ 
+  \end{tabular}
+
+  \vskip 1cm
+
+  For example $d = 5735$ data points to segment.\\
+  $d^2 = 32890225$\\
+  $d^3 = 188625440375$\\
+  $\vdots$
+\end{frame}
+
+\input{figure-dp-third}
+
 % \begin{frame}
 %   \frametitle{Previous work: maximum likelihood segmentation}
 %   \begin{itemize}

@@ -15,29 +15,82 @@ load(counts.file)
 counts.list <- split(counts, counts$sample.id)
 sample.id <- "McGill0026"
 sample.counts <- counts.list[[sample.id]]
-cell.type <- as.character(sample.counts$cell.type[1])
-
 sample.counts$weight <- with(sample.counts, chromEnd-chromStart)
-n <- 2900
-l <- 100
-seg2.starts <- as.integer(seq(1, n, l=l)[-c(1, l)])
+seg.info <- with(sample.counts, PoissonSeg(coverage, weight, maxSegments=3L))
+loss.mat <- t(seg.info$res1)
+end.mat <- t(seg.info$res2)
+mean.mat <- t(seg.info$res3)
+
+## need to compute best ends ourself, if we want to show
+## feasible/infeasible.
+
+## cumsum1 <- with(sample.counts, cumsum(coverage * weight))
+## best.mean1 <- cumsum1/cumsum(sample.counts$weight)
+## best.loss1 <- cumsum1 * (1-log(best.mean1))
+## stopifnot(all.equal(best.mean1, mean.mat[,1]))
+## to <- 1000
+## to.data <- sample.counts[1:to,]
+## to.mean <- with(to.data, sum(coverage * weight)/sum(weight))
+## stopifnot(all.equal(to.mean, best.mean1[to]))
+## to.loss <- with(to.data, PoissonLoss(coverage, to.mean, weight))
+## stopifnot(all.equal(to.loss, best.loss1[to]))
+## n <- nrow(sample.counts)
+## seg2.ends <- 2:n
+## best.seg2.start <- rep(NA, n)
+## best.seg2.loss <- rep(NA, n)
+## for(seg2.end in seg2.ends){
+##   seg2.starts <- 2:seg2.end
+##   seg1.ends <- seg2.starts-1L
+##   seg1.loss <- best.loss1[seg1.ends]
+##   seg1.mean <- best.mean1[seg1.ends]
+##   rev.counts <- sample.counts[rev(seg2.starts), ]
+##   rev.cumsum2 <- with(rev.counts, cumsum(coverage * weight))
+##   rev.mean2 <- rev.cumsum2/cumsum(rev.counts$weight)
+##   rev.loss2 <- ifelse(rev.mean2==0, 0, rev.cumsum2 * (1-log(rev.mean2)))
+##   seg2.loss <- rev(rev.loss2)
+##   seg2.mean <- rev(rev.mean2)
+##   all.models <- 
+##   data.table(is.feasible=seg2.mean > seg1.mean,
+##              total.loss=seg1.loss + seg2.loss,
+##              seg2.starts)
+##   feasible.models <- all.models %>%
+##     filter(is.feasible)
+##   feasible.best <- feasible.models %>%
+##     filter(total.loss == min(total.loss))
+##   stopifnot(nrow(feasible.best) <= 1)
+##   if(nrow(feasible.best) == 1){
+##     best.seg2.start[seg2.end] <- feasible.best$seg2.starts
+##     best.seg2.loss[seg2.end] <- feasible.best$total.loss
+##   }
+## }
+n <- 3500
+l <- 400
+seg3.starts <- as.integer(seq(4, n, l=l))
 loss.list <- list()
-mean.mat <- matrix(NA, length(seg2.starts), 2)
-for(model.i in seq_along(seg2.starts)){
-  seg2.start <- seg2.starts[[model.i]]
-  seg2.chromStart <- sample.counts$chromStart[seg2.start]
-  seg.starts <- c(1, seg2.start)
-  seg.ends <- c(seg2.start-1, n)
+mean3.mat <- matrix(NA, l, 3)
+for(model.i in seq_along(seg3.starts)){
+  seg3.start <- seg3.starts[[model.i]]
+  seg3.chromStart <- sample.counts$chromStart[seg3.start]
+  ## index of last point on segment 2 is in  end.mat[,3] and index of
+  ## last point on segment 1 is in end.mat[,2].
+
+  ## end.mat[n, 3] gives last point on segment 2 for the best model up
+  ## to and including data point n.
+  seg2.end <- seg3.start-1L
+  seg1.end <- end.mat[seg2.end, 2]
+  seg.ends <- as.integer(c(seg1.end, seg2.end, n))
+  seg.starts <- as.integer(c(1, seg1.end+1, seg3.start))
+  
   for(seg.i in seq_along(seg.starts)){
     seg.start <- seg.starts[[seg.i]]
     seg.end <- seg.ends[[seg.i]]
     seg.data <- sample.counts[seg.start:seg.end, ]
     seg.mean <- with(seg.data, sum(coverage * weight)/sum(weight))
-    mean.mat[model.i, seg.i] <- seg.mean
     seg.loss <- with(seg.data, PoissonLoss(coverage, seg.mean, weight))
+    mean3.mat[model.i, seg.i] <- seg.mean
     loss.list[[paste(model.i, seg.i)]] <-
       data.table(model.i, seg.i,
-                 seg2.chromStart, seg2.start,
+                 seg3.chromStart, seg3.start,
                  seg.start, seg.end,
                  seg.chromStart=sample.counts$chromStart[seg.start],
                  seg.chromEnd=sample.counts$chromEnd[seg.end],
@@ -46,25 +99,21 @@ for(model.i in seq_along(seg2.starts)){
 }
 loss.dt <- do.call(rbind, loss.list)
 model.dt <- loss.dt %>%
-  group_by(model.i, seg2.chromStart) %>%
+  group_by(model.i, seg3.chromStart) %>%
   summarise(loss=sum(seg.loss))
 model.dt$feasible <-
-  ifelse(mean.mat[,1] < mean.mat[,2], "yes", "no")
+  ifelse(mean3.mat[,3] < mean3.mat[,2], "yes", "no")
 feasible <- model.dt %>%
   filter(feasible=="yes")
 
 show.models <-
-  c(50, 100,
-    which.min(model.dt$loss),
-    382, 395)
-show.models <-
-  c(12, 25,
-    which.min(model.dt$loss),
-    95)
+  sort(c(100, 250,
+         which.min(model.dt$loss),
+         350))
 show.loss.list <- split(loss.dt, loss.dt$model.i)
 show.model.list <- split(model.dt, model.dt$model.i)
 png.list <- list()
-last.base <- max(model.dt$seg2.chromStart/1e3)
+last.base <- max(model.dt$seg3.chromStart/1e3)
 best.loss <- min(model.dt$loss)
 t.dt <- data.table(last.base, best.loss, what="loss")
 for(show.model.i in seq_along(show.models)){
@@ -84,20 +133,20 @@ for(show.model.i in seq_along(show.models)){
                color="grey")+
     geom_text(aes(last.base, best.loss, label="t "),
               data=t.dt, hjust=1, vjust=0, color="grey")+
-  ## geom_line(aes(seg2.chromStart/1e3, loss),
+  ## geom_line(aes(seg3.chromStart/1e3, loss),
   ##           data=data.table(model.dt, what="loss"))+
-  geom_point(aes(seg2.chromStart/1e3, loss, size=feasible),
+  geom_point(aes(seg3.chromStart/1e3, loss, size=feasible),
              data=data.table(model.dt, what="loss"),
              pch=1)+
-  geom_point(aes(seg2.chromStart/1e3, loss, size=feasible),
+  geom_point(aes(seg3.chromStart/1e3, loss, size=feasible),
              data=data.table(show.model, what="loss"),
-             pch=1, 
+             pch=1,
              color="green")+
-  geom_vline(aes(xintercept=seg2.chromStart/1e3),
+  geom_vline(aes(xintercept=seg3.chromStart/1e3),
              data=show.model,
              linetype="dotted",
              color="green")+
-  geom_text(aes(seg2.chromStart/1e3,
+  geom_text(aes(seg3.chromStart/1e3,
                 max(sample.counts$coverage),
                 label="t' "),
              hjust=1,
@@ -109,9 +158,9 @@ for(show.model.i in seq_along(show.models)){
   theme(panel.margin=grid::unit(0, "cm"))+
   facet_grid(what ~ ., scales="free")+
   ylab("")+
-  xlab(paste("position on chromosome (kb = kilo bases)"))
+  xlab(paste("position on chromosome t' (kb = kilo bases)"))
 
-  png(png.name <- sprintf("figure-dp-short-%d.png", show.model.i),
+  png(png.name <- sprintf("figure-dp-third-%d.png", show.model.i),
       units="in", res=200, width=6, height=3)
   print(selectedPlot)
   dev.off()
@@ -124,28 +173,28 @@ pngs <- do.call(c, png.list)
 png.tex <- sprintf("
 \\begin{frame}
 \\frametitle{Computation of optimal loss $\\mathcal L_{s, t}$
-  for $s=2$ segments up to data point $t < d$}
+ for $s=3$ segments up to data point $t$}
   \\includegraphics[width=\\textwidth]{%s}
 
 $$
-\\mathcal L_{2, t} =
+\\mathcal L_{3, t} =
 \\min_{
   t' < t
 }
 \\underbrace{
-  \\mathcal L_{1, t'}
+  \\mathcal L_{2, t'}
 }_{
-  \\text{optimal loss in 1 segment up to $t'$}
+  \\text{optimal loss in 2 segments up to $t'$}
 }
 +
 \\underbrace{
   c_{(t', t]}
 }_{
-  \\text{optimal loss of 2nd segment $(t', t]$}
+  \\text{optimal loss of 3rd segment $(t', t]$}
 }
 $$
 
 \\end{frame}
 ", pngs)
 
-cat(png.tex, file="figure-dp-short.tex")
+cat(png.tex, file="figure-dp-third.tex")
