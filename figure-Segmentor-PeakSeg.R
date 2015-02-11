@@ -84,6 +84,128 @@ error.regions <- do.call(rbind, error.list)
 
 segs.regions <-
   ggplot()+
+  scale_fill_manual("label", values=ann.colors, 
+                    breaks=names(ann.colors))+
+  scale_linetype_manual("error type", 
+                        values=c(correct=0,
+                          "false negative"=3,
+                          "false positive"=1))+
+  scale_y_continuous(breaks=seq(0, 50, by=25), minor_breaks=NULL)+
+  scale_x_continuous("position on chr11 (kilo bases)",
+                     breaks=seq(118080, 118120, by=20))+
+  theme_bw()+
+  theme(panel.margin=grid::unit(0, "cm"))+
+  facet_grid(segments ~ model, scales="free", labeller=function(var, val){
+    if(var=="model"){
+      more <- ifelse(val=="constrained", " (PeakSeg)", "")
+      paste0(val, " ", var, more)
+    }else{
+      paste("s =", val)
+    }
+  })+
+  geom_step(aes(chromStart/1e3, count),
+            data=compressed, color="grey40")+
+  geom_segment(aes((chromStart-1/2)/1e3, mean,
+                   xend=(chromEnd+1/2)/1e3, yend=mean),
+               data=both.segs, color="green", alpha=3/4, size=1)+
+  geom_vline(aes(xintercept=(chromEnd+1/2)/1e3),
+             data=both.breaks,
+             color="green")+
+  ylab("count of aligned reads")
+
+png("figure-Segmentor-PeakSeg-noregions.png",
+    units="in", res=200, width=6, height=3)
+print(segs.regions)
+dev.off()
+
+for(suffix in c("constrained", "unconstrained")){
+segs.regions <-
+  ggplot()+
+  scale_fill_manual("label", values=ann.colors, 
+                    breaks=names(ann.colors))+
+  scale_linetype_manual("error type", 
+                        values=c(correct=0,
+                          "false negative"=3,
+                          "false positive"=1))+
+  scale_y_continuous(breaks=seq(0, 50, by=25), minor_breaks=NULL)+
+  scale_x_continuous("position on chr11 (kilo bases)",
+                     breaks=seq(118080, 118120, by=20))+
+  theme_bw()+
+  theme(panel.margin=grid::unit(0, "cm"))+
+  facet_grid(segments ~ model, scales="free", labeller=function(var, val){
+    if(var=="model"){
+      more <- ifelse(val=="constrained", " (PeakSeg)", "")
+      paste0(val, " ", var, more)
+    }else{
+      paste("s =", val)
+    }
+  })+
+  geom_step(aes(chromStart/1e3, count),
+            data=compressed, color="grey40")+
+  geom_segment(aes((chromStart-1/2)/1e3, mean,
+                   xend=(chromEnd+1/2)/1e3, yend=mean),
+               data=subset(both.segs, model==suffix),
+               color="green", alpha=3/4, size=1)+
+  geom_vline(aes(xintercept=(chromEnd+1/2)/1e3),
+             data=subset(both.breaks, model==suffix),
+             color="green")+
+  ylab("count of aligned reads")
+
+png(sprintf("figure-Segmentor-PeakSeg-%s.png", suffix),
+    units="in", res=200, width=6, height=3)
+print(segs.regions)
+dev.off()
+}
+
+segs.regions <-
+  ggplot()+
+  geom_tallrect(aes(xmin=chromStart/1e3, xmax=chromEnd/1e3,
+                    fill=annotation),
+                data=error.regions, alpha=1/2)+
+  scale_fill_manual("label", values=ann.colors, 
+                    breaks=names(ann.colors))+
+  scale_linetype_manual("error type", 
+                        values=c(correct=0,
+                          "false negative"=3,
+                          "false positive"=1))+
+  scale_y_continuous(breaks=seq(0, 50, by=25), minor_breaks=NULL)+
+  scale_x_continuous("position on chr11 (kilo bases)",
+                     breaks=seq(118080, 118120, by=20))+
+  theme_bw()+
+  theme(panel.margin=grid::unit(0, "cm"))+
+  facet_grid(segments ~ model, scales="free", labeller=function(var, val){
+    if(var=="model"){
+      more <- ifelse(val=="constrained", " (PeakSeg)", "")
+      paste0(val, " ", var, more)
+    }else{
+      paste("s =", val)
+    }
+  })+
+  geom_step(aes(chromStart/1e3, count),
+            data=compressed, color="grey40")+
+  geom_segment(aes((chromStart-1/2)/1e3, mean,
+                   xend=(chromEnd+1/2)/1e3, yend=mean),
+               data=subset(both.segs, model=="constrained"),
+               color="green", alpha=3/4, size=1)+
+  geom_vline(aes(xintercept=(chromEnd+1/2)/1e3),
+             data=subset(both.breaks, model=="constrained"),
+             color="green")+
+  geom_tallrect(aes(xmin=chromStart/1e3, xmax=chromEnd/1e3),
+                data=error.regions,
+                fill=NA, color="grey")+
+  ylab("count of aligned reads")+
+  geom_tallrect(aes(xmin=chromStart/1e3, xmax=chromEnd/1e3,
+                    linetype=status),
+                data=error.regions,
+                fill=NA, color="black", size=1)
+
+png("figure-Segmentor-PeakSeg-constrained-regions.png",
+    units="in", res=200, width=6, height=3)
+print(segs.regions)
+dev.off()
+
+segs.regions <-
+  ggplot()+
   geom_tallrect(aes(xmin=chromStart/1e3, xmax=chromEnd/1e3,
                     fill=annotation),
                 data=error.regions, alpha=1/2)+
