@@ -54,13 +54,9 @@ feasible <- model.dt %>%
   filter(feasible=="yes")
 
 show.models <-
-  c(10, 80,
-    which.min(model.dt$loss),
-    240, 350, 500, 620)
-show.models <-
   c(5, 40,
     which.min(model.dt$loss),
-    120, 175, 250, 310)
+    120, 200, 310)
 show.loss.list <- split(loss.dt, loss.dt$model.i)
 show.model.list <- split(model.dt, model.dt$model.i)
 png.list <- list()

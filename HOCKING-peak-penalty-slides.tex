@@ -135,48 +135,30 @@ maxIter 20
   image-based screens with iterative feedback and machine learning.
 \end{frame}
 
-% \begin{frame}
-%   \frametitle{Peak H3K4me3 profiles with manually annotated regions}
-%   \includegraphics[width=\textwidth]{figure-macs-default-4samples-just-regions}
+\begin{frame}
+  \frametitle{Peak detector accuracy can be quantified using manually
+    annotated region labels}
+  
+  \includegraphics[width=1.1\textwidth]{figure-dp-peaks-train}
 
-%   Determined by visual inspection on
-%   \href{http://ucscbrowser.genap.ca/cgi-bin/hgTracks?db=hg19\&position=chr11:118080000-118130000}{ucscbrowser.genap.ca}
-% \end{frame}
+  \begin{itemize}
+  \item Good peaks have 0 incorrect regions.
+  \item Bad peaks have 7 incorrect regions.
+  \item Goal: minimize number of incorrect regions.
+  \end{itemize}
 
-% \begin{frame}
-%   \frametitle{Peak H3K4me3 profiles, macs default model}
-%   \includegraphics[width=\textwidth]{figure-macs-default-4samples-with-peaks}
+\end{frame}
 
-%   How many errors?
-% \end{frame}
+\begin{frame}
+  \frametitle{Two annotators provide consistent labels, but different
+    precision}
+  \includegraphics[width=1.1\textwidth]{figure-several-annotators}
 
-% \begin{frame}
-%   \frametitle{Peak H3K4me3 profiles, macs default model}
-%   \includegraphics[width=\textwidth]{figure-macs-default-4samples}
-
-%   3 false positives, 2 false negatives.
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{Peak H3K4me3 profiles, macs trained model}
-%   \includegraphics[width=\textwidth]{figure-macs-4samples}
-
-%   1 false positive, 3 false negatives.
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{Broad H3K36me3 profiles, HMCan.broad default model}
-%   \includegraphics[width=\textwidth]{figure-H3K36me3-sub-hmcan-broad-2}
-
-%   13 false positives, 1 false negative.
-% \end{frame}
-
-% \begin{frame}
-%   \frametitle{Broad H3K36me3 data, HMCan.broad trained model}
-%   \includegraphics[width=\textwidth]{figure-H3K36me3-sub-hmcan-broad-1}
-
-%   0 false positives, 2 false negatives.
-% \end{frame}
+  \begin{itemize}
+  \item TDH peakStart/peakEnd more precise than AM peaks.
+  \item AM noPeaks more precise than TDH no label.
+  \end{itemize}
+\end{frame}
 
 \begin{frame}
   \frametitle{Comparison on annotated McGill benchmark data set}
@@ -193,17 +175,6 @@ maxIter 20
   \item HMCan.broad best for H3K36me3 (broad peak pattern).
   \item 10--20\% test error rates.
   \item Same results across 4 annotators (PhD students, postdocs).
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Two annotators provide consistent labels, but different
-    precision}
-  \includegraphics[width=1.1\textwidth]{figure-several-annotators}
-
-  \begin{itemize}
-  \item TDH peakStart/peakEnd more precise than AM peaks.
-  \item AM noPeaks more precise than TDH no label.
   \end{itemize}
 \end{frame}
 

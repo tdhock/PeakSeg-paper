@@ -157,7 +157,9 @@ for(show.model.i in seq_along(show.models)){
   theme_bw()+
   theme(panel.margin=grid::unit(0, "cm"))+
   facet_grid(what ~ ., scales="free")+
-  ylab("")+
+  scale_y_continuous("",
+                     breaks=c(seq(0, 30, by=10),
+                       (13:17)*-10000))+
   xlab(paste("position on chromosome t' (kb = kilo bases)"))
 
   png(png.name <- sprintf("figure-dp-third-%d.png", show.model.i),
