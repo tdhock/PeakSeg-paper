@@ -83,7 +83,7 @@ transcription factor binding sites, with many experimental and
 computational steps \citep{practical}. Briefly, each experiment yields
 a set of sequence reads which are aligned to a reference genome, and
 then the number of aligned reads are counted at each genomic position
-(Figure~\ref{fig:dp-peaks-train}). These data can be interpreted using
+(Figure~\ref{fig:good-bad}). These data can be interpreted using
 one of the many available peak detection algorithms
 \citep{evaluation2010, rye2010manually, chip-seq-bench}, which each
 essentially work as a binary classifier for each genomic position. The
@@ -93,7 +93,7 @@ contiguous segments across the genome.
 
 \begin{figure*}[b!]
   \centering
-  \includegraphics[width=\textwidth]{figure-dp-peaks-train}
+  \includegraphics[width=\textwidth]{figure-good-bad}
   \vskip -0.5cm
   \caption{Different ChIP-seq data types have peaks with different
     patterns. Positions classified as peaks are drawn as line segments
@@ -105,7 +105,7 @@ contiguous segments across the genome.
     there should be exactly 1 peak start/end somewhere in the region,
     and \colorbox{noPeaks}{noPeaks} means there should be no
     overlapping peaks).}
-  \label{fig:dp-peaks-train}
+  \label{fig:good-bad}
 \end{figure*}
 
 More concretely, a single ChIP-seq profile on a genomic region with
@@ -122,7 +122,7 @@ a peak.
 
 There are several different kinds of peak patterns that have been
 observed in different ChIP-seq data sets. For example,
-Figure~\ref{fig:dp-peaks-train} shows H3K4me3 data with a sharp peak
+Figure~\ref{fig:good-bad} shows H3K4me3 data with a sharp peak
 pattern, and H3K36me3 data with a broad peak pattern. Current
 state-of-the-art peak detectors from the bioinformatics literature are
 unsupervised learning algorithms that are designed for specific
@@ -408,7 +408,7 @@ down). Thus the even-numbered segments may be interpreted as peaks
 $P_j(\mathbf m)=1$, and the odd-numbered segments may be interpreted
 as background $P_j(\mathbf m)=0$.
 
-For example, the good peaks in Figure~\ref{fig:dp-peaks-train} are the
+For example, the good peaks in Figure~\ref{fig:good-bad} are the
 second and fourth segments of the \ref{PeakSeg} solution for $s=5$
 segments.
 
