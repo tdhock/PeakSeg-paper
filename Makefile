@@ -5,7 +5,7 @@ HOCKING-RIGAILL-chip-seq-paper.pdf: HOCKING-RIGAILL-chip-seq-paper.tex refs.bib 
 	pdflatex HOCKING-RIGAILL-chip-seq-paper
 	pdflatex HOCKING-RIGAILL-chip-seq-paper
 
-HOCKING-peak-penalty-slides.pdf: HOCKING-peak-penalty-slides.tex figure-dp-peaks-regression-dots.pdf figure-dp.tex figure-dp-short.tex figure-dp-first.tex  figure-dp-third.tex  figure-good-bad.png 
+HOCKING-peak-penalty-slides.pdf: HOCKING-peak-penalty-slides.tex figure-dp-peaks-regression-dots.pdf figure-dp.tex figure-dp-short.tex figure-dp-first.tex  figure-dp-third.tex figure-good-bad.png figure-dp-peaks-train-2.png figure-Segmentor-PeakSeg.png
 	rm -f *.aux *.bbl
 	pdflatex HOCKING-peak-penalty-slides
 	pdflatex HOCKING-peak-penalty-slides
@@ -63,6 +63,8 @@ dp.peaks.train.RData: dp.peaks.train.R
 PeakSeg4samples.RData: PeakSeg4samples.R dp.peaks.error.RData
 	R --no-save < $<
 figure-good-bad.png: figure-good-bad.R dp.peaks.train.RData
+	R --no-save < $<
+figure-dp-peaks-train-2.png: figure-dp-peaks-train.R dp.peaks.train.RData
 	R --no-save < $<
 
 ## regularized model for ICML paper.

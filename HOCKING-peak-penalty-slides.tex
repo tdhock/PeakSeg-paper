@@ -251,7 +251,7 @@ maxIter 20
   \frametitle{Maximum likelihood segmentations}
   \includegraphics[width=\textwidth]{figure-Segmentor-PeakSeg-unconstrained}
   
-  $s=5$ changes up, up, down, down.\\
+  Model with $s=5$ segments changes up, up, down, down.\\
   How to define peaks? Introduce a threshold parameter?
 \end{frame}
 
@@ -259,7 +259,7 @@ maxIter 20
   \frametitle{Constrained maximum likelihood segmentations}
   \includegraphics[width=\textwidth]{figure-Segmentor-PeakSeg-constrained}
 
-  $s=5$ changes up, down, up, down.\\
+  Model with $s=5$ segments changes up, down, up, down.\\
   Peaks are even-numbered segments.
 \end{frame}
 
@@ -289,10 +289,8 @@ where the peak indicator $P_1(\mathbf m)=0$ and for $j>1$,
   P_j(\mathbf m) = \sum_{k=2}^j \sign( m_{k} - m_{k-1} ).
 \end{equation*}
 
-  We propose cDPA = a constrained dynamic programming algorithm,
-    which returns $\mathbf{\tilde m}^1(\mathbf y), \dots,
-    \mathbf{\tilde m}^{s_{\text{max}}}(\mathbf y)$
-    in $O(s_{\text{max}} d^2)$ time.
+We propose cDPA = a constrained dynamic programming algorithm, which
+computes $s_{\text{max}}$ models in $O(s_{\text{max}} d^2)$ time.
 
 \end{frame}
 
@@ -305,7 +303,7 @@ where the peak indicator $P_1(\mathbf m)=0$ and for $j>1$,
   \item Models with $s\in\{1, 7\}$ segments have 1 incorrect region.
   \item Models with $s\in\{3, 5\}$ segments are perfect.
   \item Goal for $i\in\{1, \dots, n\}$ profiles:\\
-    predict profile-specific segments $s_i$ with minimum errors.
+    predict profile-specific segments $\hat s_i$ with minimum errors.
   \end{itemize}
 \end{frame}
 
@@ -366,16 +364,26 @@ where the peak indicator $P_1(\mathbf m)=0$ and for $j>1$,
   \item 37 annotated H3K4me3 profiles (sharp peaks).
   \item 29 annotated H3K36me3 profiles (broadly enriched domains).
   \item 12,826 annotated regions in total.
+  \item 2752 separate segmentation problems.
   \end{itemize}
-  Used the DP algorithm on a subset of the data.
+  Used the cDPA on the annotated data.
   \begin{itemize}
-  \item Compute 10 PeakSeg models $\mathbf{\tilde m}^1(\mathbf
-    y),\mathbf{\tilde m}^3(\mathbf y), \dots, \mathbf{\tilde
-      m}^{19}(\mathbf y)$.
-  \item For the biggest window, DP took 3 hours.\\
-    ($d=88,509$ data points, 3.5  megabases)
+  \item cDPA computed models with $0, \dots, 9$ peaks\\
+    (for 99.5\% of problems).
+  \item For the biggest problem, cDPA took 3 hours.\\
+    ($d=88,509$ data points, 3.5 megabases)
   \item macs takes about 90 minutes for one whole genome.
   \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Best results on H3K4me3 data}
+  \includegraphics[width=\textwidth]{figure-dp-peaks-train-1}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Best results on H3K36me3 data}
+  \includegraphics[width=\textwidth]{figure-dp-peaks-train-2}
 \end{frame}
 
 \begin{frame}
@@ -389,11 +397,11 @@ Predicted number of segments for profile $i\in\{1, \dots, n\}$:
   \overbrace{\rho\left[
     \mathbf{\tilde m}^s(\mathbf y_i),
     \mathbf y_i
-  \right]}^{\text{loss}}
+  \right]}^{\text{Poisson loss}}
   + 
   \overbrace{
-    \alert<3>{\lambda_i}
-    \alert<2>{h(s, d_i)}
+    \alert<1>{h(s, d_i)}
+    \alert<2>{\lambda_i}
   }^{\text{penalty}},
 \end{equation*}
 
@@ -401,27 +409,27 @@ Predicted number of segments for profile $i\in\{1, \dots, n\}$:
 
   \begin{center}
   \begin{tabular}{ll}
-    \textbf{name} & \textbf{model complexity} \alert<2>{$h(s, d_i)$} \\
+    \textbf{name} & \textbf{model complexity} \alert<1>{$h(s, d_i)$} \\
     \hline
-    AIC/BIC.* & \alert<2>{$s$}\\
-    oracle.* & \alert<2>{$s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$}
+    AIC/BIC.* & \alert<1>{$s$}\\
+    oracle.* & \alert<1>{$s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$}
   \end{tabular}
 \end{center}
 
   \begin{center}
   \begin{tabular}{lllll}
-    \textbf{name} & \textbf{smoothing} \alert<3>{$\lambda_i$} & 
+    \textbf{name} & \textbf{smoothing} \alert<2>{$\lambda_i$} & 
     \textbf{parameters} & \textbf{learning algorithm} \\
     \hline
-    *.0 & AIC=\alert<3>{2}, BIC=\alert<3>{$\log d_i$} & none & unsupervised \\
+    *.0 & AIC=\alert<2>{2}, BIC=\alert<2>{$\log d_i$} & none & unsupervised \\
     *.1 & 
-    \alert<3>{$\beta$} & 
+    \alert<2>{$\beta$} & 
     $\beta\in\RR_+$ & grid search \\
     *.3 & 
-    \alert<3>{$e^\beta d_i^{w_1} (\max \mathbf y_i)^{w_{2}}$} & 
+    \alert<2>{$e^\beta d_i^{w_1} (\max \mathbf y_i)^{w_{2}}$} & 
     $\beta, w_1, w_{2}\in\RR$ & interval regression \\
     *.41 & 
-    \alert<3>{$\exp(\beta + \mathbf w^\intercal \mathbf x_i)$} & 
+    \alert<2>{$\exp(\beta + \mathbf w^\intercal \mathbf x_i)$} & 
     $\beta\in\RR, \mathbf w\in\RR^{40}$ & 
     interval regression \\
   \end{tabular}
@@ -475,11 +483,12 @@ Predicted number of segments for profile $i\in\{1, \dots, n\}$:
   \end{itemize}
   Future work:
   \begin{itemize}
-  \item Constrained version of Pruned Dynamic Programming (Rigaill
-    arXiv:1004.0887) to compute PeakSeg in $O(d\log d)$ time.
   \item Apply to whole genome (not just annotated windows).
-  \item Better test error using other features $\mathbf x$?
   \item Detecting the same peaks across several profiles?
+  \item Constrained version of Pruned Dynamic Programming (Rigaill
+    arXiv:1004.0887) to compute in $O(d\log d)$ time.
+  \item Efficient algorithm which provably computes PeakSeg model?
+  %\item Better test error using other features $\mathbf x$?
   \end{itemize}
 \end{frame}
 
@@ -516,7 +525,8 @@ Student gets \$5000 for writing open source code for
   \end{itemize}
   Examples: 
   \begin{itemize}
-  \item Louis/Mathieu can be \textbf{admins} for MUGQIC org.
+  \item Louis/Mathieu can be \textbf{admins} for MUGQIC org\\
+    \alert{\url{https://bitbucket.org/mugqic/gsoc2015/wiki}}
   \item Warren/Stephan can be \textbf{mentors} for a project to write
     a new R package for methylation analysis.
   \item Robert/Dan can be \textbf{mentors} for a project to implement
