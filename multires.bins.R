@@ -7,7 +7,7 @@ works_with_R("3.1.2",
 
 load("dp.peaks.sets.RData")
 
-pick.best.index <- structure(function
+pick.best.index <- function
 ### Minimizer for local models, described in article section 2.3
 ### "Picking the optimal model"
 (err
@@ -36,28 +36,7 @@ pick.best.index <- structure(function
     middle
   }
 ### Integer index of the minimal error.
-},ex=function(){
-  stopifnot(pick.best.index(rep(0,100))==50)
-
-  err <- rep(1,100)
-  err[5] <- 0
-  stopifnot(pick.best.index(err)==5)
-
-  ## should pick the middle
-  err <- rep(1,100)
-  err[40:60] <- 0
-  stopifnot(pick.best.index(err)==50)
-
-  ## should pick the biggest
-  err <- rep(1,100)
-  err[1:60] <- 0
-  stopifnot(pick.best.index(err)==60)
-
-  ## should pick the smallest
-  err <- rep(1,100)
-  err[50:100] <- 0
-  stopifnot(pick.best.index(err)==50)
-})
+}
 
 all.best.list <- list()
 for(set.name in names(dp.peaks.sets)){
@@ -213,10 +192,41 @@ for(set.name in names(dp.peaks.sets)){
                    data=best.dot, pch=1)
     }#validation.fold
     mean.gamma <- mean(unlist(gamma.vals))
-    ## TODO: fit model on combined train/validation set.
+    ## fit model on combined train/validation set.
+    is.tv <- names(best.fl) %in% train.validation
+    set.chunks <- 
+      list(train.validation=names(best.fl)[!is.tv],
+           test=names(best.fl)[is.tv])
+    set.data <- list()
+    for(tv in c("train.validation", "test")){
+      for(data.type in c("features", "limits")){
+        data.list <- list()
+        for(set.chunk in set.chunks[[tv]]){
+          sample.list <- best.fl[[set.chunk]]
+          for(sample.id in names(sample.list)){
+            fl <- sample.list[[sample.id]]
+            data.list[[paste(set.chunk, sample.id)]] <- fl[[data.type]]
+          }
+        }
+        set.data[[tv]][[data.type]] <- do.call(rbind, data.list)
+      }
+    }
+    fmat <- with(set.data$train.validation, {
+      stopifnot(rownames(features) ==
+                rownames(limits))
+      keep <- apply(is.finite(features), 2, all)
+      features[, keep, drop=FALSE]
+    })
+    fit <-
+      smooth.interval.regression(fmat, set.data$train.validation$limits,
+                                 L0=ncol(fmat)*1.5,
+                                 gamma=mean.gamma,
+                                 calc.grad=calc.grad.list$square,
+                                 calc.loss=calc.loss.list$square)
 
-    ## TODO: predict peaks on the test set.
-
+    names(fit$weights)[fit$weights != 0] #selected features.
+    ## predict peaks on the test set.
+    pred.log.lambda <- fit$predict(set.data$test$features)
     ## TODO: combine peaks on each chromosome.
 
     ## TODO: evaluate test error for each chrom.
