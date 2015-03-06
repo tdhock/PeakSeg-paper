@@ -66,8 +66,13 @@ for(set.name in names(dp.peaks.sets)){
         limits <- chunk.list[[chunk.id]]
         chunk.name <- paste0(set.name, "/", chunk.id)
         features <- fl$features[rownames(limits), , drop=FALSE ]
+        ## features and limits are matrices[problems, ]
         rownames(features) <- rownames(limits) <-
           paste(chunk.name, bases.per.bin, rownames(limits))
+        ## The problem index is INSIDE on the matrix rows.
+        if(!is.null(fl.list[[bases.per.bin]][[chunk.name]][[sample.id]]))
+          stop("overwriting some data, this should never happen")
+        ## TODO: add problems, modelSelection, peaks.
         fl.list[[bases.per.bin]][[chunk.name]][[sample.id]] <-
           list(features=features, limits=limits)
       }
@@ -226,6 +231,16 @@ for(set.name in names(dp.peaks.sets)){
 
     names(fit$weights)[fit$weights != 0] #selected features.
     ## predict peaks on the test set.
+
+    ## for every sample
+    ##   for every chrom
+    ##     for every problem
+    ##       predict peaks
+    ##     combine peaks
+    ##     for every chunk
+    ##       evaluate peaks
+    stop(1)
+
     pred.log.lambda <- fit$predict(set.data$test$features)
     ## TODO: combine peaks on each chromosome.
 
