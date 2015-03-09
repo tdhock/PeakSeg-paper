@@ -61,20 +61,29 @@ for(set.name in names(dp.peaks.sets)){
                         to.check$total.weight))
     for(bases.per.bin in names(e$features.limits)){
       fl <- e$features.limits[[bases.per.bin]]
+      stopifnot(!is.null(fl$problems))
       chunk.list <- fl$limits
       for(chunk.id in names(chunk.list)){
         limits <- chunk.list[[chunk.id]]
+        chrom <- sub(":.*", "", rownames(limits)[1])
+        all.problems <- fl$problems[[chrom]]
+        setkey(all.problems, problem.name)
+        problems <- all.problems[rownames(limits)]
+        modelSelection <- fl$modelSelection[rownames(limits)]
+        peaks <- fl$peaks[rownames(limits)]
         chunk.name <- paste0(set.name, "/", chunk.id)
         features <- fl$features[rownames(limits), , drop=FALSE ]
         ## features and limits are matrices[problems, ]
-        rownames(features) <- rownames(limits) <-
-          paste(chunk.name, bases.per.bin, rownames(limits))
+        ## rownames(features) <- rownames(limits) <-
+        ##   paste(chunk.name, bases.per.bin, rownames(limits))
         ## The problem index is INSIDE on the matrix rows.
         if(!is.null(fl.list[[bases.per.bin]][[chunk.name]][[sample.id]]))
           stop("overwriting some data, this should never happen")
-        ## TODO: add problems, modelSelection, peaks.
         fl.list[[bases.per.bin]][[chunk.name]][[sample.id]] <-
-          list(features=features, limits=limits)
+          list(features=features, limits=limits,
+               modelSelection=modelSelection,
+               peaks=peaks,
+               problems=problems)
       }
     }
   }
