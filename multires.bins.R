@@ -45,7 +45,10 @@ max2 <- function(x, y){
   ifelse(y < x, x, y)
 }
 overlapsNext <- function(chromStart, chromEnd){
-  c(chromStart[-1] < chromEnd[-length(chromEnd)],
+  next.chromStart <- chromStart[-1]
+  prev.chromEnd <- chromEnd[-length(chromEnd)]
+  cummax.chromEnd <- cummax(prev.chromEnd)
+  c(next.chromStart < cummax.chromEnd,
     FALSE)
 }  
 
@@ -62,6 +65,7 @@ for(set.name in names(dp.peaks.sets)){
   error.list <- list()
   chrom.list <- list()
   region.list <- list()
+  bad.list <- list()
   sample.ids <- names(RData.files)
   for(sample.id in sample.ids){
     RData.file <- RData.files[[sample.id]]
@@ -91,7 +95,9 @@ for(set.name in names(dp.peaks.sets)){
         chrom.list[[chrom]][[chunk.name]] <- chunk.name
         features <- fl$features[rownames(limits), , drop=FALSE ]
         ## TODO: immediately filter out non-finite features.
-        
+        is.bad <- apply(!is.finite(features), 2, any)
+        bad.list[[bases.per.bin]][[paste(sample.id, chunk.id)]] <-
+          colnames(features)[is.bad]
         ## features and limits are matrices[problems, ]
         ## rownames(features) <- rownames(limits) <-
         ##   paste(chunk.name, bases.per.bin, rownames(limits))
@@ -161,6 +167,7 @@ for(set.name in names(dp.peaks.sets)){
 
     best.bases.per.bin <- paste(best.error$bases.per.bin[1])
     best.fl <- fl.list[[best.bases.per.bin]]
+    best.bad <- unique(do.call(c, bad.list[[best.bases.per.bin]]))
 
     n.folds <- if(length(train.validation) == 2) 2 else 3
     fold.id <- rep(1:n.folds, l=length(train.validation))
@@ -189,7 +196,7 @@ for(set.name in names(dp.peaks.sets)){
       fmat <- with(set.data$train, {
         stopifnot(rownames(features) ==
                   rownames(limits))
-        keep <- apply(is.finite(features), 2, all)
+        keep <- ! colnames(features) %in% best.bad
         features[, keep, drop=FALSE]
       })
       fit <-
@@ -247,7 +254,7 @@ for(set.name in names(dp.peaks.sets)){
     fmat <- with(set.data$train.validation, {
       stopifnot(rownames(features) ==
                 rownames(limits))
-      keep <- apply(is.finite(features), 2, all)
+      keep <- ! colnames(features) %in% best.bad
       features[, keep, drop=FALSE]
     })
     fit <-
@@ -300,62 +307,13 @@ for(set.name in names(dp.peaks.sets)){
         chrom.peaks$peak.i <- 1:nrow(chrom.peaks)
         filtered.peaks <- chrom.peaks %>%
           filter(is.overlap) %>%
+          arrange(chromStart, chromEnd) %>%
           mutate(overlaps.next.peak=overlapsNext(chromStart, chromEnd),
-                 status=ifelse(overlaps.next.peak, "merge", "keep"),
                  overlaps.prev.peak=c(FALSE,
-                   overlaps.next.peak[-length(overlaps.next.peak)]))
-        p.next <- filtered.peaks[filtered.peaks$overlaps.next.peak, ]
-        p.prev <- filtered.peaks[filtered.peaks$overlaps.prev.peak, ]
-        edited.peaks <- filtered.peaks %>%
-          filter(!overlaps.next.peak) %>%
-          mutate(status=ifelse(overlaps.prev.peak, "edited", "same"))
-        edited.peaks$chromStart[edited.peaks$overlaps.prev.peak] <-
-          min2(p.next$chromStart, p.prev$chromStart)
-        edited.peaks$chromEnd[edited.peaks$overlaps.prev.peak] <-
-          max2(p.next$chromEnd, p.prev$chromEnd)
-        overlap.peaks <- filtered.peaks %>%
-          filter(overlaps.next.peak) %>%
-          mutate(overlap.i=seq_along(overlaps.next.peak))
-        overlap.edited <- edited.peaks %>%
-          filter(overlaps.prev.peak)
-        if(nrow(overlap.peaks) > 0){
-          zoom.problem.list <- list()
-          zoom.peak.list <- list()
-          for(overlap.i in 1:nrow(overlap.peaks)){
-            overlap.peak <- data.table(overlap.peaks[overlap.i, ]) %>%
-              mutate(mid=(chromStart+chromEnd)/2,
-                     zoom=overlap.i)
-            edited.peak <- overlap.edited[overlap.i, ] %>%
-              mutate(problem.name="edited")
-            setkey(overlap.peak, chromStart, chromEnd)
-            overlap.rects <- foverlaps(problem.rects, overlap.peak, nomatch=0L)
-            zoom.problem.list[[overlap.i]] <- overlap.rects
-            zoom.chromEnd <- max(overlap.rects$chromEnd)
-            zoom.chromStart <- min(overlap.rects$chromStart)
-            relevant.peaks <- rbind(filtered.peaks, edited.peak) %>%
-              filter(chromStart < zoom.chromEnd,
-                     zoom.chromStart < chromEnd) %>%
-              mutate(mid=overlap.peak$mid,
-                     zoom=overlap.peak$zoom)
-            zoom.peak.list[[overlap.i]] <- relevant.peaks
-          }
-          zoom.problems <- do.call(rbind, zoom.problem.list)
-          zoom.peaks <- do.call(rbind, zoom.peak.list)
-        ggplot()+
-          geom_segment(aes((i.chromStart-mid)/1e3, i.problem.name,
-                           xend=(i.chromEnd-mid)/1e3, yend=i.problem.name),
-                        data=zoom.problems, size=5, alpha=1/10)+
-          geom_segment(aes((peakStart-mid)/1e3, i.problem.name,
-                           xend=(peakEnd-mid)/1e3, yend=i.problem.name),
-                        data=zoom.problems, size=5, alpha=1/10)+
-          geom_segment(aes((chromStart-mid)/1e3, problem.name,
-                           xend=(chromEnd-mid)/1e3, yend=problem.name,
-                           color=status),
-                       data=zoom.peaks, size=2)+
-          theme_bw()+
-          theme(panel.margin=grid::unit(0, "cm"))+
-          facet_grid(zoom ~ ., scales="free")
-        }
+                   overlaps.next.peak[-length(overlaps.next.peak)]),
+                 status=ifelse(overlaps.next.peak|overlaps.prev.peak,
+                   "merge", "keep"),
+                 diff=c(0, diff(overlaps.next.peak)))
         if(FALSE){
         ggplot()+
           geom_segment(aes(chromStart/1e3, peak.i,
@@ -397,6 +355,56 @@ for(set.name in names(dp.peaks.sets)){
                            color=status),
                        data=filtered.peaks, size=2)
         }
+        cluster.starts <- which(filtered.peaks$diff == 1)
+        cluster.ends <- which(filtered.peaks$diff == -1)
+        merged.peaks <- if(length(cluster.starts) > 0){
+          zoom.problem.list <- list()
+          zoom.peak.list <- list()
+          for(cluster.i in seq_along(cluster.starts)){
+            cluster.start <- cluster.starts[[cluster.i]]
+            cluster.end <- cluster.ends[[cluster.i]]
+            overlap.peak <- data.table(filtered.peaks[1,]) %>%
+              mutate(chromStart=filtered.peaks$chromStart[cluster.start],
+                     chromEnd=filtered.peaks$chromEnd[cluster.end],
+                     problem.name="edited")
+            problem.names <-
+              filtered.peaks$problem.name[c(cluster.start, cluster.end)]
+            mid <- filtered.peaks$problemPeakEnd[cluster.start]
+            overlap.rects <- problem.rects %>%
+              filter(problem.name %in% problem.names)
+            zoom.problem.list[[overlap.i]] <-
+              data.table(overlap.rects, cluster.i)
+            problem.peaks <- filtered.peaks %>%
+              filter(problem.name %in% problem.names)
+            relevant.peaks <-
+              data.table(rbind(problem.peaks, overlap.peak), mid, cluster.i)
+            zoom.peak.list[[overlap.i]] <- relevant.peaks
+          }
+          zoom.problems <- do.call(rbind, zoom.problem.list)
+          zoom.peaks <- do.call(rbind, zoom.peak.list)
+        ggplot()+
+          geom_segment(aes((chromStart-mid)/1e3, problem.name,
+                           xend=(chromEnd-mid)/1e3, yend=problem.name),
+                       data=zoom.problems, size=5, alpha=1/10)+
+          geom_segment(aes((peakStart-mid)/1e3, problem.name,
+                           xend=(peakEnd-mid)/1e3, yend=problem.name),
+                        data=zoom.problems, size=5, alpha=1/10)+
+          geom_segment(aes((chromStart-mid)/1e3, problem.name,
+                           xend=(chromEnd-mid)/1e3, yend=problem.name,
+                           color=status),
+                       data=zoom.peaks, size=2)+
+          theme_bw()+
+          theme(panel.margin=grid::unit(0, "cm"))+
+          facet_grid(cluster.i ~ ., scales="free")
+          zoom.peaks %>%
+            filter(problem.name == "edited")
+        }
+        edited.peaks <-
+          rbind(merged.peaks %>%
+                select(chromStart, chromEnd),
+                filtered.peaks %>%
+                filter(status=="keep") %>%
+                select(chromStart, chromEnd))
         sorted.peaks <- edited.peaks %>%
           arrange(chromStart, chromEnd) %>%
           mutate(overlaps.next.peak=overlapsNext(chromStart, chromEnd))
