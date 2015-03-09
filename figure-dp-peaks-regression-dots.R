@@ -1,5 +1,5 @@
 works_with_R("3.1.2", reshape2="1.2.2", ggplot2="1.0",
-             "Rdatatable/data.table@200b5b40dd3b05112688c3a9ca2dd41319c2bbae",
+             data.table="1.9.4",
              dplyr="0.4.0",
              xtable="1.7.3")
 
@@ -8,7 +8,16 @@ load("dp.peaks.regression.RData")
 load("regularized.all.RData")
 load("unsupervised.error.RData")
 load("oracle.regularized.RData")
+load("multires.bins.RData")
 
+bins <- 
+multires.bins$test.error %>%
+  group_by(set.name, set.i) %>%
+  summarise(errors=sum(fp+fn),
+            regions=n()) %>%
+  mutate(percent=errors/regions*100,
+         algorithm="multires.bins")
+  
 reg <- regularized.all$error %>%
   filter(model.name %in% c("L1.reg", "log.bases.log.max")) %>%
   group_by(set.name, set.i, model.name) %>%
@@ -48,7 +57,7 @@ un.bad <- un %>%
 with(un.bad, stopifnot(min == max))
 
 un.other <- un %>%
-  filter(!algorithm %in% c(bad.algos, "grid loss", "best.DP"))
+  filter(!algorithm %in% c(bad.algos, "grid loss"))
 un.bad <- un %>%
   filter(algorithm == "none") %>%
   mutate(algorithm="AIC/BIC.0")
@@ -83,7 +92,8 @@ both <-
             ">1", "supervised"),
         ann(data.frame(oreg)[, both.cols],
             ">1", "supervised"),
-        ann(dp.peaks.baseline[, both.cols], "1", "supervised")
+        ann(dp.peaks.baseline[, both.cols], "1", "supervised"),
+        ann(data.frame(bins)[, both.cols], ">1", "supervised")
         ) %>%
   group_by() %>%
   mutate(percent=errors/regions*100,
@@ -102,8 +112,17 @@ both <-
 dot.counts <- with(both, table(algorithm, set.name))
 stopifnot(dot.counts == 6)
 
-wide <- dcast(both, set.name + set.i ~ algorithm, value.var="errors")
+region.sums <- both %>%
+  group_by(set.name, set.i, algorithm) %>%
+  summarise(regions=sum(regions)) %>%
+  arrange(set.name, set.i, algorithm)
+region.stats <- region.sums %>%
+  group_by(set.name, set.i) %>%
+  summarise(min.regions=min(regions),
+            max.regions=max(regions))
+stopifnot(with(region.stats, min.regions == max.regions))
 
+wide <- dcast(both, set.name + set.i ~ algorithm, value.var="errors")
 scatter <- 
 ggplot()+
   geom_abline(aes(intercept=intercept, slope=slope),
@@ -147,6 +166,7 @@ algo.stats <- mean.both %>%
 algo.levs <- rev(algo.stats$algo)
 algo.levs <-
   rev(c("best.DP",
+        "multires.bins",
         ## "oracle.41", "AIC/BIC.41",
         ## "oracle.3", "AIC/BIC.3",
         ## "oracle.1", "AIC/BIC.1",

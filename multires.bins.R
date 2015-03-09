@@ -429,6 +429,10 @@ for(set.name in names(dp.peaks.sets)){
 test.error <- do.call(rbind, test.error.list)
 all.best <- do.call(rbind, all.best.list)
 
+## TODO: why do the region totals not equal the other data sets?
+
+## TODO: why is there only 1 test set for H3K4me3_XJ_immune?
+
 L <- split(all.best, all.best$set.name)
 lapply(L, with, table(bases.per.bin, variable))
 
