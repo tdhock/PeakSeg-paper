@@ -38,9 +38,21 @@ pick.best.index <- function
 ### Integer index of the minimal error.
 }
 
+min2 <- function(x, y){
+  ifelse(x < y, x, y)
+}
+max2 <- function(x, y){
+  ifelse(y < x, x, y)
+}
+overlapsNext <- function(chromStart, chromEnd){
+  c(chromStart[-1] < chromEnd[-length(chromEnd)],
+    FALSE)
+}  
+
 all.best.list <- list()
 for(set.name in names(dp.peaks.sets)){
   train.sets <- dp.peaks.sets[[set.name]]
+  experiment <- sub("_.*", "", set.name)
   label.dir <- paste0("~/genomelabels/", set.name)
   RData.files <- Sys.glob(file.path(label.dir, "*.RData"))
   names(RData.files) <- sub(".RData$", "", basename(RData.files))
@@ -78,6 +90,8 @@ for(set.name in names(dp.peaks.sets)){
         chunk.name <- paste0(set.name, "/", chunk.id)
         chrom.list[[chrom]][[chunk.name]] <- chunk.name
         features <- fl$features[rownames(limits), , drop=FALSE ]
+        ## TODO: immediately filter out non-finite features.
+        
         ## features and limits are matrices[problems, ]
         ## rownames(features) <- rownames(limits) <-
         ##   paste(chunk.name, bases.per.bin, rownames(limits))
@@ -245,7 +259,6 @@ for(set.name in names(dp.peaks.sets)){
 
     names(fit$weights)[fit$weights != 0] #selected features.
     ## predict peaks on the test set.
-
     for(chrom in names(chrom.list)){
       chrom.chunks <- names(chrom.list[[chrom]])
       for(sample.id in sample.ids){
@@ -264,19 +277,20 @@ for(set.name in names(dp.peaks.sets)){
             stopifnot(nrow(interval) == 1)
             peaks.str <- paste(interval$peaks)
             peaks <- chunk.info$peaks[[problem.name]][[peaks.str]]
-            problem <- chunk.info$problems[problem.name]
-            problem.list[[problem.name]] <- problem
-            peaks$problemStart <- problem$chromStart
-            peaks$problemPeakStart <- problem$peakStart
-            peaks$problemPeakEnd <- problem$peakEnd
-            peaks$problemEnd <- problem$chromEnd
-            peaks$problem.name <- problem.name
             if(nrow(peaks)){
+              problem <- chunk.info$problems[problem.name]
+              problem.list[[problem.name]] <- problem
+              peaks$problemStart <- problem$chromStart
+              peaks$problemPeakStart <- problem$peakStart
+              peaks$problemPeakEnd <- problem$peakEnd
+              peaks$problemEnd <- problem$chromEnd
+              peaks$problem.name <- problem.name
               chrom.peak.list[[paste(chunk.name, problem.name)]] <- peaks
             }
           }#problem.name
         }#chunk.name
         problem.rects <- do.call(rbind, problem.list)
+        setkey(problem.rects, chromStart, chromEnd)
         chrom.peaks <- do.call(rbind, chrom.peak.list) %>%
           arrange(chromStart, chromEnd) %>%
           mutate(is.before=chromEnd < problemPeakStart,
@@ -284,6 +298,65 @@ for(set.name in names(dp.peaks.sets)){
                  is.overlap=(!is.before)&(!is.after),
                  status=ifelse(is.overlap, "keep", "discard"))
         chrom.peaks$peak.i <- 1:nrow(chrom.peaks)
+        filtered.peaks <- chrom.peaks %>%
+          filter(is.overlap) %>%
+          mutate(overlaps.next.peak=overlapsNext(chromStart, chromEnd),
+                 status=ifelse(overlaps.next.peak, "merge", "keep"),
+                 overlaps.prev.peak=c(FALSE,
+                   overlaps.next.peak[-length(overlaps.next.peak)]))
+        p.next <- filtered.peaks[filtered.peaks$overlaps.next.peak, ]
+        p.prev <- filtered.peaks[filtered.peaks$overlaps.prev.peak, ]
+        edited.peaks <- filtered.peaks %>%
+          filter(!overlaps.next.peak) %>%
+          mutate(status=ifelse(overlaps.prev.peak, "edited", "same"))
+        edited.peaks$chromStart[edited.peaks$overlaps.prev.peak] <-
+          min2(p.next$chromStart, p.prev$chromStart)
+        edited.peaks$chromEnd[edited.peaks$overlaps.prev.peak] <-
+          max2(p.next$chromEnd, p.prev$chromEnd)
+        overlap.peaks <- filtered.peaks %>%
+          filter(overlaps.next.peak) %>%
+          mutate(overlap.i=seq_along(overlaps.next.peak))
+        overlap.edited <- edited.peaks %>%
+          filter(overlaps.prev.peak)
+        if(nrow(overlap.peaks) > 0){
+          zoom.problem.list <- list()
+          zoom.peak.list <- list()
+          for(overlap.i in 1:nrow(overlap.peaks)){
+            overlap.peak <- data.table(overlap.peaks[overlap.i, ]) %>%
+              mutate(mid=(chromStart+chromEnd)/2,
+                     zoom=overlap.i)
+            edited.peak <- overlap.edited[overlap.i, ] %>%
+              mutate(problem.name="edited")
+            setkey(overlap.peak, chromStart, chromEnd)
+            overlap.rects <- foverlaps(problem.rects, overlap.peak, nomatch=0L)
+            zoom.problem.list[[overlap.i]] <- overlap.rects
+            zoom.chromEnd <- max(overlap.rects$chromEnd)
+            zoom.chromStart <- min(overlap.rects$chromStart)
+            relevant.peaks <- rbind(filtered.peaks, edited.peak) %>%
+              filter(chromStart < zoom.chromEnd,
+                     zoom.chromStart < chromEnd) %>%
+              mutate(mid=overlap.peak$mid,
+                     zoom=overlap.peak$zoom)
+            zoom.peak.list[[overlap.i]] <- relevant.peaks
+          }
+          zoom.problems <- do.call(rbind, zoom.problem.list)
+          zoom.peaks <- do.call(rbind, zoom.peak.list)
+        ggplot()+
+          geom_segment(aes((i.chromStart-mid)/1e3, i.problem.name,
+                           xend=(i.chromEnd-mid)/1e3, yend=i.problem.name),
+                        data=zoom.problems, size=5, alpha=1/10)+
+          geom_segment(aes((peakStart-mid)/1e3, i.problem.name,
+                           xend=(peakEnd-mid)/1e3, yend=i.problem.name),
+                        data=zoom.problems, size=5, alpha=1/10)+
+          geom_segment(aes((chromStart-mid)/1e3, problem.name,
+                           xend=(chromEnd-mid)/1e3, yend=problem.name,
+                           color=status),
+                       data=zoom.peaks, size=2)+
+          theme_bw()+
+          theme(panel.margin=grid::unit(0, "cm"))+
+          facet_grid(zoom ~ ., scales="free")
+        }
+        if(FALSE){
         ggplot()+
           geom_segment(aes(chromStart/1e3, peak.i,
                            xend=chromEnd/1e3, yend=peak.i,
@@ -301,14 +374,37 @@ for(set.name in names(dp.peaks.sets)){
           theme_bw()+
           theme(panel.margin=grid::unit(0, "cm"))+
           facet_grid(problem.name ~ .)
-      }
-    }
-    ##   for every chrom
-    ##     for every problem
-    ##       predict peaks
-    ##     combine peaks
-    ##     for every chunk
-    ##       evaluate peaks
+        ggplot()+
+          geom_segment(aes(chromStart/1e3, problem.name,
+                           xend=chromEnd/1e3, yend=problem.name),
+                        data=problem.rects, size=5, alpha=1/10)+
+          geom_segment(aes(peakStart/1e3, problem.name,
+                           xend=peakEnd/1e3, yend=problem.name),
+                        data=problem.rects, size=5, alpha=1/10)+
+          geom_segment(aes(chromStart/1e3, problem.name,
+                           xend=chromEnd/1e3, yend=problem.name,
+                           color=status),
+                       data=chrom.peaks, size=2)
+        ggplot()+
+          geom_segment(aes(chromStart/1e3, problem.name,
+                           xend=chromEnd/1e3, yend=problem.name),
+                        data=problem.rects, size=5, alpha=1/10)+
+          geom_segment(aes(peakStart/1e3, problem.name,
+                           xend=peakEnd/1e3, yend=problem.name),
+                        data=problem.rects, size=5, alpha=1/10)+
+          geom_segment(aes(chromStart/1e3, problem.name,
+                           xend=chromEnd/1e3, yend=problem.name,
+                           color=status),
+                       data=filtered.peaks, size=2)
+        }
+        sorted.peaks <- edited.peaks %>%
+          arrange(chromStart, chromEnd) %>%
+          mutate(overlaps.next.peak=overlapsNext(chromStart, chromEnd))
+        stopifnot(all(!sorted.peaks$overlaps.next.peak))
+        ##     for every chunk
+        ##       evaluate peaks
+      }#sample.id
+    }#chrom
     stop(1)
 
     pred.log.lambda <- fit$predict(set.data$test$features)
