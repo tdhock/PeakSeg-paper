@@ -89,3 +89,6 @@ oracle.intervals.RData: oracle.intervals.R oracle.optimal.RData
 	R --no-save < $<
 oracle.regularized.RData: oracle.regularized.R oracle.intervals.RData dp.peaks.sets.RData
 	R --no-save < $<
+## regularized model with multi-resolution bins.
+multires.bins.RData: multires.bins.R
+	R --no-save < $<

@@ -1,4 +1,5 @@
 works_with_R("3.1.2",
+             "tdhock/PeakError@d9196abd9ba51ad1b8f165d49870039593b94732",
              "tdhock/ggplot2@aac38b6c48c016c88123208d497d896864e74bd7",
              reshape2="1.2.2",
              data.table="1.9.4",
@@ -53,6 +54,7 @@ overlapsNext <- function(chromStart, chromEnd){
 }  
 
 all.best.list <- list()
+test.error.list <- list()
 for(set.name in names(dp.peaks.sets)){
   train.sets <- dp.peaks.sets[[set.name]]
   experiment <- sub("_.*", "", set.name)
@@ -268,10 +270,12 @@ for(set.name in names(dp.peaks.sets)){
     ## predict peaks on the test set.
     for(chrom in names(chrom.list)){
       chrom.chunks <- names(chrom.list[[chrom]])
-      for(sample.id in sample.ids){
-        sample.regions <- region.list[[sample.id]]
-        setkey(sample.regions, chrom)
-        chrom.regions <- sample.regions[chrom]
+      is.test.name <- chrom.chunks %in% set.chunks$test
+      test.chunks <- chrom.chunks[is.test.name]
+      if(length(test.chunks))for(sample.id in sample.ids){
+        sample.regions <- region.list[[sample.id]] %>%
+          mutate(chunk.name=paste0(set.name, "/", chunk.id))
+        setkey(sample.regions, chunk.name)
         chrom.peak.list <- list()
         problem.list <- list()
         for(chunk.name in chrom.chunks){
@@ -313,7 +317,8 @@ for(set.name in names(dp.peaks.sets)){
                    overlaps.next.peak[-length(overlaps.next.peak)]),
                  status=ifelse(overlaps.next.peak|overlaps.prev.peak,
                    "merge", "keep"),
-                 diff=c(0, diff(overlaps.next.peak)))
+                 diff=c(ifelse(overlaps.next.peak[1], 1, 0),
+                   diff(overlaps.next.peak)))
         if(FALSE){
         ggplot()+
           geom_segment(aes(chromStart/1e3, peak.i,
@@ -357,6 +362,7 @@ for(set.name in names(dp.peaks.sets)){
         }
         cluster.starts <- which(filtered.peaks$diff == 1)
         cluster.ends <- which(filtered.peaks$diff == -1)
+        stopifnot(length(cluster.starts) == length(cluster.ends))
         merged.peaks <- if(length(cluster.starts) > 0){
           zoom.problem.list <- list()
           zoom.peak.list <- list()
@@ -372,13 +378,13 @@ for(set.name in names(dp.peaks.sets)){
             mid <- filtered.peaks$problemPeakEnd[cluster.start]
             overlap.rects <- problem.rects %>%
               filter(problem.name %in% problem.names)
-            zoom.problem.list[[overlap.i]] <-
+            zoom.problem.list[[cluster.i]] <-
               data.table(overlap.rects, cluster.i)
             problem.peaks <- filtered.peaks %>%
               filter(problem.name %in% problem.names)
             relevant.peaks <-
               data.table(rbind(problem.peaks, overlap.peak), mid, cluster.i)
-            zoom.peak.list[[overlap.i]] <- relevant.peaks
+            zoom.peak.list[[cluster.i]] <- relevant.peaks
           }
           zoom.problems <- do.call(rbind, zoom.problem.list)
           zoom.peaks <- do.call(rbind, zoom.peak.list)
@@ -400,7 +406,7 @@ for(set.name in names(dp.peaks.sets)){
             filter(problem.name == "edited")
         }
         edited.peaks <-
-          rbind(merged.peaks %>%
+          rbind(if(!is.null(merged.peaks))merged.peaks %>%
                 select(chromStart, chromEnd),
                 filtered.peaks %>%
                 filter(status=="keep") %>%
@@ -409,21 +415,25 @@ for(set.name in names(dp.peaks.sets)){
           arrange(chromStart, chromEnd) %>%
           mutate(overlaps.next.peak=overlapsNext(chromStart, chromEnd))
         stopifnot(all(!sorted.peaks$overlaps.next.peak))
-        ##     for every chunk
-        ##       evaluate peaks
+        for(chunk.name in test.chunks){
+          test.regions <- sample.regions[chunk.name]
+          error <- PeakErrorChrom(sorted.peaks, test.regions)
+          test.error.list[[paste(set.name, set.i, sample.id, chunk.name)]] <-
+          data.table(sample.id, chunk.name, chrom, set.name, testSet, set.i,
+                     error)
+        }
       }#sample.id
     }#chrom
-    stop(1)
-
-    pred.log.lambda <- fit$predict(set.data$test$features)
-    ## TODO: combine peaks on each chromosome.
-
-    ## TODO: evaluate test error for each chrom.
-    
   }#set.i
 }#set.name
-
+test.error <- do.call(rbind, test.error.list)
 all.best <- do.call(rbind, all.best.list)
 
 L <- split(all.best, all.best$set.name)
 lapply(L, with, table(bases.per.bin, variable))
+
+multires.bins <-
+  list(test.error=test.error,
+       hyperparameters=all.best)
+
+save(multires.bins, file="multires.bins.RData")
