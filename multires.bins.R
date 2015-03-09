@@ -48,11 +48,15 @@ for(set.name in names(dp.peaks.sets)){
   e <- new.env()
   fl.list <- list()
   error.list <- list()
-  for(sample.id in names(RData.files)){
+  chrom.list <- list()
+  region.list <- list()
+  sample.ids <- names(RData.files)
+  for(sample.id in sample.ids){
     RData.file <- RData.files[[sample.id]]
     objs <- load(RData.file, e)
     RData.by.sample[[sample.id]] <- as.list(e)
     error.list[[sample.id]] <- data.table(sample.id, e$errors)
+    region.list[[sample.id]] <- data.table(sample.id, e$regions)
     to.check <- e$errors %>%
       group_by(bases.per.bin) %>%
       summarise(total.weight=sum(total.weight))
@@ -72,6 +76,7 @@ for(set.name in names(dp.peaks.sets)){
         modelSelection <- fl$modelSelection[rownames(limits)]
         peaks <- fl$peaks[rownames(limits)]
         chunk.name <- paste0(set.name, "/", chunk.id)
+        chrom.list[[chrom]][[chunk.name]] <- chunk.name
         features <- fl$features[rownames(limits), , drop=FALSE ]
         ## features and limits are matrices[problems, ]
         ## rownames(features) <- rownames(limits) <-
@@ -241,7 +246,63 @@ for(set.name in names(dp.peaks.sets)){
     names(fit$weights)[fit$weights != 0] #selected features.
     ## predict peaks on the test set.
 
-    ## for every sample
+    for(chrom in names(chrom.list)){
+      chrom.chunks <- names(chrom.list[[chrom]])
+      for(sample.id in sample.ids){
+        sample.regions <- region.list[[sample.id]]
+        setkey(sample.regions, chrom)
+        chrom.regions <- sample.regions[chrom]
+        chrom.peak.list <- list()
+        problem.list <- list()
+        for(chunk.name in chrom.chunks){
+          chunk.info <- best.fl[[chunk.name]][[sample.id]]
+          pred.log.lambda <- fit$predict(chunk.info$features)
+          for(problem.name in names(chunk.info$modelSelection)){
+            l <- pred.log.lambda[problem.name, ]
+            exact <- chunk.info$modelSelection[[problem.name]]
+            interval <- subset(exact, min.log.lambda < l & l < max.log.lambda)
+            stopifnot(nrow(interval) == 1)
+            peaks.str <- paste(interval$peaks)
+            peaks <- chunk.info$peaks[[problem.name]][[peaks.str]]
+            problem <- chunk.info$problems[problem.name]
+            problem.list[[problem.name]] <- problem
+            peaks$problemStart <- problem$chromStart
+            peaks$problemPeakStart <- problem$peakStart
+            peaks$problemPeakEnd <- problem$peakEnd
+            peaks$problemEnd <- problem$chromEnd
+            peaks$problem.name <- problem.name
+            if(nrow(peaks)){
+              chrom.peak.list[[paste(chunk.name, problem.name)]] <- peaks
+            }
+          }#problem.name
+        }#chunk.name
+        problem.rects <- do.call(rbind, problem.list)
+        chrom.peaks <- do.call(rbind, chrom.peak.list) %>%
+          arrange(chromStart, chromEnd) %>%
+          mutate(is.before=chromEnd < problemPeakStart,
+                 is.after=problemPeakEnd < chromStart,
+                 is.overlap=(!is.before)&(!is.after),
+                 status=ifelse(is.overlap, "keep", "discard"))
+        chrom.peaks$peak.i <- 1:nrow(chrom.peaks)
+        ggplot()+
+          geom_segment(aes(chromStart/1e3, peak.i,
+                           xend=chromEnd/1e3, yend=peak.i,
+                           color=status),
+                       data=chrom.peaks)
+        ggplot()+
+          geom_tallrect(aes(xmin=chromStart/1e3, xmax=chromEnd/1e3),
+                        data=problem.rects, alpha=1/10)+
+          geom_tallrect(aes(xmin=peakStart/1e3, xmax=peakEnd/1e3),
+                        data=problem.rects, alpha=1/10)+
+          geom_segment(aes(chromStart/1e3, peak.i,
+                           xend=chromEnd/1e3, yend=peak.i,
+                           color=status),
+                       data=chrom.peaks)+
+          theme_bw()+
+          theme(panel.margin=grid::unit(0, "cm"))+
+          facet_grid(problem.name ~ .)
+      }
+    }
     ##   for every chrom
     ##     for every problem
     ##       predict peaks
