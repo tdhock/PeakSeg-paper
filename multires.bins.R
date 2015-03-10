@@ -7,6 +7,15 @@ works_with_R("3.1.2",
              dplyr="0.4.0")
 
 load("dp.peaks.sets.RData")
+load("oracle.regularized.RData")
+
+ref.err <- subset(oracle.regularized$error, model.name==model.name[1])
+
+ref.regions <- ref.err %>%
+  group_by(set.name, set.i) %>%
+  summarise(regions=sum(regions)) %>%
+  mutate(testSet=paste(set.name, "split", set.i))
+setkey(ref.regions, testSet)
 
 pick.best.index <- function
 ### Minimizer for local models, described in article section 2.3
@@ -39,12 +48,6 @@ pick.best.index <- function
 ### Integer index of the minimal error.
 }
 
-min2 <- function(x, y){
-  ifelse(x < y, x, y)
-}
-max2 <- function(x, y){
-  ifelse(y < x, x, y)
-}
 overlapsNext <- function(chromStart, chromEnd){
   next.chromStart <- chromStart[-1]
   prev.chromEnd <- chromEnd[-length(chromEnd)]
@@ -96,7 +99,7 @@ for(set.name in names(dp.peaks.sets)){
         chunk.name <- paste0(set.name, "/", chunk.id)
         chrom.list[[chrom]][[chunk.name]] <- chunk.name
         features <- fl$features[rownames(limits), , drop=FALSE ]
-        ## TODO: immediately filter out non-finite features.
+        ## immediately filter out non-finite features.
         is.bad <- apply(!is.finite(features), 2, any)
         bad.list[[bases.per.bin]][[paste(sample.id, chunk.id)]] <-
           colnames(features)[is.bad]
@@ -125,6 +128,17 @@ for(set.name in names(dp.peaks.sets)){
   for(set.i in seq_along(train.sets)){
     testSet <- paste(set.name, "split", set.i)
     train.validation <- train.sets[[set.i]]
+
+    ## Check to make sure there are the right number of test regions
+    ## in this dats set.
+    expected.regions <- ref.regions[testSet]$regions
+    set.regions <- do.call(rbind, region.list) %>%
+      mutate(chunk.name=paste0(set.name, "/", chunk.id))
+    test.regions <- set.regions %>%
+      filter(! chunk.name %in% train.validation)
+    stopifnot(nrow(test.regions) == expected.regions)
+
+    set.test.error.list <- list()
 
     error.by.sample <- 
     all.errors %>%
@@ -418,12 +432,15 @@ for(set.name in names(dp.peaks.sets)){
         for(chunk.name in test.chunks){
           test.regions <- sample.regions[chunk.name]
           error <- PeakErrorChrom(sorted.peaks, test.regions)
-          test.error.list[[paste(set.name, set.i, sample.id, chunk.name)]] <-
+          set.test.error.list[[paste(sample.id, chunk.name)]] <-
           data.table(sample.id, chunk.name, chrom, set.name, testSet, set.i,
                      error)
         }
       }#sample.id
     }#chrom
+    set.test.error <- do.call(rbind, set.test.error.list)
+    stopifnot(nrow(set.test.error) == expected.regions)
+    test.error.list[[testSet]] <- set.test.error
   }#set.i
 }#set.name
 test.error <- do.call(rbind, test.error.list)
