@@ -59,6 +59,7 @@ overlapsNext <- function(chromStart, chromEnd){
 
 all.best.list <- list()
 test.error.list <- list()
+test.peak.list <- list()
 for(set.name in names(dp.peaks.sets)){
   all.chunks <- grep(set.name, names(dp.peaks.error), value=TRUE)
   train.sets <- dp.peaks.sets[[set.name]]
@@ -442,7 +443,8 @@ for(set.name in names(dp.peaks.sets)){
             arrange(chromStart, chromEnd) %>%
             mutate(overlaps.next.peak=overlapsNext(chromStart, chromEnd))
           stopifnot(all(!sorted.peaks$overlaps.next.peak))
-        }
+        }#if/else
+        test.peak.list[[testSet]][[chrom]][[sample.id]] <- sorted.peaks
         for(chunk.name in test.chunks){
           sid <- sample.id
           chunk.ref <- do.call(rbind, dp.peaks.error[[chunk.name]]) %>%
@@ -465,15 +467,12 @@ for(set.name in names(dp.peaks.sets)){
 test.error <- do.call(rbind, test.error.list)
 all.best <- do.call(rbind, all.best.list)
 
-## TODO: why do the region totals not equal the other data sets?
-
-## TODO: why is there only 1 test set for H3K4me3_XJ_immune?
-
 L <- split(all.best, all.best$set.name)
 lapply(L, with, table(bases.per.bin, variable))
 
 multires.bins <-
   list(test.error=test.error,
-       hyperparameters=all.best)
+       hyperparameters=all.best,
+       test.peaks=do.call(rbind, test.peak.list))
 
 save(multires.bins, file="multires.bins.RData")
