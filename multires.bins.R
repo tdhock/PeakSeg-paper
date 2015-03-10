@@ -326,119 +326,123 @@ for(set.name in names(dp.peaks.sets)){
         }#chunk.name
         problem.rects <- do.call(rbind, problem.list)
         setkey(problem.rects, chromStart, chromEnd)
-        chrom.peaks <- do.call(rbind, chrom.peak.list) %>%
-          arrange(chromStart, chromEnd) %>%
-          mutate(is.before=chromEnd < problemPeakStart,
+        if(length(chrom.peak.list) == 0){
+          sorted.peaks <- Peaks()
+        }else{
+          chrom.peaks <- do.call(rbind, chrom.peak.list) %>%
+            arrange(chromStart, chromEnd) %>%
+            mutate(is.before=chromEnd < problemPeakStart,
                  is.after=problemPeakEnd < chromStart,
                  is.overlap=(!is.before)&(!is.after),
                  status=ifelse(is.overlap, "keep", "discard"))
-        chrom.peaks$peak.i <- 1:nrow(chrom.peaks)
-        filtered.peaks <- chrom.peaks %>%
-          filter(is.overlap) %>%
-          arrange(chromStart, chromEnd) %>%
-          mutate(overlaps.next.peak=overlapsNext(chromStart, chromEnd),
+          chrom.peaks$peak.i <- 1:nrow(chrom.peaks)
+          filtered.peaks <- chrom.peaks %>%
+            filter(is.overlap) %>%
+            arrange(chromStart, chromEnd) %>%
+            mutate(overlaps.next.peak=overlapsNext(chromStart, chromEnd),
                  overlaps.prev.peak=c(FALSE,
                    overlaps.next.peak[-length(overlaps.next.peak)]),
                  status=ifelse(overlaps.next.peak|overlaps.prev.peak,
                    "merge", "keep"),
                  diff=c(ifelse(overlaps.next.peak[1], 1, 0),
                    diff(overlaps.next.peak)))
-        if(FALSE){
-        ggplot()+
-          geom_segment(aes(chromStart/1e3, peak.i,
+          if(FALSE){
+            ggplot()+
+              geom_segment(aes(chromStart/1e3, peak.i,
                            xend=chromEnd/1e3, yend=peak.i,
                            color=status),
                        data=chrom.peaks)
-        ggplot()+
-          geom_tallrect(aes(xmin=chromStart/1e3, xmax=chromEnd/1e3),
+            ggplot()+
+              geom_tallrect(aes(xmin=chromStart/1e3, xmax=chromEnd/1e3),
                         data=problem.rects, alpha=1/10)+
-          geom_tallrect(aes(xmin=peakStart/1e3, xmax=peakEnd/1e3),
+              geom_tallrect(aes(xmin=peakStart/1e3, xmax=peakEnd/1e3),
                         data=problem.rects, alpha=1/10)+
-          geom_segment(aes(chromStart/1e3, peak.i,
+              geom_segment(aes(chromStart/1e3, peak.i,
                            xend=chromEnd/1e3, yend=peak.i,
                            color=status),
                        data=chrom.peaks)+
-          theme_bw()+
-          theme(panel.margin=grid::unit(0, "cm"))+
-          facet_grid(problem.name ~ .)
-        ggplot()+
-          geom_segment(aes(chromStart/1e3, problem.name,
+              theme_bw()+
+              theme(panel.margin=grid::unit(0, "cm"))+
+              facet_grid(problem.name ~ .)
+            ggplot()+
+              geom_segment(aes(chromStart/1e3, problem.name,
                            xend=chromEnd/1e3, yend=problem.name),
                         data=problem.rects, size=5, alpha=1/10)+
-          geom_segment(aes(peakStart/1e3, problem.name,
+              geom_segment(aes(peakStart/1e3, problem.name,
                            xend=peakEnd/1e3, yend=problem.name),
                         data=problem.rects, size=5, alpha=1/10)+
-          geom_segment(aes(chromStart/1e3, problem.name,
+              geom_segment(aes(chromStart/1e3, problem.name,
                            xend=chromEnd/1e3, yend=problem.name,
                            color=status),
                        data=chrom.peaks, size=2)
-        ggplot()+
-          geom_segment(aes(chromStart/1e3, problem.name,
+            ggplot()+
+              geom_segment(aes(chromStart/1e3, problem.name,
                            xend=chromEnd/1e3, yend=problem.name),
                         data=problem.rects, size=5, alpha=1/10)+
-          geom_segment(aes(peakStart/1e3, problem.name,
+              geom_segment(aes(peakStart/1e3, problem.name,
                            xend=peakEnd/1e3, yend=problem.name),
                         data=problem.rects, size=5, alpha=1/10)+
-          geom_segment(aes(chromStart/1e3, problem.name,
+              geom_segment(aes(chromStart/1e3, problem.name,
                            xend=chromEnd/1e3, yend=problem.name,
                            color=status),
                        data=filtered.peaks, size=2)
-        }
-        cluster.starts <- which(filtered.peaks$diff == 1)
-        cluster.ends <- which(filtered.peaks$diff == -1)
-        stopifnot(length(cluster.starts) == length(cluster.ends))
-        merged.peaks <- if(length(cluster.starts) > 0){
-          zoom.problem.list <- list()
-          zoom.peak.list <- list()
-          for(cluster.i in seq_along(cluster.starts)){
-            cluster.start <- cluster.starts[[cluster.i]]
-            cluster.end <- cluster.ends[[cluster.i]]
-            overlap.peak <- data.table(filtered.peaks[1,]) %>%
-              mutate(chromStart=filtered.peaks$chromStart[cluster.start],
-                     chromEnd=filtered.peaks$chromEnd[cluster.end],
-                     problem.name="edited")
-            problem.names <-
-              filtered.peaks$problem.name[c(cluster.start, cluster.end)]
-            mid <- filtered.peaks$problemPeakEnd[cluster.start]
-            overlap.rects <- problem.rects %>%
-              filter(problem.name %in% problem.names)
-            zoom.problem.list[[cluster.i]] <-
-              data.table(overlap.rects, cluster.i)
-            problem.peaks <- filtered.peaks %>%
-              filter(problem.name %in% problem.names)
-            relevant.peaks <-
-              data.table(rbind(problem.peaks, overlap.peak), mid, cluster.i)
-            zoom.peak.list[[cluster.i]] <- relevant.peaks
           }
-          zoom.problems <- do.call(rbind, zoom.problem.list)
-          zoom.peaks <- do.call(rbind, zoom.peak.list)
-        ggplot()+
-          geom_segment(aes((chromStart-mid)/1e3, problem.name,
+          cluster.starts <- which(filtered.peaks$diff == 1)
+          cluster.ends <- which(filtered.peaks$diff == -1)
+          stopifnot(length(cluster.starts) == length(cluster.ends))
+          merged.peaks <- if(length(cluster.starts) > 0){
+            zoom.problem.list <- list()
+            zoom.peak.list <- list()
+            for(cluster.i in seq_along(cluster.starts)){
+              cluster.start <- cluster.starts[[cluster.i]]
+              cluster.end <- cluster.ends[[cluster.i]]
+              overlap.peak <- data.table(filtered.peaks[1,]) %>%
+                mutate(chromStart=filtered.peaks$chromStart[cluster.start],
+                       chromEnd=filtered.peaks$chromEnd[cluster.end],
+                       problem.name="edited")
+              problem.names <-
+                filtered.peaks$problem.name[c(cluster.start, cluster.end)]
+              mid <- filtered.peaks$problemPeakEnd[cluster.start]
+              overlap.rects <- problem.rects %>%
+                filter(problem.name %in% problem.names)
+              zoom.problem.list[[cluster.i]] <-
+                data.table(overlap.rects, cluster.i)
+              problem.peaks <- filtered.peaks %>%
+                filter(problem.name %in% problem.names)
+              relevant.peaks <-
+                data.table(rbind(problem.peaks, overlap.peak), mid, cluster.i)
+              zoom.peak.list[[cluster.i]] <- relevant.peaks
+            }
+            zoom.problems <- do.call(rbind, zoom.problem.list)
+            zoom.peaks <- do.call(rbind, zoom.peak.list)
+            ggplot()+
+              geom_segment(aes((chromStart-mid)/1e3, problem.name,
                            xend=(chromEnd-mid)/1e3, yend=problem.name),
                        data=zoom.problems, size=5, alpha=1/10)+
-          geom_segment(aes((peakStart-mid)/1e3, problem.name,
+              geom_segment(aes((peakStart-mid)/1e3, problem.name,
                            xend=(peakEnd-mid)/1e3, yend=problem.name),
                         data=zoom.problems, size=5, alpha=1/10)+
-          geom_segment(aes((chromStart-mid)/1e3, problem.name,
+              geom_segment(aes((chromStart-mid)/1e3, problem.name,
                            xend=(chromEnd-mid)/1e3, yend=problem.name,
                            color=status),
                        data=zoom.peaks, size=2)+
-          theme_bw()+
-          theme(panel.margin=grid::unit(0, "cm"))+
-          facet_grid(cluster.i ~ ., scales="free")
-          zoom.peaks %>%
-            filter(problem.name == "edited")
+              theme_bw()+
+              theme(panel.margin=grid::unit(0, "cm"))+
+              facet_grid(cluster.i ~ ., scales="free")
+            zoom.peaks %>%
+              filter(problem.name == "edited")
+          }
+          edited.peaks <-
+            rbind(if(!is.null(merged.peaks))merged.peaks %>%
+                  select(chromStart, chromEnd),
+                  filtered.peaks %>%
+                  filter(status=="keep") %>%
+                  select(chromStart, chromEnd))
+          sorted.peaks <- edited.peaks %>%
+            arrange(chromStart, chromEnd) %>%
+            mutate(overlaps.next.peak=overlapsNext(chromStart, chromEnd))
+          stopifnot(all(!sorted.peaks$overlaps.next.peak))
         }
-        edited.peaks <-
-          rbind(if(!is.null(merged.peaks))merged.peaks %>%
-                select(chromStart, chromEnd),
-                filtered.peaks %>%
-                filter(status=="keep") %>%
-                select(chromStart, chromEnd))
-        sorted.peaks <- edited.peaks %>%
-          arrange(chromStart, chromEnd) %>%
-          mutate(overlaps.next.peak=overlapsNext(chromStart, chromEnd))
-        stopifnot(all(!sorted.peaks$overlaps.next.peak))
         for(chunk.name in test.chunks){
           sid <- sample.id
           chunk.ref <- do.call(rbind, dp.peaks.error[[chunk.name]]) %>%
