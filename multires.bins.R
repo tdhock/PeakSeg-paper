@@ -7,7 +7,7 @@ works_with_R("3.1.2",
              dplyr="0.4.0")
 
 load("dp.peaks.sets.RData")
-load("oracle.regularized.RData")
+load("dp.peaks.error.RData")
 
 ref.err <- subset(oracle.regularized$error, model.name==model.name[1])
 
@@ -59,6 +59,7 @@ overlapsNext <- function(chromStart, chromEnd){
 all.best.list <- list()
 test.error.list <- list()
 for(set.name in names(dp.peaks.sets)){
+  all.chunks <- grep(set.name, names(dp.peaks.error), value=TRUE)
   train.sets <- dp.peaks.sets[[set.name]]
   experiment <- sub("_.*", "", set.name)
   label.dir <- paste0("~/genomelabels/", set.name)
@@ -128,6 +129,9 @@ for(set.name in names(dp.peaks.sets)){
   for(set.i in seq_along(train.sets)){
     testSet <- paste(set.name, "split", set.i)
     train.validation <- train.sets[[set.i]]
+    chunks.used <- rep(NA, length(all.chunks))
+    names(chunks.used) <- all.chunks
+    chunks.used[train.validation] <- "train.validation"
 
     ## Check to make sure there are the right number of test regions
     ## in this dats set.
@@ -253,6 +257,8 @@ for(set.name in names(dp.peaks.sets)){
     set.chunks <- 
       list(train.validation=names(best.fl)[!is.tv],
            test=names(best.fl)[is.tv])
+    chunks.used[set.chunks$test] <- "test"
+    stopifnot(!is.na(chunks.used))
     set.data <- list()
     for(tv in c("train.validation", "test")){
       for(data.type in c("features", "limits")){
@@ -282,10 +288,12 @@ for(set.name in names(dp.peaks.sets)){
 
     names(fit$weights)[fit$weights != 0] #selected features.
     ## predict peaks on the test set.
+    test.chunk.list <- list()
     for(chrom in names(chrom.list)){
       chrom.chunks <- names(chrom.list[[chrom]])
       is.test.name <- chrom.chunks %in% set.chunks$test
       test.chunks <- chrom.chunks[is.test.name]
+      test.chunk.list[[chrom]] <- test.chunks
       if(length(test.chunks))for(sample.id in sample.ids){
         sample.regions <- region.list[[sample.id]] %>%
           mutate(chunk.name=paste0(set.name, "/", chunk.id))
@@ -430,7 +438,12 @@ for(set.name in names(dp.peaks.sets)){
           mutate(overlaps.next.peak=overlapsNext(chromStart, chromEnd))
         stopifnot(all(!sorted.peaks$overlaps.next.peak))
         for(chunk.name in test.chunks){
+          sid <- sample.id
+          chunk.ref <- do.call(rbind, dp.peaks.error[[chunk.name]]) %>%
+            filter(param.name == param.name[1],
+                   sample.id == sid)
           test.regions <- sample.regions[chunk.name]
+          stopifnot(nrow(chunk.ref) == nrow(test.regions))
           error <- PeakErrorChrom(sorted.peaks, test.regions)
           set.test.error.list[[paste(sample.id, chunk.name)]] <-
           data.table(sample.id, chunk.name, chrom, set.name, testSet, set.i,
