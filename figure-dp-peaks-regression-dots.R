@@ -10,6 +10,19 @@ load("unsupervised.error.RData")
 load("oracle.regularized.RData")
 load("multires.bins.RData")
 
+## table summarizing hyperparameters selected for multires.bins model.
+only.percent <- multires.bins$hyperparameters %>%
+  filter(variable=="percent")
+count.dt <- dcast(only.percent, set.name ~ bases.per.bin)
+count.mat <- as.matrix(data.frame(count.dt)[, -1])
+dimnames(count.mat) <-
+  list(set.name=count.dt$set.name,
+       bases.per.bin=names(count.dt)[-1])
+count.mat[count.mat==0] <- ""
+xt <- xtable(count.mat)
+print(xt, file="table-multires-bases-per-bin.tex",
+      include.rownames=TRUE, floating=FALSE)
+
 bins <- 
 multires.bins$test.error %>%
   group_by(set.name, set.i) %>%
@@ -57,7 +70,9 @@ un.bad <- un %>%
 with(un.bad, stopifnot(min == max))
 
 un.other <- un %>%
-  filter(!algorithm %in% c(bad.algos, "grid loss"))
+  filter(!algorithm %in% c(bad.algos,
+                           "best.DP",
+                           "grid loss"))
 un.bad <- un %>%
   filter(algorithm == "none") %>%
   mutate(algorithm="AIC/BIC.0")
