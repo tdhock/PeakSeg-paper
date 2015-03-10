@@ -8,6 +8,7 @@ works_with_R("3.1.2",
 
 load("dp.peaks.sets.RData")
 load("dp.peaks.error.RData")
+load("oracle.regularized.RData")
 
 ref.err <- subset(oracle.regularized$error, model.name==model.name[1])
 
@@ -255,8 +256,8 @@ for(set.name in names(dp.peaks.sets)){
     ## fit model on combined train/validation set.
     is.tv <- names(best.fl) %in% train.validation
     set.chunks <- 
-      list(train.validation=names(best.fl)[!is.tv],
-           test=names(best.fl)[is.tv])
+      list(train.validation=names(best.fl)[is.tv],
+           test=names(best.fl)[!is.tv])
     chunks.used[set.chunks$test] <- "test"
     stopifnot(!is.na(chunks.used))
     set.data <- list()
@@ -308,11 +309,12 @@ for(set.name in names(dp.peaks.sets)){
             exact <- chunk.info$modelSelection[[problem.name]]
             interval <- subset(exact, min.log.lambda < l & l < max.log.lambda)
             stopifnot(nrow(interval) == 1)
+            problem <- chunk.info$problems[problem.name]
+            problem.list[[problem.name]] <- problem
+
             peaks.str <- paste(interval$peaks)
             peaks <- chunk.info$peaks[[problem.name]][[peaks.str]]
             if(nrow(peaks)){
-              problem <- chunk.info$problems[problem.name]
-              problem.list[[problem.name]] <- problem
               peaks$problemStart <- problem$chromStart
               peaks$problemPeakStart <- problem$peakStart
               peaks$problemPeakEnd <- problem$peakEnd
