@@ -473,6 +473,6 @@ lapply(L, with, table(bases.per.bin, variable))
 multires.bins <-
   list(test.error=test.error,
        hyperparameters=all.best,
-       test.peaks=do.call(rbind, test.peak.list))
+       test.peaks=test.peak.list)
 
 save(multires.bins, file="multires.bins.RData")

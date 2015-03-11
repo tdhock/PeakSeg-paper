@@ -1,7 +1,7 @@
-works_with_R("3.1.2", reshape2="1.2.2", ggplot2="1.0",
+works_with_R("3.1.3", reshape2="1.2.2", ggplot2="1.0",
              data.table="1.9.4",
              dplyr="0.4.0",
-             xtable="1.7.3")
+             xtable="1.7.4")
 
 load("dp.peaks.baseline.RData")
 load("dp.peaks.regression.RData")

@@ -1,4 +1,4 @@
-HOCKING-RIGAILL-chip-seq-paper.pdf: HOCKING-RIGAILL-chip-seq-paper.tex refs.bib figure-Segmentor-PeakSeg.png figure-dp-peaks-regression-dots.pdf figure-good-bad.png 
+HOCKING-RIGAILL-chip-seq-paper.pdf: HOCKING-RIGAILL-chip-seq-paper.tex refs.bib figure-Segmentor-PeakSeg.png figure-dp-peaks-regression-dots.pdf figure-good-bad.png  figure-overlapping-peaks.tex
 	rm -f *.aux *.bbl
 	pdflatex HOCKING-RIGAILL-chip-seq-paper
 	bibtex HOCKING-RIGAILL-chip-seq-paper
@@ -91,4 +91,6 @@ oracle.regularized.RData: oracle.regularized.R oracle.intervals.RData dp.peaks.s
 	R --no-save < $<
 ## regularized model with multi-resolution bins.
 multires.bins.RData: multires.bins.R
+	R --no-save < $<
+figure-overlapping-peaks.tex: figure-overlapping-peaks.R
 	R --no-save < $<
