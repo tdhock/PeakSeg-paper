@@ -1,5 +1,5 @@
 works_with_R("3.1.3", reshape2="1.2.2", ggplot2="1.0",
-             "tdhock/PeakSegDP@854678f21f6886ce99400fac8b81900d16051eb9",
+             "tdhock/PeakSegDP@36ae6de95da89c1dc4455d55631a7d4313955dc8",
              data.table="1.9.4",
              dplyr="0.4.0",
              xtable="1.7.4")
@@ -65,18 +65,62 @@ for(chunk.name in valid.chunks){
   load(counts.file)
   sample.ids <- unique(counts$sample.id)
 
-  cluster.list <- split(chunk.peaks, chunk.peaks$cluster)
+  cluster.list <- split(chunk.peaks, chunk.peaks$cluster, drop=TRUE)
+  joint.peak.list <- list()
   for(cluster.id in names(cluster.list)){
     cluster.peaks <- cluster.list[[cluster.id]]
     peakStart <- min(cluster.peaks$chromStart)
     peakEnd <- max(cluster.peaks$chromEnd)
-    expand.bases <- 1
+    expand.bases <- (peakEnd-peakStart)/2
+    next.id <- paste(as.integer(cluster.id) + 1)
+    prev.id <- paste(as.integer(cluster.id) - 1)
+    next.chromStart <- min(cluster.list[[next.id]]$chromStart)
+    prev.chromEnd <- max(cluster.list[[prev.id]]$chromEnd)
     clusterStart <- peakStart - expand.bases
+    if(clusterStart < prev.chromEnd){
+      clusterStart <- prev.chromEnd
+    }
     clusterEnd <- peakEnd + expand.bases
+    if(next.chromStart < clusterEnd){
+      clusterEnd <- next.chromStart
+    }
+    cluster.counts <-
+      subset(counts,
+             sample.id %in% paste(cluster.peaks$sample.id) &
+             clusterStart < chromStart &
+             chromEnd < clusterEnd)
     cluster.bases <- clusterEnd-clusterStart
+    cluster.counts$count <- cluster.counts$coverage
+    peak <- multiSampleSegHeuristic(cluster.counts)
+    joint.peak.list[[cluster.id]] <- data.frame(sample.id="joint", cluster.id, peak)
+    ggplot()+
+      theme_bw()+
+      scale_y_continuous("aligned read coverage signal",
+                         labels=function(x){
+                           sprintf("%.1f", x)
+                         },
+                         breaks=function(limits){
+                           limits[2]
+                         })+
+      theme(panel.margin=grid::unit(0, "cm"))+
+      facet_grid(sample.id ~ ., scales="free_y", labeller=function(var, val){
+        sub("McGill0", "", val)
+      })+
+      geom_segment(aes(chromStart/1e3, 0,
+                       xend=chromEnd/1e3, yend=0),
+                   data=cluster.peaks,
+                   size=2)+
+      geom_segment(aes(chromStart/1e3, 0,
+                       xend=chromEnd/1e3, yend=0),
+                   data=peak,
+                   color="green",
+                   size=1)+
+      geom_step(aes(chromStart/1e3, coverage),
+                data=cluster.counts, color="grey50")
   }
+  joint.peaks <- do.call(rbind, joint.peak.list)
 
-  P <- 
+  without.joint <- 
 ggplot()+
   geom_tallrect(aes(xmin=chromStart/1e3, xmax=chromEnd/1e3,
                     fill=annotation),
@@ -114,6 +158,18 @@ ggplot()+
     sub("McGill0", "", val)
   })
 
+  with.joint <-
+    without.joint +
+      guides(color="none")+
+      geom_segment(aes(chromStart/1e3, 0,
+                   color=cluster.id,
+                   xend=chromEnd/1e3, yend=0),
+               data=joint.peaks,
+               size=10)+
+      geom_text(aes((chromStart+chromEnd)/2/1e3, 0, label=cluster.id),
+                data=joint.peaks)
+
+  
   png.file <-
     paste0("overlapping-peaks/",
            split.id, "/", chunk.name,
@@ -125,7 +181,7 @@ ggplot()+
   if(!file.exists(png.file)){
   png(png.file,
       units="in", res=200, width=8, height=10)
-  print(P)
+  print(with.joint)
   dev.off()
   }
 }
