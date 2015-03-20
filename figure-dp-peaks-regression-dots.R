@@ -9,6 +9,7 @@ load("regularized.all.RData")
 load("unsupervised.error.RData")
 load("oracle.regularized.RData")
 load("multires.bins.RData")
+load("multires.bins.joint.RData")
 
 ## table summarizing hyperparameters selected for multires.bins model.
 only.percent <- multires.bins$hyperparameters %>%
@@ -25,6 +26,16 @@ print(xt, file="table-multires-bases-per-bin.tex",
 
 bins <- 
 multires.bins$test.error %>%
+  group_by(set.name, set.i) %>%
+  summarise(errors=sum(fp+fn),
+            regions=n()) %>%
+  mutate(percent=errors/regions*100,
+         algorithm="multires.bins")
+  
+bins.joint <- 
+multires.bins.joint$test.error %>%
+  mutate(set.name=sub(" .*", "", testSet),
+         set.i=sub(".* ", "", testSet)) %>%
   group_by(set.name, set.i) %>%
   summarise(errors=sum(fp+fn),
             regions=n()) %>%

@@ -19,7 +19,7 @@ figure-dp-third.tex: figure-dp-third.R
 	R --no-save < $<
 figure-Segmentor-PeakSeg.png: figure-Segmentor-PeakSeg.R
 	R --no-save < $<
-figure-dp-peaks-regression-dots.pdf: figure-dp-peaks-regression-dots.R dp.peaks.regression.RData dp.peaks.baseline.RData regularized.all.RData unsupervised.error.RData oracle.regularized.RData multires.bins.RData
+figure-dp-peaks-regression-dots.pdf: figure-dp-peaks-regression-dots.R dp.peaks.regression.RData dp.peaks.baseline.RData regularized.all.RData unsupervised.error.RData oracle.regularized.RData multires.bins.RData multires.bins.joint.RData
 	R --no-save < $<
 figure-dp-timings.pdf: figure-dp-timings.R dp.timings.RData
 	R --no-save < $<
@@ -91,6 +91,8 @@ oracle.regularized.RData: oracle.regularized.R oracle.intervals.RData dp.peaks.s
 	R --no-save < $<
 ## regularized model with multi-resolution bins.
 multires.bins.RData: multires.bins.R
+	R --no-save < $<
+multires.bins.joint.RData: multires.bins.joint.R
 	R --no-save < $<
 figure-overlapping-peaks.tex: figure-overlapping-peaks.R
 	R --no-save < $<

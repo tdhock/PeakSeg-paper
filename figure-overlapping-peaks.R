@@ -1,5 +1,5 @@
 works_with_R("3.1.3", reshape2="1.2.2", ggplot2="1.0",
-             "tdhock/PeakSegDP@36ae6de95da89c1dc4455d55631a7d4313955dc8",
+             "tdhock/PeakSegDP@dd9d52d1341d2824f9bb18d2c9fa84f6e12e6317",
              data.table="1.9.4",
              dplyr="0.4.0",
              xtable="1.7.4")
@@ -67,11 +67,12 @@ for(chunk.name in valid.chunks){
 
   cluster.list <- split(chunk.peaks, chunk.peaks$cluster, drop=TRUE)
   joint.peak.list <- list()
+  tit <- paste0(split.id, "/", chunk.name)
   for(cluster.id in names(cluster.list)){
     cluster.peaks <- cluster.list[[cluster.id]]
     peakStart <- min(cluster.peaks$chromStart)
     peakEnd <- max(cluster.peaks$chromEnd)
-    expand.bases <- (peakEnd-peakStart)/2
+    expand.bases <- peakEnd-peakStart
     next.id <- paste(as.integer(cluster.id) + 1)
     prev.id <- paste(as.integer(cluster.id) - 1)
     next.chromStart <- min(cluster.list[[next.id]]$chromStart)
@@ -91,9 +92,14 @@ for(chunk.name in valid.chunks){
              chromEnd < clusterEnd)
     cluster.bases <- clusterEnd-clusterStart
     cluster.counts$count <- cluster.counts$coverage
-    peak <- multiSampleSegHeuristic(cluster.counts)
-    joint.peak.list[[cluster.id]] <- data.frame(sample.id="joint", cluster.id, peak)
+    ##peak <- multiSampleSegOptimal(cluster.counts)
+    peak <- multiSampleSegHeuristic(cluster.counts, 2)
+    joint.peak.list[[cluster.id]] <-
+      data.frame(sample.id="joint", cluster.id, peak)
     ggplot()+
+      ggtitle(paste(tit, "cluster", cluster.id))+
+        xlab(paste("position on", cluster.peaks$chunkChrom[1],
+                   "(kilobases = kb)"))+
       theme_bw()+
       scale_y_continuous("aligned read coverage signal",
                          labels=function(x){
@@ -160,6 +166,9 @@ ggplot()+
 
   with.joint <-
     without.joint +
+      ggtitle(tit)+
+        xlab(paste("position on", cluster.peaks$chunkChrom[1],
+                   "(kilobases = kb)"))+
       guides(color="none")+
       geom_segment(aes(chromStart/1e3, 0,
                    color=cluster.id,
@@ -169,10 +178,9 @@ ggplot()+
       geom_text(aes((chromStart+chromEnd)/2/1e3, 0, label=cluster.id),
                 data=joint.peaks)
 
-  
   png.file <-
     paste0("overlapping-peaks/",
-           split.id, "/", chunk.name,
+           tit,
            ".png")
   png.dir <- dirname(png.file)
   dir.create(png.dir, recursive = TRUE, showWarnings=FALSE)
