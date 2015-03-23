@@ -40,7 +40,7 @@ multires.bins.joint$test.error %>%
   summarise(errors=sum(fp+fn),
             regions=n()) %>%
   mutate(percent=errors/regions*100,
-         algorithm="multires.bins")
+         algorithm="multires.joint")
   
 reg <- regularized.all$error %>%
   filter(model.name %in% c("L1.reg", "log.bases.log.max")) %>%
@@ -119,7 +119,8 @@ both <-
         ann(data.frame(oreg)[, both.cols],
             ">1", "supervised"),
         ann(dp.peaks.baseline[, both.cols], "1", "supervised"),
-        ann(data.frame(bins)[, both.cols], ">1", "supervised")
+        ann(data.frame(bins)[, both.cols], ">1", "supervised"),
+        ann(data.frame(bins.joint)[, both.cols], ">1", "supervised")
         ) %>%
   group_by() %>%
   mutate(percent=errors/regions*100,
@@ -192,6 +193,7 @@ algo.stats <- mean.both %>%
 algo.levs <- rev(algo.stats$algo)
 algo.levs <-
   rev(c("best.DP",
+        "multires.joint",
         "multires.bins",
         ## "oracle.41", "AIC/BIC.41",
         ## "oracle.3", "AIC/BIC.3",

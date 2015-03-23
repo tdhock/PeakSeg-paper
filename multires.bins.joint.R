@@ -1,6 +1,6 @@
 works_with_R("3.1.3", reshape2="1.2.2", ggplot2="1.0",
              "tdhock/PeakError@d9196abd9ba51ad1b8f165d49870039593b94732",
-             "tdhock/PeakSegDP@dd9d52d1341d2824f9bb18d2c9fa84f6e12e6317",
+             "tdhock/PeakSegDP@8601b78b937c609b2dcddef79a63ed1899fc0c2b",
              data.table="1.9.4",
              dplyr="0.4.0",
              xtable="1.7.4")
@@ -29,8 +29,10 @@ for(testSet in hyper.dt$testSet){
   set.errors <- errors.by.testSet[[testSet]]
   errors.by.chunk <- split(set.errors, set.errors$chunk.name)
   peaks.by.chrom <- multires.bins$test.peaks[[testSet]]
+  setName <- sub(" .*", "", testSet)
+  set.i <- sub(".* ", "", testSet)
   set.chunks <- chunks %>%
-    filter(set.name == set)
+    filter(set.name == setName)
   chunks.by.chrom <- split(set.chunks, set.chunks$chunkChrom, drop=TRUE)
 
   chroms <- intersect(names(chunks.by.chrom), names(peaks.by.chrom))
@@ -44,8 +46,11 @@ for(testSet in hyper.dt$testSet){
     peaks.by.sample <- peaks.by.chrom[[chrom]]
     chrom.peak.list <- list()
     for(sample.id in names(peaks.by.sample)){
-      chrom.peak.list[[sample.id]] <-
-        data.table(sample.id, peaks.by.sample[[sample.id]])
+      sample.peaks <- peaks.by.sample[[sample.id]]
+      if(nrow(sample.peaks)){ # possible to have no peaks.
+        chrom.peak.list[[sample.id]] <-
+          data.table(sample.id, sample.peaks)
+      }
     }
     chrom.peaks <- do.call(rbind, chrom.peak.list) %>%
       select(sample.id, chromStart, chromEnd)
@@ -72,9 +77,7 @@ for(testSet in hyper.dt$testSet){
       geom_segment(aes(chromStart/1e3, sample.id,
                        xend=chromEnd/1e3, yend=sample.id),
                    data=clustered.peaks)
-    print(chromPlot)
-    ## TODO: why are there no peaks/errors for all data sets except
-    ## H3K4me3_TDH_immune ?
+    ##print(chromPlot)
     
     setkey(clustered.peaks, chromStart, chromEnd)
     peaks.and.chunks <- foverlaps(clustered.peaks, chrom.chunks, nomatch=0L)
@@ -90,8 +93,7 @@ for(testSet in hyper.dt$testSet){
       cluster.list <- split(chunk.peaks, chunk.peaks$cluster, drop=TRUE)
       joint.peak.list <- list()
       joint.sample.peak.list <- list()
-      tit <- paste0(split.id, "/", chunk.name)
-              stop(1)
+      tit <- paste0(set.i, "/", chunk.name)
 
       for(cluster.id in names(cluster.list)){
         cluster.peaks <- cluster.list[[cluster.id]]
@@ -103,62 +105,94 @@ for(testSet in hyper.dt$testSet){
         next.chromStart <- min(cluster.list[[next.id]]$chromStart)
         prev.chromEnd <- max(cluster.list[[prev.id]]$chromEnd)
         clusterStart <- peakStart - expand.bases
+        clusterEnd <- peakEnd + expand.bases
+        fillStart <- min(peakStart-1L, clusterStart)
+        fillEnd <- max(peakEnd+1L, clusterEnd)
         if(clusterStart < prev.chromEnd){
           clusterStart <- prev.chromEnd
         }
-        clusterEnd <- peakEnd + expand.bases
         if(next.chromStart < clusterEnd){
           clusterEnd <- next.chromStart
         }
         sample.ids <- unique(paste(cluster.peaks$sample.id))
-        cluster.counts <-
+        cluster.counts.unfilled <-
           subset(counts,
                  sample.id %in% sample.ids &
                  clusterStart < chromStart &
                  chromEnd < clusterEnd)
-        cluster.bases <- clusterEnd-clusterStart
-        cluster.counts$count <- cluster.counts$coverage
-        ##peak <- multiSampleSegOptimal(cluster.counts)
-        peak <- multiSampleSegHeuristic(cluster.counts, 2)
-        joint.peak.list[[cluster.id]] <-
-          data.frame(sample.id="joint", cluster.id, peak)
-        joint.sample.peak.list[[cluster.id]] <-
-          data.frame(sample.id=sample.ids, cluster.id, peak)
-
-        ggplot()+
-          ggtitle(paste(tit, "cluster", cluster.id))+
-          xlab(paste("position on", cluster.peaks$chunkChrom[1],
-                     "(kilobases = kb)"))+
-          theme_bw()+
-          scale_y_continuous("aligned read coverage signal",
-                             labels=function(x){
-                               sprintf("%.1f", x)
-                             },
-                             breaks=function(limits){
-                               limits[2]
-                             })+
-          theme(panel.margin=grid::unit(0, "cm"))+
-          facet_grid(sample.id ~ ., scales="free_y", labeller=function(var, val){
-            sub("McGill0", "", val)
-          })+
-          geom_segment(aes(chromStart/1e3, 0,
-                           xend=chromEnd/1e3, yend=0),
-                       data=cluster.peaks,
-                       size=2)+
-          geom_segment(aes(chromStart/1e3, 0,
-                           xend=chromEnd/1e3, yend=0),
-                       data=peak,
-                       color="green",
-                       size=1)+
-          geom_step(aes(chromStart/1e3, coverage),
-                    data=cluster.counts, color="grey50")
+        if(nrow(cluster.counts.unfilled)){
+          cluster.counts.unfilled$count <- cluster.counts.unfilled$coverage
+          unfilled.list <-
+            split(cluster.counts.unfilled,
+                  cluster.counts.unfilled$sample.id,
+                  drop=TRUE)
+          filled.list <- list()
+          filled.cols <- c("sample.id", "chromStart", "chromEnd", "count")
+          for(sample.id in names(unfilled.list)){
+            unfilled <- unfilled.list[[sample.id]]
+            filled.list[[sample.id]] <-
+              rbind(data.frame(sample.id,
+                               chromStart=fillStart,
+                               chromEnd=unfilled$chromStart[1],
+                               count=unfilled$count[1]),
+                    unfilled[, filled.cols],
+                    data.frame(sample.id,
+                               chromStart=unfilled$chromEnd[nrow(unfilled)],
+                               chromEnd=fillEnd,
+                               count=unfilled$count[nrow(unfilled)]))
+          }
+          cluster.counts <- do.call(rbind, filled.list)
+          cluster.bases <- clusterEnd-clusterStart
+          peak <- multiSampleSegHeuristic(cluster.counts, 2)
+          min.peakStart <- as.integer((prev.chromEnd+peakStart)/2+1)
+          if(is.finite(min.peakStart) && peak$chromStart < min.peakStart){
+            peak$chromStart <- min.peakStart
+          }
+          max.peakEnd <- as.integer((next.chromStart+peakEnd)/2-1)
+          if(is.finite(max.peakEnd) && max.peakEnd < peak$chromEnd){
+            peak$chromEnd <- max.peakEnd
+          }
+          if(with(peak, chromStart < chromEnd)){
+            joint.peak.list[[cluster.id]] <-
+              data.frame(sample.id="joint", cluster.id, peak)
+            joint.sample.peak.list[[cluster.id]] <-
+              data.frame(sample.id=sample.ids, cluster.id, peak)
+          }
+          ggplot()+
+            ggtitle(paste(tit, "cluster", cluster.id))+
+            xlab(paste("position on", cluster.peaks$chunkChrom[1],
+                       "(kilobases = kb)"))+
+            theme_bw()+
+            scale_y_continuous("aligned read coverage signal",
+                               labels=function(x){
+                                 sprintf("%.1f", x)
+                               },
+                               breaks=function(limits){
+                                 limits[2]
+                               })+
+            theme(panel.margin=grid::unit(0, "cm"))+
+            facet_grid(sample.id ~ ., labeller=function(var, val){
+              sub("McGill0", "", val)
+            }, scales="free_y")+
+            geom_segment(aes(chromStart/1e3, 0,
+                             xend=chromEnd/1e3, yend=0),
+                         data=cluster.peaks,
+                         size=2)+
+            coord_cartesian(xlim=c(fillStart, fillEnd)/1e3)+
+            geom_segment(aes(chromStart/1e3, 0,
+                             xend=chromEnd/1e3, yend=0),
+                         data=peak,
+                         color="green",
+                         size=1)+
+            geom_step(aes(chromStart/1e3, count),
+                      data=cluster.counts, color="grey50")
+        }
       }
       joint.sample.peaks <- do.call(rbind, joint.sample.peak.list)
       joint.peaks <- do.call(rbind, joint.peak.list)
       errors.by.sample <- split(chunk.errors, chunk.errors$sample.id)
       joint.peaks.by.sample <-
         split(joint.sample.peaks, joint.sample.peaks$sample.id)
-        stop(1)
       for(sample.id in names(errors.by.sample)){
         sample.errors <- errors.by.sample[[sample.id]]
         sample.peaks <- joint.peaks.by.sample[[sample.id]]
@@ -166,7 +200,6 @@ for(testSet in hyper.dt$testSet){
           sample.peaks <- Peaks()
         }
         new.errors <- PeakErrorChrom(sample.peaks, sample.errors)
-        stop(1)
         all.error.list[[paste(testSet, chunk.name, sample.id)]] <- 
           data.frame(testSet, chunk.name, sample.id, new.errors)
         if(nrow(sample.peaks)){
@@ -211,16 +244,16 @@ for(testSet in hyper.dt$testSet){
           scale_fill_manual("annotation", values=ann.colors,
                             breaks=names(ann.colors))+
           theme(panel.margin=grid::unit(0, "cm"))+
-          facet_grid(sample.id ~ ., scales="free_y", labeller=function(var, val){
+          facet_grid(sample.id ~ ., labeller=function(var, val){
             sub("McGill0", "", val)
-          })
+          }, scales="free_y")
 
       with.joint <-
-      without.joint +
-      ggtitle(tit)+
-      xlab(paste("position on", cluster.peaks$chunkChrom[1],
-                 "(kilobases = kb)"))+
-                 guides(color="none")+
+        without.joint +
+          ggtitle(tit)+
+          xlab(paste("position on", cluster.peaks$chunkChrom[1],
+                     "(kilobases = kb)"))+
+          guides(color="none")+
           geom_segment(aes(chromStart/1e3, 0,
                            color=cluster.id,
                            xend=chromEnd/1e3, yend=0),
