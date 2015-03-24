@@ -30,7 +30,7 @@ multires.bins$test.error %>%
   summarise(errors=sum(fp+fn),
             regions=n()) %>%
   mutate(percent=errors/regions*100,
-         algorithm="multires.bins")
+         algorithm="PeakSeg.102")
   
 bins.joint <- 
 multires.bins.joint$test.error %>%
@@ -62,7 +62,7 @@ regression.set.i <- dp.peaks.regression %>%
   group_by(set.name, set.i) %>%
   summarise(errors=sum(errors),
             regions=sum(regions)) %>%
-  mutate(algorithm="PeakSeg (cDPA)")
+  mutate(algorithm="cDPA")
 both.cols <- c("set.name", "set.i", "algorithm", "errors", "regions")
 
 un <- unsupervised.error %>%
@@ -128,8 +128,8 @@ both <-
          algorithm=ifelse(algorithm %in% names(alg.rep),
            alg.rep[as.character(algorithm)], as.character(algorithm)),
          algo.type=ifelse(grepl("hmcan|macs", algorithm),
-           "baselines", "PeakSeg (cDPA)"),
-         algo.type=factor(algo.type, c("PeakSeg (cDPA)",
+           "baselines", "cDPA"),
+         algo.type=factor(algo.type, c("cDPA",
            "baselines")),
          learning=ifelse(grepl("[.]0$", algorithm), "unsupervised",
            ifelse(grepl("[.]1$", algorithm), "grid\nsearch",
@@ -194,7 +194,7 @@ algo.levs <- rev(algo.stats$algo)
 algo.levs <-
   rev(c("best.DP",
         "multires.joint",
-        "multires.bins",
+        "PeakSeg.102",
         ## "oracle.41", "AIC/BIC.41",
         ## "oracle.3", "AIC/BIC.3",
         ## "oracle.1", "AIC/BIC.1",
@@ -307,7 +307,7 @@ ggplot()+
 un.both <- both %>%
   filter(grepl("[.][0]$", algo)) %>%
   mutate(algo.type=sub(" ", "\n", algo.type),
-         algo.fac=factor(algo.type, c("PeakSeg\n(cDPA)", "baselines")))
+         algo.fac=factor(algo.type, c("cDPA", "baselines")))
 un.mean <- un.both %>%
   group_by(set.name, algo, algo.fac, learning) %>%
   summarise(mean=mean(percent))
@@ -387,7 +387,7 @@ best.percent <- mean.both %>%
             algo=algo[which.min(mean)],
             learning=learning[which.min(mean)])
 
-dots <-  #with 1 set of facets.
+dots.all <-  #with 1 set of facets.
 ggplot()+
   geom_vline(aes(xintercept=min), data=best.percent)+
   geom_point(aes(mean, algo, color=learning),
@@ -411,6 +411,47 @@ ggplot()+
   ##scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
   scale_x_continuous("percent incorrect peak region labels (test error)",
                      breaks=seq(0, 100, by=20))
+
+pdf("figure-dp-peaks-regression-dots-all.pdf", h=4.2, w=8)
+print(dots.all)
+dev.off()
+
+some <- both %>%
+  filter(grepl("PeakSeg|macs|hmcan", algo))
+
+mean.some <- mean.both %>%
+  filter(grepl("PeakSeg|macs|hmcan", algo))
+
+best.some <- mean.some %>%
+  filter(algo != "best.DP") %>%
+  group_by(set.name) %>%
+  summarise(min=min(mean),
+            algo=algo[which.min(mean)],
+            learning=learning[which.min(mean)])
+
+dots <-  #with only multires and baselines.
+ggplot()+
+  geom_vline(aes(xintercept=min), data=best.some)+
+  geom_point(aes(mean, algo, color=learning),
+             data=mean.some, alpha=0.25, size=4)+
+  geom_point(aes(percent, algo, color=learning),
+             data=some, pch=1)+
+  facet_grid(algo.type ~ set.name, labeller=function(var, val){
+    gsub("_", "\n", val)
+  }, scales="free_y", space="free_y")+
+  scale_y_discrete("model . parameters learned")+
+  theme_bw()+
+  guides(color=guide_legend())+
+  theme(panel.margin=grid::unit(0, "cm"),
+        legend.position="top")+
+  scale_color_manual("learning\nalgorithm", values=algo.colors,
+                     breaks=names(algo.colors))+
+  scale_fill_manual("learning\nalgorithm", values=algo.colors,
+                     breaks=names(algo.colors))+
+  ##scale_x_continuous("percent test error", breaks=seq(0, 50, by=25))
+  scale_x_continuous("percent incorrect peak region labels (test error)",
+                     breaks=seq(0, 100, by=20))
+
 pdf("figure-dp-peaks-regression-dots.pdf", h=4.2, w=8)
 print(dots)
 dev.off()
