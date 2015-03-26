@@ -1,9 +1,9 @@
-works_with_R("3.1.2",
+works_with_R("3.1.3",
              "tdhock/PeakError@d9196abd9ba51ad1b8f165d49870039593b94732",
              "tdhock/ggplot2@aac38b6c48c016c88123208d497d896864e74bd7",
              reshape2="1.2.2",
              data.table="1.9.4",
-             "tdhock/PeakSegDP@45e95f50b957d82965dc55b1892a0e1e2516b649",
+             "tdhock/PeakSegDP@af1e3af69e886e9cbf45e03e283083c88fb9fa43",
              dplyr="0.4.0")
 
 load("dp.peaks.sets.RData")
@@ -440,6 +440,30 @@ for(set.name in names(dp.peaks.sets)){
                   filter(status=="keep") %>%
                   select(chromStart, chromEnd))
           sorted.peaks <- edited.peaks %>%
+            arrange(chromStart, chromEnd) %>%
+            mutate(overlaps.next.peak=overlapsNext(chromStart, chromEnd))
+          stopifnot(all(!sorted.peaks$overlaps.next.peak))
+          ## TDH 26 Mar 2015. try a simpler strategy involving clusterPeaks.
+          all.peaks <- do.call(rbind, chrom.peak.list) %>%
+            arrange(chromStart, chromEnd) %>%
+            mutate(is.before=chromEnd < problemPeakStart,
+                 is.after=problemPeakEnd < chromStart,
+                   not.in.region=is.before|is.after,
+                 is.overlap=!not.in.region,
+                 status=ifelse(is.overlap, "keep", "discard"))
+          some.peaks <- all.peaks %>%
+            filter(is.overlap)
+          clustered.peaks <- clusterPeaks(some.peaks)
+          table(clustered.peaks$cluster)
+          clustered.peak.list <- split(clustered.peaks, clustered.peaks$cluster)
+          reduced.peak.list <- list()
+          for(cluster.str in names(clustered.peak.list)){
+            peaks <- clustered.peak.list[[cluster.str]]
+            reduced.peak.list[[cluster.str]] <- 
+              data.frame(chromStart=peaks$chromStart[1],
+                         chromEnd=peaks$chromEnd[nrow(peaks)])
+          }
+          sorted.peaks <- do.call(rbind, reduced.peak.list) %>%
             arrange(chromStart, chromEnd) %>%
             mutate(overlaps.next.peak=overlapsNext(chromStart, chromEnd))
           stopifnot(all(!sorted.peaks$overlaps.next.peak))
