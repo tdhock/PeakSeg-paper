@@ -198,7 +198,7 @@ for(set.name in c("H3K36me3_AM_immune", "H3K4me3_TDH_other")){
       ## Fit model to entire train set.
       set.chunks <-
         list(train=train.validation,
-             test=names(chunk.list)[! names(chunk.list) %in% train.validation])
+             test=test.chunks)
       stopifnot(sum(sapply(set.chunks, length)) ==
                   length(unique(unlist(set.chunks))))
       with(set.chunks, stopifnot(length(intersect(train, test)) == 0))
