@@ -30,12 +30,13 @@ ggplot()+
   geom_line(aes(train.size, mean, color=model.name),
             data=error.bands,
             size=2)+
-  geom_ribbon(aes(train.size, xmin=mean-sd, xmax=mean+sd,
+  geom_ribbon(aes(train.size, ymin=mean-sd, ymax=mean+sd,
                   fill=model.name),
               data=error.bands,
               alpha=0.25)+
-  geom_line(aes(train.size, percent, color=model.name),
-            data=error.stats)+
+  geom_line(aes(train.size, percent, color=model.name,
+                group=interaction(set.i, model.name)),
+            data=error.lines)+
   geom_line(aes(train.size, mean, group=model.name),
             data=error.bands,
             size=1)+
@@ -44,7 +45,9 @@ ggplot()+
   facet_grid(set.name ~ .)
 
 with.legend <-
-  direct.label(no.legend)
+  direct.label(no.legend, dl.combine("first.qp", "last.qp"))
+
+## TODO: add oracle.0 and oracle.1 models?
 
 pdf("figure-oracle-learning.pdf")
 print(with.legend)

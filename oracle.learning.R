@@ -10,6 +10,8 @@ load("oracle.optimal.RData")
 load("dp.peaks.matrices.RData")
 load("dp.peaks.sets.RData")
 
+source("pick.best.index.R")
+
 dup.vars <- function(features){
   for(feature.i in 1:(ncol(features)-1)){
     feature.vec <- features[, feature.i]
@@ -33,13 +35,14 @@ for(set.name in c("H3K36me3_AM_immune", "H3K4me3_TDH_other")){
   feature.is.good <- apply(bad.count.mat==0, 1, all)
   all.chunks <- names(chunk.list)
   dp.peak.set <- dp.peaks.sets[[set.name]]
+  set.matrices <- dp.peaks.matrices[[set.name]]
   for(set.i in seq_along(dp.peak.set)){
     all.train.validation <- dp.peak.set[[set.i]]
     test.chunks <- all.chunks[! all.chunks %in% all.train.validation]
     ##for(set.i in seq_along(train.sets)){
     testSet <- paste(set.name, "split", set.i)
 
-    train.sizes <- seq(2, length(all.train.validation), by=2)
+    train.sizes <- seq(2, 10, by=2)
     for(train.size in train.sizes){
       train.validation <- all.train.validation[1:train.size]
 
@@ -91,8 +94,8 @@ for(set.name in c("H3K36me3_AM_immune", "H3K4me3_TDH_other")){
             f.mat <- chunk.list[[chunk.name]]$all.features
             penalty.mat <- fit$predict(f.mat)
             optimal.by.sample <- oracle.optimal[[set.name]][[chunk.name]]
-            err.mat <- dp.peaks.matrices[[set.name]][[chunk.name]]$PeakSeg
-            regions <- dp.peaks.matrices[[set.name]][[chunk.name]]$regions
+            err.mat <- set.matrices[[chunk.name]]$PeakSeg
+            regions <- set.matrices[[chunk.name]]$regions
             for(regularization.i in 1:ncol(penalty.mat)){
               regularization <- fit$gamma.seq[[regularization.i]]
               penalty.vec <- penalty.mat[, regularization.i]
@@ -111,7 +114,7 @@ for(set.name in c("H3K36me3_AM_immune", "H3K4me3_TDH_other")){
             }#regularization.i
           }#chunk.name
           set.data.error[[tv]] <- do.call(rbind, error.list)
-        }
+        }#tv
         set.dt <- do.call(rbind, set.data.error)
         set.stats <- set.dt %>%
           group_by(set, regularization) %>%
@@ -125,18 +128,13 @@ for(set.name in c("H3K36me3_AM_immune", "H3K4me3_TDH_other")){
         names(dimnames(coef.mat)) <- c("feature", "regularization")
         coef.tall <- melt(coef.mat[-1, ]) %>%
           group_by(regularization) %>%
-          mutate(arclength=sum(abs(value)),
-                 what="weights")
-        arclength <-
-          unique(data.frame(coef.tall)[, c("regularization", "arclength")])
-        rownames(arclength) <- arclength$regularization
-        set.stats$arclength <-
-          arclength[paste(set.stats$regularization), "arclength"]
+          mutate(what="weights")
 
         selected <- set.stats %>%
           filter(set=="validation") %>%
           group_by() %>%
-          arrange(errors, regularization) %>%
+          ## least complex (most regularized) model with minimal error.
+          arrange(errors, -regularization) %>%
           select(regularization, errors) %>%
           head(1)
 
@@ -158,7 +156,6 @@ for(set.name in c("H3K36me3_AM_immune", "H3K4me3_TDH_other")){
                           "validation set", validation.fold))+
             geom_vline(aes(xintercept=-log10(regularization)),
                        data=selected, color="grey")+
-            xlab("model complexity (L1 norm of weights)")+
             geom_line(aes(-log10(regularization), value,
                           group=feature, color=feature),
                       data=coef.tall, show_guide=FALSE)+
@@ -214,20 +211,62 @@ for(set.name in c("H3K36me3_AM_immune", "H3K4me3_TDH_other")){
       small.mat <- train.mat[, c("log.bases", "log.unweighted.quartile.100%")]
 
       fits <- 
-        list(L1.reg=smooth.interval.regression(train.mat,
+        list(oracle.41=smooth.interval.regression(train.mat,
                set.data$train$intervals,
                gamma=mean.reg,
                calc.grad=calc.grad.list$square,
                calc.loss=calc.loss.list$square),
-             log.bases.log.max=smooth.interval.regression(small.mat,
+             oracle.3=smooth.interval.regression(small.mat,
                set.data$train$intervals,
                calc.grad=calc.grad.list$square,
                calc.loss=calc.loss.list$square))
 
+      ## train baselines as well!
+      baseline.params <-
+        list(hmcan.broad.default="2.30258509299405",
+             macs.default="1.30103")
+      for(algorithm in c("hmcan.broad.trained", "macs.trained")){
+        train.vecs <- list()
+        for(chunk.name in train.validation){
+          err.vec <- colSums(set.matrices[[chunk.name]][[algorithm]])
+          train.vecs[[chunk.name]] <- err.vec
+        }
+        train.mat <- do.call(rbind, train.vecs)
+        train.vec <- colSums(train.mat)
+        best.i <- pick.best.index(train.vec)
+        baseline.params[[algorithm]] <- names(train.vec)[best.i]
+      }
+        
       for(chunk.name in set.chunks$test){
+        regions <- set.matrices[[chunk.name]]$regions
+        err.mat <- set.matrices[[chunk.name]]$PeakSeg
+        ## unsupervised oracle.0 error.
+        segment.vec <- unsupervised[[chunk.name]][, "oracle"]
+        param.vec <- paste((segment.vec-1)/2)
+        sample.id <- names(segment.vec)
+        select.mat <- cbind(sample.id, param.vec)
+        errors <- err.mat[select.mat]
+        uniq.id <-
+          paste(set.name, set.i, train.size,
+                chunk.name, "oracle.0")
+        error.result.list[[uniq.id]] <- 
+          data.table(set.name, set.i, train.size, chunk.name,
+                     model.name="oracle.0",
+                     sample.id, errors, regions)
+        ## baseline error
+        for(model.name in names(baseline.params)){
+          param.name <- baseline.params[[model.name]]
+          other.name <- sub("default", "trained", model.name)
+          errors <- set.matrices[[chunk.name]][[other.name]][, param.name]
+          uniq.id <-
+            paste(set.name, set.i, train.size,
+                  chunk.name, model.name)
+          error.result.list[[uniq.id]] <- 
+            data.table(set.name, set.i, train.size, chunk.name, model.name,
+                       sample.id=names(errors), errors, regions)
+        }
+        ## PeakSeg error
         optimal.by.sample <- oracle.optimal[[set.name]][[chunk.name]]
-        err.mat <- dp.peaks.matrices[[set.name]][[chunk.name]]$PeakSeg
-        regions <- dp.peaks.matrices[[set.name]][[chunk.name]]$regions
         f.mat <- chunk.list[[chunk.name]]$all.features
         for(model.name in names(fits)){
           fit <- fits[[model.name]]
@@ -241,7 +280,10 @@ for(set.name in c("H3K36me3_AM_immune", "H3K4me3_TDH_other")){
             })$peaks
             stopifnot(length(optimal.peaks) == 1)
             errors <- err.mat[sample.id, paste(optimal.peaks)]
-            error.result.list[[paste(chunk.name, model.name, sample.id)]] <- 
+            uniq.id <-
+              paste(set.name, set.i, train.size,
+                    chunk.name, model.name, sample.id)
+            error.result.list[[uniq.id]] <- 
               data.table(set.name, set.i, train.size, chunk.name, model.name,
                          sample.id, errors, regions=regions[[sample.id]])
           }#sample.id
@@ -251,8 +293,6 @@ for(set.name in c("H3K36me3_AM_immune", "H3K4me3_TDH_other")){
   }#set.i
 }#set.name
 
-error.results <- do.call(rbind, error.result.list)
-
-oracle.learning <- error.results
+oracle.learning <- do.call(rbind, error.result.list)
 
 save(oracle.learning, file="oracle.learning.RData")
