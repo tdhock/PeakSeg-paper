@@ -1,5 +1,5 @@
 works_with_R("3.1.2", reshape2="1.2.2", ggplot2="1.0",
-             "Rdatatable/data.table@200b5b40dd3b05112688c3a9ca2dd41319c2bbae",
+             data.table="1.9.4",
              dplyr="0.4.0",
              xtable="1.7.3")
 

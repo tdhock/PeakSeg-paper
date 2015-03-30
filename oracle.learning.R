@@ -9,6 +9,7 @@ load("oracle.intervals.RData")
 load("oracle.optimal.RData")
 load("dp.peaks.matrices.RData")
 load("dp.peaks.sets.RData")
+objs <- load("unsupervised.RData")
 
 source("pick.best.index.R")
 
@@ -36,6 +37,23 @@ for(set.name in c("H3K36me3_AM_immune", "H3K4me3_TDH_other")){
   all.chunks <- names(chunk.list)
   dp.peak.set <- dp.peaks.sets[[set.name]]
   set.matrices <- dp.peaks.matrices[[set.name]]
+  ## compute error matrices of oracle.1 grid!
+  for(chunk.name in names(set.matrices)){
+    seg.mat <- oracle.segments[[chunk.name]]
+    err.peaks <- set.matrices[[chunk.name]]$PeakSeg
+    err.penalty <- matrix(NA, nrow(err.peaks), ncol(seg.mat),
+                         dimnames=list(sample.id=rownames(err.peaks),
+                           penalty=paste0("p", 1:ncol(seg.mat))))
+    for(penalty.i in 1:ncol(err.penalty)){
+      seg.vec <- seg.mat[, penalty.i]
+      sample.id <- names(seg.vec)
+      param.name <- paste((seg.vec-1)/2)
+      index.mat <- cbind(sample.id, param.name)
+      err.penalty[, penalty.i] <- err.peaks[index.mat]
+    }
+    stopifnot(!is.na(err.penalty))
+    set.matrices[[chunk.name]]$oracle.1 <- err.penalty
+  }
   for(set.i in seq_along(dp.peak.set)){
     all.train.validation <- dp.peak.set[[set.i]]
     test.chunks <- all.chunks[! all.chunks %in% all.train.validation]
@@ -225,7 +243,7 @@ for(set.name in c("H3K36me3_AM_immune", "H3K4me3_TDH_other")){
       baseline.params <-
         list(hmcan.broad.default="2.30258509299405",
              macs.default="1.30103")
-      for(algorithm in c("hmcan.broad.trained", "macs.trained")){
+      for(algorithm in c("hmcan.broad.trained", "macs.trained", "oracle.1")){
         train.vecs <- list()
         for(chunk.name in train.validation){
           err.vec <- colSums(set.matrices[[chunk.name]][[algorithm]])
