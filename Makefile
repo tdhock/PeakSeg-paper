@@ -89,3 +89,7 @@ oracle.intervals.RData: oracle.intervals.R oracle.optimal.RData
 	R --no-save < $<
 oracle.regularized.RData: oracle.regularized.R oracle.intervals.RData dp.peaks.sets.RData
 	R --no-save < $<
+oracle.learning.RData: oracle.learning.R oracle.intervals.RData dp.peaks.sets.RData
+	R --no-save < $<
+figure-oracle-learning.pdf: figure-oracle-learning.R oracle.learning.RData
+	R --no-save < $<
