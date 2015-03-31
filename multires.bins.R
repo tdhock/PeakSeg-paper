@@ -347,6 +347,7 @@ for(set.name in names(dp.peaks.sets)){
                    "merge", "keep"),
                  diff=c(ifelse(overlaps.next.peak[1], 1, 0),
                    diff(overlaps.next.peak)))
+          stop(1)
           if(FALSE){
             ggplot()+
               geom_segment(aes(chromStart/1e3, peak.i,
@@ -365,17 +366,33 @@ for(set.name in names(dp.peaks.sets)){
               theme_bw()+
               theme(panel.margin=grid::unit(0, "cm"))+
               facet_grid(problem.name ~ .)
+            some <- function(df){
+              df <- subset(df, 115000000 <= chromStart &
+                             chromEnd <= 120000000)
+              df$problem.name <- paste(df$problem.name)
+              df
+            }
+            zoom <- 
             ggplot()+
+              ##xlim(17500, 23500)+
+              ##xlim(115000, 120000)+
               geom_segment(aes(chromStart/1e3, problem.name,
                            xend=chromEnd/1e3, yend=problem.name),
-                        data=problem.rects, size=5, alpha=1/10)+
+                        data=some(problem.rects),
+                           size=5, alpha=1/10)+
+              xlab("position on chromosome (kilo bases = kb)")+
               geom_segment(aes(peakStart/1e3, problem.name,
                            xend=peakEnd/1e3, yend=problem.name),
-                        data=problem.rects, size=5, alpha=1/10)+
+                        data=some(problem.rects), size=5, alpha=1/10)+
               geom_segment(aes(chromStart/1e3, problem.name,
                            xend=chromEnd/1e3, yend=problem.name,
                            color=status),
-                       data=chrom.peaks, size=2)
+                       data=some(chrom.peaks), size=2)
+            png("figure-multires-bins-overlap.png",
+                width=7, height=2, units="in", res=200)
+            print(zoom)
+            dev.off()
+            
             ggplot()+
               geom_segment(aes(chromStart/1e3, problem.name,
                            xend=chromEnd/1e3, yend=problem.name),

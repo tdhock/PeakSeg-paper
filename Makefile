@@ -1,3 +1,7 @@
+HOCKING-peak-penalty-slides.pdf: HOCKING-peak-penalty-slides.tex figure-dp-peaks-regression-dots.pdf figure-dp.tex figure-dp-short.tex figure-dp-first.tex  figure-dp-third.tex figure-good-bad.png figure-dp-peaks-train-2.png figure-Segmentor-PeakSeg.png
+	rm -f *.aux *.bbl
+	pdflatex HOCKING-peak-penalty-slides
+	pdflatex HOCKING-peak-penalty-slides
 HOCKING-RIGAILL-chip-seq-paper.pdf: HOCKING-RIGAILL-chip-seq-paper.tex refs.bib figure-Segmentor-PeakSeg.png figure-dp-peaks-regression-dots.pdf figure-good-bad.png  figure-overlapping-peaks.tex
 	rm -f *.aux *.bbl
 	pdflatex HOCKING-RIGAILL-chip-seq-paper
@@ -5,10 +9,6 @@ HOCKING-RIGAILL-chip-seq-paper.pdf: HOCKING-RIGAILL-chip-seq-paper.tex refs.bib 
 	pdflatex HOCKING-RIGAILL-chip-seq-paper
 	pdflatex HOCKING-RIGAILL-chip-seq-paper
 
-HOCKING-peak-penalty-slides.pdf: HOCKING-peak-penalty-slides.tex figure-dp-peaks-regression-dots.pdf figure-dp.tex figure-dp-short.tex figure-dp-first.tex  figure-dp-third.tex figure-good-bad.png figure-dp-peaks-train-2.png figure-Segmentor-PeakSeg.png
-	rm -f *.aux *.bbl
-	pdflatex HOCKING-peak-penalty-slides
-	pdflatex HOCKING-peak-penalty-slides
 figure-dp.tex: figure-dp.R 
 	R --no-save < $<
 figure-dp-short.tex: figure-dp-short.R 

@@ -168,10 +168,11 @@ maxIter 20
   \frametitle{Summary of supervised peak detection}
   \begin{displaymath}
   \xymatrix{
+    \texttt{coverage.bedGraph}
+    \ar [ddr] 
+    \ar [rr]
     & & \texttt{labels.bed} \ar [d]
     \\
-    \texttt{coverage.bedGraph}
-    \ar [dr] 
     & \text{ }
     & \text{Parameters} 
     \ar [dl]
@@ -181,7 +182,6 @@ maxIter 20
   \end{displaymath}
   
 \end{frame}
-
 
 \begin{frame}
   \frametitle{PeakSeg constrained maximum likelihood model}
@@ -204,38 +204,58 @@ maxIter 20
 \end{frame}
 
 \begin{frame}
+  \frametitle{Break the genome into separate segmentation problems}
+  \includegraphics[width=\textwidth]{figure-overlapping-problems}
+
+  Segmentation problems (black) with labeled regions (colors).
+\end{frame}
+
+\begin{frame}
+  \frametitle{Only keep peaks in the center of each problem}
+  \includegraphics[width=\textwidth]{figure-multires-bins-overlap}
+
+  Segmentation problems (light grey) \\
+  with regions where peaks are kept (dark grey).
+\end{frame}
+
+\begin{frame}
   \frametitle{Summary of proposed PeakSeg model}
-  Parallelizable on samples, genomic regions:
   \begin{itemize}
-  \item Inputs: a ChIP-seq coverage profile $\mathbf y\in\ZZ_+^d$,\\
-    maximum number of segments $s_{\text{max}}$.
-  \item Proposed method: cDPA = constrained 
-    %pruned 
-    dynamic programming
-    algorithm,
-    %$O(p_{\text{max}} d \log d)$ time complexity.
-    $O(s_{\text{max}} d^2)$ time complexity.
-  \item Outputs: constrained maximum likelihood segmentations
-    $\mathbf{\tilde m}^1(\mathbf y), 
-    \dots, 
-    \mathbf{\tilde m}^{s_\text{max}}(\mathbf y)$ 
-    (peaks are 2nd, 4th, ... segments).
+  \item Fix $d = 2000$ data points (bins) per segmentation problem.
+  \item Split the genome into separate segmentation problems of size
+    $R$.
+  \item Try several different resolutions $R$,\\
+    select the resolution $R$ with minimal train error.
+  \item Learn the PeakSeg model using the labeled problems.
+  \item Use the model to predict peaks on all problems.
   \end{itemize}
-  How to choose the optimal number of segments/peaks?\\
-  Manually annotated regions + supervised penalty function learning.\\
-  %(next slide).
-  G Rigaill, TD Hocking, \emph{et al.} Learning Sparse Penalties for
-  Change Point Detection using Max Margin Interval Regression, ICML
-  2013.
 \end{frame}
 
 \section{A qsub pipeline for supervised peak detection}
 
+\begin{frame}
+  \frametitle{Summary of supervised peak detection}
+  \begin{displaymath}
+  \xymatrix{
+    \texttt{coverage.bedGraph}
+    \ar [ddr] 
+    \ar [rr]
+    & & \texttt{labels.bed} \ar [d]
+    \\
+    & \text{ }
+    & \text{Parameters} 
+    \ar [dl]
+    \\
+    & \texttt{peaks.bed}
+  }
+  \end{displaymath}
+  
+\end{frame}
 
 \section{Results on the McGill benchmark data set, conclusions}
 
 \begin{frame}
-  \frametitle{Benchmark: 7 annotated region data sets}
+  \frametitle{Benchmark labeled data sets}
   \url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}
   \begin{itemize}
   \item 4 annotators (AM, TDH, PGP, XJ).
@@ -243,16 +263,25 @@ maxIter 20
   \item 37 annotated H3K4me3 profiles (sharp peaks).
   \item 29 annotated H3K36me3 profiles (broadly enriched domains).
   \item 12,826 annotated regions in total.
-  %\item 2752 separate segmentation problems.
   \end{itemize}
-  % Used the cDPA on the annotated data.
-  % \begin{itemize}
-  % \item cDPA computed models with $0, \dots, 9$ peaks\\
-  %   (for 99.5\% of problems).
-  % \item For the biggest problem, cDPA took 3 hours.\\
-  %   ($d=88,509$ data points, 3.5 megabases)
-  % \item macs takes about 90 minutes for one whole genome.
-  % \end{itemize}
+
+  \url{http://cbio.ensmp.fr/~thocking/table-TF-benchmark/}
+  \begin{itemize}
+  \item 1 annotator.
+  \item 3 TF types: max, nrsf, srf.
+  \item For each TF: 1 cell type, 2 replicates.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Training time proportional to 
+    number of segmentation problems}
+  \includegraphics[width=\textwidth]{figure-overlapping-feasible-timings}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Best resolution depends on data type}
+  \includegraphics[width=0.9\textwidth]{figure-overlapping-feasible}
 \end{frame}
 
 \begin{frame}

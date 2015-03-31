@@ -1,23 +1,4 @@
 PeakSeg: Peak detection via constrained optimal Segmentation
 
-This repos contains the code for the long version of
-https://github.com/tdhock/PeakSegDP-NIPS -- the main differences are
-- more discussion of constrained DP and penalty learning.
-- comparison with unsupervised AIC/BIC/mBIC and oracle penalty.
-- L1-regularized 41-parameter model.
-
-To make sure to use the same package versions, please install the
-=works_with_R= function by copying the code in [[file:works_with.R]] to
-your ~/.Rprofile which will load it at the beginning of every R
-session.
-
-Then type "make" to run the code. There are two big steps:
-
-1. Download the ChIP-seq benchmark data set from
-   http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/
-
-2. Run the https://github.com/tdhock/PeakSegDP algorithm on each
-   profile in the benchmark.
-
-On my computer it took about 1 week (using one 1.6GHz CPU) to run the
-PeakSegDP algorithm on all the profiles in the benchmark. 
+This repos contains the [[file:HOCKING-peak-penalty-slides.pdf][slides]] describing how PeakSeg was adapted for
+genome-wide peak prediction.
