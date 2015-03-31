@@ -233,22 +233,68 @@ maxIter 20
 
 \section{A qsub pipeline for supervised peak detection}
 
+\begin{frame}[fragile]
+  \frametitle{Input labels file determined by visual inspection}
+\begin{verbatim}
+chr11:118,092,641-118,095,026 peakStart tcell
+chr11:118,095,334-118,096,640 peakEnd tcell
+chr11:118,101,452-118,118,472 noPeaks
+chr11:118,121,649-118,124,175 peaks tcell bcell
+
+chr11:117,197,077-117,200,591 peaks tcell bcell
+chr11:117,190,651-117,196,415 noPeaks
+chr11:117,149,810-117,152,933 peaks tcell 
+\end{verbatim}
+\begin{itemize}
+\item Used UCSC genome browser or IGV.
+\item Two newlines separate groups of nearby regions.
+\item Write only cell types with peaks.
+\item Labels: peaks, peakStart, peakEnd, noPeaks.
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Input: project organized by cell type}
+\begin{verbatim}
+exampleData/
+exampleData/manually_annotated_region_labels.txt
+exampleData/bcell/
+exampleData/bcell/McGill0091.bedGraph  
+exampleData/bcell/McGill0322.bedGraph
+exampleData/tcell/
+exampleData/tcell/McGill0095.bedGraph  
+exampleData/tcell/McGill0107.bedGraph
+\end{verbatim}
+
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{qsub pipeline steps}
+  For $n$ samples, \texttt{00\_AllSteps\_qsub.R} launches
+  \begin{tabular}{cll}
+    jobs & time per job & script \\
+    \hline
+    0 & seconds & Step0-convert-labels.R\\
+    $n$ & 5--60 minutes* & Step1-segment-labeled-regions.R\\
+    1 & 5--30 minutes & Step2-learn-model-complexity.R\\
+    $n$ & 1--10 hours* & Step3-predict-peaks.R\\
+    1 & 5--15 minutes & Step4-cluster-peaks.R
+  \end{tabular}
+
+* depends on optimal resolution.
+
+\vskip 0.5cm
+
+Wait for jobs to finish:
+\begin{verbatim}
+#PBS -W depend=afterok:1001:1002:1003
+\end{verbatim}
+
+\end{frame}
+
 \begin{frame}
-  \frametitle{Summary of supervised peak detection}
-  \begin{displaymath}
-  \xymatrix{
-    \texttt{coverage.bedGraph}
-    \ar [ddr] 
-    \ar [rr]
-    & & \texttt{labels.bed} \ar [d]
-    \\
-    & \text{ }
-    & \text{Parameters} 
-    \ar [dl]
-    \\
-    & \texttt{peaks.bed}
-  }
-  \end{displaymath}
+  \frametitle{TODO: demo and example output}
   
 \end{frame}
 
@@ -268,7 +314,7 @@ maxIter 20
   \url{http://cbio.ensmp.fr/~thocking/table-TF-benchmark/}
   \begin{itemize}
   \item 1 annotator.
-  \item 3 TF types: max, nrsf, srf.
+  \item 3 transcription factor (TF) types: max, nrsf, srf.
   \item For each TF: 1 cell type, 2 replicates.
   \end{itemize}
 \end{frame}
@@ -282,16 +328,6 @@ maxIter 20
 \begin{frame}
   \frametitle{Best resolution depends on data type}
   \includegraphics[width=0.9\textwidth]{figure-overlapping-feasible}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Best results on H3K4me3 data}
-  \includegraphics[width=\textwidth]{figure-dp-peaks-train-1}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Best results on H3K36me3 data}
-  \includegraphics[width=\textwidth]{figure-dp-peaks-train-2}
 \end{frame}
 
 \begin{frame}
@@ -327,25 +363,26 @@ maxIter 20
   PeakSeg: \textbf{Peak} detection via constrained optimal
   \textbf{Seg}mentation.
   \begin{itemize}
-  \item First peak detector with efficient multi-parameter supervised
-    learning algorithm.
-  \item State-of-the-art peak detection for both H3K4me3 and H3K36me3
-    profiles.
+  \item Inputs: annotated region \texttt{labels.bed} instead of
+    model parameters.
+  \item Outputs: state-of-the-art peak detection for both H3K4me3 and
+    H3K36me3 data.
   \end{itemize}
   Future work:
   \begin{itemize}
+  \item Interactive visual peak labeling GUI.
   \item Detecting the same peaks across several profiles?
   \item Faster algorithm via constrained version of
     \begin{tabular}{rllll}
-      Time & Models & Algorithm & Author 
+      Time & Models & Algorithm & Reference
       % & Reference 
       \\
       \hline
       $O( s_{\text{max}} d\log d)$ & $s_{\text{max}}$ &
-      pDPA & Rigaill 
+      pDPA & Rigaill 2010
       % & arXiv:1004.0887 
       \\
-      $O(d\log d)$ & 1 & FPOP & Maistone et al. % & arXiv:1409.1842 
+      $O(d\log d)$ & 1 & FPOP & Maidstone et al. 2014 % & arXiv:1409.1842 
     \end{tabular}
     \\
     $d$ = data points to segment, $s_{\text{max}}$ = max segments.
