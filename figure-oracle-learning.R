@@ -12,7 +12,8 @@ error.lines <- oracle.learning %>%
             regions=sum(regions)) %>%
   mutate(percent=errors/regions*100,
          model.name=sub("default", "0", sub("trained", "1", model.name)),
-         model.type=ifelse(grepl("oracle", model.name), "cDPA", "baselines"),
+         model.type=ifelse(grepl("oracle", model.name),
+           "cDPA + penalty learning", "baselines"),
          algorithm=ifelse(grepl("[.]1$", model.name), "grid\nsearch",
            ifelse(grepl("[.]0$", model.name), "unsupervised",
                   "interval\nregression")))
@@ -21,7 +22,7 @@ data.frame(subset(error.lines, set.name==set.name[1] & set.i==set.i[1]))
 
 ## Make sure the same number of regions were used to compute test
 ## error for each of the models.
-perror.check <- error.lines %>%
+error.check <- error.lines %>%
   group_by(set.name, set.i) %>%
   summarise(min.regions=min(regions),
             max.regions=max(regions))
@@ -37,6 +38,8 @@ algo.colors <-
     "interval\nregression"="#D95F02",
     "grid\nsearch"="#1B9E77",
     "unsupervised"="#7570B3")
+
+leg <- guide_legend(direction="horizontal")
 
 with.legend <- 
 ggplot()+
@@ -60,6 +63,8 @@ ggplot()+
             data=error.bands,
             size=1)+
   theme_bw()+
+  theme(legend.position="top")+
+  guides(color=leg, fill=leg)+
   theme(panel.margin=grid::unit(0, "cm"))+
   facet_grid(set.name ~ model.type)+
   ylab("percent test error")
