@@ -46,6 +46,11 @@ dev.off()
 
 model.regions <- error.list[[1]]
 
+sample.cell <- unique(PeakSeg4samples$signal[, c("sample.id", "cell.type")])
+rownames(sample.cell) <- sample.cell$sample.id
+model.regions$cell.type <-
+  sample.cell[paste(model.regions$sample.id), "cell.type"]
+
 just.regions <- 
   ggplot()+
   scale_y_continuous("aligned read coverage",
@@ -58,7 +63,7 @@ just.regions <-
   xlab("position on chr11 (kilo base pairs)")+
   theme_bw()+
   theme(panel.margin=grid::unit(0, "cm"))+
-  facet_grid(sample.id ~ ., scales="free")+
+  facet_grid(cell.type + sample.id ~ ., scales="free")+
   scale_fill_manual("annotation", values=ann.colors,
                     breaks=names(ann.colors))+
   coord_cartesian(xlim=c(118090, 118125))+

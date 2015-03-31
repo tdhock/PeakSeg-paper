@@ -233,13 +233,19 @@ maxIter 20
 
 \section{A qsub pipeline for supervised peak detection}
 
+\begin{frame}
+  \frametitle{Label regions with and without peaks in several samples}
+  \includegraphics[width=\textwidth]{figure-4samples-just-regions}
+
+\end{frame}
+
 \begin{frame}[fragile]
   \frametitle{Input labels file determined by visual inspection}
 \begin{verbatim}
-chr11:118,092,641-118,095,026 peakStart tcell
-chr11:118,095,334-118,096,640 peakEnd tcell
+chr11:118,092,641-118,095,026 peakStart tcell monocyte
+chr11:118,095,334-118,096,640 peakEnd tcell monocyte
 chr11:118,101,452-118,118,472 noPeaks
-chr11:118,121,649-118,124,175 peaks tcell bcell
+chr11:118,121,649-118,124,175 peaks tcell monocyte bcell
 
 chr11:117,197,077-117,200,591 peaks tcell bcell
 chr11:117,190,651-117,196,415 noPeaks
