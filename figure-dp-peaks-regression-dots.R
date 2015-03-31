@@ -305,7 +305,7 @@ ggplot()+
 ##dev.off()
 
 un.both <- both %>%
-  filter(grepl("[.][0]$", algo)) %>%
+  filter(algo %in% c("hmcan.broad.0", "macs.0")) %>%
   mutate(algo.type=sub(" ", "\n", algo.type),
          algo.fac=factor(algo.type, c("cDPA", "baselines")))
 un.mean <- un.both %>%
@@ -345,9 +345,10 @@ print(un.dots)
 dev.off()
 
 grid.both <- both %>%
-  filter(grepl("[.][01]$", algo))
-grid.mean <- mean.both %>%
-  filter(grepl("[.][01]$", algo))
+  filter(algo.type == "baselines")
+grid.mean <- grid.both %>%
+  group_by(set.name, algo, learning) %>%
+  summarise(mean=mean(percent))
 grid.best <- grid.mean %>%
   group_by(set.name) %>%
   summarise(min=min(mean),

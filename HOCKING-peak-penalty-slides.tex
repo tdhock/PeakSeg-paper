@@ -32,20 +32,20 @@
 
 \begin{document}
 
-\title{PeakSeg: ChIP-seq \textbf{Peak} detection using constrained
-  optimal \textbf{Seg}mentation
-and supervised penalty learning}  
+\title{A qsub pipeline for 
+  supervised ChIP-seq peak detection} 
 
 \author{
   Toby Dylan Hocking\\
   toby.hocking@mail.mcgill.ca\\
   joint work with Guillem Rigaill and Guillaume Bourque}
 
-\date{13 February 2014}
+\date{2 April 2015}
 
 \maketitle
 
-\section{ChIP-seq data and previous work on peak detection}
+\section{ChIP-seq data and previous work on unsupervised peak
+  detection}
 
 
 \begin{frame}
@@ -63,12 +63,12 @@ and supervised penalty learning}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Problem: find peaks in each of several samples}
+  \frametitle{Goal: find peaks in each of several samples}
   \includegraphics[width=\textwidth]{screenshot-ucsc-edited}
 \end{frame}
 
 \begin{frame}
-  \frametitle{Existing peak detection algorithms}
+  \frametitle{Existing unsupervised peak detection algorithms}
   \begin{itemize}
   \item Model-based analysis of ChIP-Seq (MACS), Zhang et al, 2008.
   \item SICER, Zang et al, 2009.
@@ -85,7 +85,7 @@ and supervised penalty learning}
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{How to choose model parameters?}
+  \frametitle{Problem: how to choose model parameters?}
 \scriptsize
 19 parameters for Model-based analysis of ChIP-Seq (MACS), Zhang et al, 2008.
 \begin{verbatim}
@@ -113,6 +113,24 @@ finalThreshold 0
 maxIter 20
 \end{verbatim}
 \end{frame}
+
+\begin{frame}
+  \frametitle{Summary of unsupervised peak detectors}
+  \begin{displaymath}
+  \xymatrix{
+    \texttt{coverage.bedGraph}
+    \ar [dr] 
+    & \text{ }
+    & \text{Parameters} 
+    \ar [dl]
+    \\
+    & \texttt{peaks.bed}
+  }
+  \end{displaymath}
+  
+\end{frame}
+
+\section{Supervised peak detection using annotated region labels}
 
 \begin{frame}
   \frametitle{Previous work in computer vision: look and add labels
@@ -147,6 +165,180 @@ maxIter 20
 \end{frame}
 
 \begin{frame}
+  \frametitle{Summary of supervised peak detection}
+  \begin{displaymath}
+  \xymatrix{
+    & & \texttt{labels.bed} \ar [d]
+    \\
+    \texttt{coverage.bedGraph}
+    \ar [dr] 
+    & \text{ }
+    & \text{Parameters} 
+    \ar [dl]
+    \\
+    & \texttt{peaks.bed}
+  }
+  \end{displaymath}
+  
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{PeakSeg constrained maximum likelihood model}
+  \includegraphics[width=\textwidth]{figure-Segmentor-PeakSeg-constrained-regions}
+
+  State-of-the-art peak detection (Hocking et al, ICML2015), but
+  constrained Dynamic Programming Algorithm = cDPA has
+  $O(s_{\text{max}} d^2)$ time complexity:
+  \begin{itemize}
+  \item $s_{\text{max}}$ = maximum number of segments/peaks,
+  \item $d$ = data points to segment.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Timings on benchmark data sets}
+  \includegraphics[width=\textwidth]{figure-cDPA-pDPA-timings}
+
+  How to use cDPA on whole genome?
+\end{frame}
+
+\begin{frame}
+  \frametitle{Summary of proposed PeakSeg model}
+  Parallelizable on samples, genomic regions:
+  \begin{itemize}
+  \item Inputs: a ChIP-seq coverage profile $\mathbf y\in\ZZ_+^d$,\\
+    maximum number of segments $s_{\text{max}}$.
+  \item Proposed method: cDPA = constrained 
+    %pruned 
+    dynamic programming
+    algorithm,
+    %$O(p_{\text{max}} d \log d)$ time complexity.
+    $O(s_{\text{max}} d^2)$ time complexity.
+  \item Outputs: constrained maximum likelihood segmentations
+    $\mathbf{\tilde m}^1(\mathbf y), 
+    \dots, 
+    \mathbf{\tilde m}^{s_\text{max}}(\mathbf y)$ 
+    (peaks are 2nd, 4th, ... segments).
+  \end{itemize}
+  How to choose the optimal number of segments/peaks?\\
+  Manually annotated regions + supervised penalty function learning.\\
+  %(next slide).
+  G Rigaill, TD Hocking, \emph{et al.} Learning Sparse Penalties for
+  Change Point Detection using Max Margin Interval Regression, ICML
+  2013.
+\end{frame}
+
+\section{A qsub pipeline for supervised peak detection}
+
+
+\section{Results on the McGill benchmark data set, conclusions}
+
+\begin{frame}
+  \frametitle{Benchmark: 7 annotated region data sets}
+  \url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}
+  \begin{itemize}
+  \item 4 annotators (AM, TDH, PGP, XJ).
+  \item 8 cell types.
+  \item 37 annotated H3K4me3 profiles (sharp peaks).
+  \item 29 annotated H3K36me3 profiles (broadly enriched domains).
+  \item 12,826 annotated regions in total.
+  %\item 2752 separate segmentation problems.
+  \end{itemize}
+  % Used the cDPA on the annotated data.
+  % \begin{itemize}
+  % \item cDPA computed models with $0, \dots, 9$ peaks\\
+  %   (for 99.5\% of problems).
+  % \item For the biggest problem, cDPA took 3 hours.\\
+  %   ($d=88,509$ data points, 3.5 megabases)
+  % \item macs takes about 90 minutes for one whole genome.
+  % \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Best results on H3K4me3 data}
+  \includegraphics[width=\textwidth]{figure-dp-peaks-train-1}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Best results on H3K36me3 data}
+  \includegraphics[width=\textwidth]{figure-dp-peaks-train-2}
+\end{frame}
+
+\begin{frame}
+  \frametitle{hmcan.broad better for H3K36me3, macs better for
+    H3K4me3}
+
+  \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots-unsupervised}
+  
+  Six train/test splits (open circles) and mean (shaded circle).
+\end{frame}
+
+\begin{frame}
+  \frametitle{Training 1 parameter with grid search reduces test error}
+
+  ...except for macs, good defaults for 3/4 H3K4me3 data sets.
+
+  \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots-grid}
+
+  Six train/test splits (open circles) and mean (shaded circle).
+\end{frame}
+
+\begin{frame}
+  \frametitle{Supervised genome-wide PeakSeg method works for both
+    data types}
+
+  \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots}
+
+  Six train/test splits (open circles) and mean (shaded circle).
+\end{frame}
+
+\begin{frame}
+  \frametitle{Conclusions and future work}
+  PeakSeg: \textbf{Peak} detection via constrained optimal
+  \textbf{Seg}mentation.
+  \begin{itemize}
+  \item First peak detector with efficient multi-parameter supervised
+    learning algorithm.
+  \item State-of-the-art peak detection for both H3K4me3 and H3K36me3
+    profiles.
+  \end{itemize}
+  Future work:
+  \begin{itemize}
+  \item Detecting the same peaks across several profiles?
+  \item Faster algorithm via constrained version of
+    \begin{tabular}{rllll}
+      Time & Models & Algorithm & Author 
+      % & Reference 
+      \\
+      \hline
+      $O( s_{\text{max}} d\log d)$ & $s_{\text{max}}$ &
+      pDPA & Rigaill 
+      % & arXiv:1004.0887 
+      \\
+      $O(d\log d)$ & 1 & FPOP & Maistone et al. % & arXiv:1409.1842 
+    \end{tabular}
+    \\
+    $d$ = data points to segment, $s_{\text{max}}$ = max segments.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Thanks for your attention!}
+  Write me at \alert{\texttt{toby.hocking@mail.mcgill.ca}} to collaborate!
+
+  \vskip 1cm
+
+  Source code for slides, figures, paper online!\\
+  \small
+  \url{https://github.com/tdhock/PeakSeg-paper}
+  \vskip 1cm
+
+  Supplementary slides appear after this one.
+
+\end{frame}
+
+\begin{frame}
   \frametitle{Two annotators provide consistent labels, but different
     precision}
   \includegraphics[width=1.1\textwidth]{figure-several-annotators}
@@ -157,46 +349,6 @@ maxIter 20
   \end{itemize}
 \end{frame}
 
-\begin{frame}
-  \frametitle{Comparison on annotated McGill benchmark data set}
-  Hocking et al, 2014, arXiv:1409.6209.\\
-  \begin{itemize}
-  \item Manually annotate regions with or without peaks.\\
-    \url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}
-  \item Tune 1 parameter that affects the number of peaks.
-  \item Choose the parameter that minimizes the annotation error.
-  \end{itemize}
-  Results:
-  \begin{itemize}
-  \item MACS best for H3K4me3 (sharp peak pattern),
-  \item HMCan.broad best for H3K36me3 (broad peak pattern).
-  \item Consistent across 4 annotators (PhD students, postdocs).
-  \item 10--20\% test error rates.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Can we do better than unsupervised peak detectors? Yes!}
-  We propose \textbf{PeakSeg}, a new model with efficient algorithms
-  for supervised peak detection.
-  \begin{itemize}
-  \item Input: \alert<1>{several ChIP-seq profiles},
-    \alert<2>{manually annotated regions}.
-  \item New methods for peak detection: 
-    \begin{itemize}
-    \item \alert<1>{Constrained optimal segmentation}.
-    \item Efficient \alert<2>{supervised learning using manually annotated
-      regions}.
-    \end{itemize}
-  \item Output: predicted peaks for each profile.
-  %\item and consistent peak boundaries across samples.
-  \end{itemize}
-  State-of-the-art peak detection accuracy (on both sharp H3K4me3 and
-  broad H3K36me3 profiles).
-\end{frame}
-
-\section{Methods: constrained optimal segmentation and 
-  supervised penalty learning}
 
 \begin{frame}
   \frametitle{Maximum likelihood segmentations}
@@ -240,10 +392,10 @@ maxIter 20
     \end{aligned}
   \end{equation*}
   \begin{itemize}
-  \item Pruned Dynamic Programming (Rigaill arXiv:1004.0887) returns
-    $\mathbf{\hat m}^1(\mathbf y), \dots, \mathbf{\hat
-      m}^{s_{\text{max}}}(\mathbf y)$ in $O(s_{\text{max}} d\log d)$
-    time.
+  \item Pruned Dynamic Programming Algorithm = pDPA (Rigaill
+    arXiv:1004.0887) returns $\mathbf{\hat m}^1(\mathbf y), \dots,
+    \mathbf{\hat m}^{s_{\text{max}}}(\mathbf y)$ in $O(s_{\text{max}}
+    d\log d)$ time.
   \end{itemize}
 \end{frame}
 
@@ -291,264 +443,6 @@ where the peak indicator $P_1(\mathbf m)=0$ and for $j>1$,
 
 We propose cDPA = a constrained dynamic programming algorithm, which
 computes $s_{\text{max}}$ models in $O(s_{\text{max}} d^2)$ time.
-
-\end{frame}
-
-\begin{frame}
-  \frametitle{PeakSeg accuracy can be quantified using labels}
-  \includegraphics[width=\textwidth]{figure-Segmentor-PeakSeg-constrained-regions}
-
-  \begin{itemize}
-  \item $1, 3, 5, 7$ segments = $0, 1, 2, 3$ peaks ($2p + 1 = s$).
-  \item Models with $s\in\{1, 7\}$ segments have 1 incorrect region.
-  \item Models with $s\in\{3, 5\}$ segments are perfect.
-  \item Goal for $i\in\{1, \dots, n\}$ profiles:\\
-    predict profile-specific segments $\hat s_i$ with minimum errors.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Summary of proposed PeakSeg model}
-  Parallelizable on samples, genomic regions:
-  \begin{itemize}
-  \item Inputs: a ChIP-seq coverage profile $\mathbf y\in\ZZ_+^d$,\\
-    maximum number of segments $s_{\text{max}}$.
-  \item Proposed method: cDPA = constrained 
-    %pruned 
-    dynamic programming
-    algorithm,
-    %$O(p_{\text{max}} d \log d)$ time complexity.
-    $O(s_{\text{max}} d^2)$ time complexity.
-  \item Outputs: constrained maximum likelihood segmentations
-    $\mathbf{\tilde m}^1(\mathbf y), 
-    \dots, 
-    \mathbf{\tilde m}^{s_\text{max}}(\mathbf y)$ 
-    (peaks are 2nd, 4th, ... segments).
-  \end{itemize}
-  How to choose the optimal number of segments/peaks?\\
-  Manually annotated regions + supervised penalty function learning.\\
-  %(next slide).
-  G Rigaill, TD Hocking, \emph{et al.} Learning Sparse Penalties for
-  Change Point Detection using Max Margin Interval Regression, ICML
-  2013.
-\end{frame}
-
-% \begin{frame}
-%   \frametitle{Previous work on breakpoint detection}
-%   G Rigaill, TD Hocking, \emph{et al.} Learning Sparse Penalties for Change
-%   Point Detection using Max Margin Interval Regression, ICML 2013.
-%   \begin{itemize}
-%   \item Supervised algorithm for detecting change points in piecewise
-%     constant DNA copy number profiles.
-%   \item Inputs: genomic profile $\mathbf y$, \\
-%     profile features $\mathbf x$, \\
-%     manually annotated regions $R$ (change point locations).
-%   \item Method: compute maximum likelihood segmentations $\mathbf{\hat
-%       m}^1(\mathbf y), \dots, \mathbf{\hat m}^{s_{\text{max}}}(\mathbf
-%     y)$, learn a penalty function $f(\mathbf x) \Rightarrow \hat s$
-%     that minimizes the number of incorrect regions $R$.
-%     \item Output: the segmentation with minimum predicted error
-%       $\mathbf{\hat m}^{\hat s}(\mathbf y)$.
-%   \end{itemize}
-%   We can use the same method for peak detection!
-% \end{frame}
-
-\section{Results on the McGill benchmark data set, conclusions}
-
-\begin{frame}
-  \frametitle{Benchmark: 7 annotated region data sets}
-  \url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}
-  \begin{itemize}
-  \item 4 annotators (AM, TDH, PGP, XJ).
-  \item 8 cell types.
-  \item 37 annotated H3K4me3 profiles (sharp peaks).
-  \item 29 annotated H3K36me3 profiles (broadly enriched domains).
-  \item 12,826 annotated regions in total.
-  \item 2752 separate segmentation problems.
-  \end{itemize}
-  Used the cDPA on the annotated data.
-  \begin{itemize}
-  \item cDPA computed models with $0, \dots, 9$ peaks\\
-    (for 99.5\% of problems).
-  \item For the biggest problem, cDPA took 3 hours.\\
-    ($d=88,509$ data points, 3.5 megabases)
-  \item macs takes about 90 minutes for one whole genome.
-  \end{itemize}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Best results on H3K4me3 data}
-  \includegraphics[width=\textwidth]{figure-dp-peaks-train-1}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Best results on H3K36me3 data}
-  \includegraphics[width=\textwidth]{figure-dp-peaks-train-2}
-\end{frame}
-
-\begin{frame}
-  \frametitle{Penalty functions learned in this paper}
-
-Predicted number of segments for profile $i\in\{1, \dots, n\}$:
-
-\begin{equation*}
-  \hat s_i = 
-  \argmin_{s\in\{1,3,\dots, s_{\text{max}}=19\}}
-  \overbrace{\rho\left[
-    \mathbf{\tilde m}^s(\mathbf y_i),
-    \mathbf y_i
-  \right]}^{\text{Poisson loss}}
-  + 
-  \overbrace{
-    \alert<1>{h(s, d_i)}
-    \alert<2>{\lambda_i}
-  }^{\text{penalty}},
-\end{equation*}
-
-  Names: (model complexity).(number of parameters learned):
-
-  \begin{center}
-  \begin{tabular}{ll}
-    \textbf{name} & \textbf{model complexity} \alert<1>{$h(s, d_i)$} \\
-    \hline
-    AIC/BIC.* & \alert<1>{$s$}\\
-    oracle.* & \alert<1>{$s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$}
-  \end{tabular}
-\end{center}
-
-  \begin{center}
-  \begin{tabular}{lllll}
-    \textbf{name} & \textbf{smoothing} \alert<2>{$\lambda_i$} & 
-    \textbf{parameters} & \textbf{learning algorithm} \\
-    \hline
-    *.0 & AIC=\alert<2>{2}, BIC=\alert<2>{$\log d_i$} & none & unsupervised \\
-    *.1 & 
-    \alert<2>{$\beta$} & 
-    $\beta\in\RR_+$ & grid search \\
-    *.3 & 
-    \alert<2>{$e^\beta d_i^{w_1} (\max \mathbf y_i)^{w_{2}}$} & 
-    $\beta, w_1, w_{2}\in\RR$ & interval regression \\
-    *.41 & 
-    \alert<2>{$\exp(\beta + \mathbf w^\intercal \mathbf x_i)$} & 
-    $\beta\in\RR, \mathbf w\in\RR^{40}$ & 
-    interval regression \\
-  \end{tabular}
-\end{center}
-
-($d_i$ = number of data for profile $i$)
-
-\end{frame}
-
-\begin{frame}
-  \frametitle{Unsupervised constrained optimization algorithm works
-    for both H3K36me3 and H3K4me3 data types}
-
-  ...except in the H3K4me3\_XJ\_immune data set.
-
-  \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots-unsupervised}
-  
-  Six train/test splits (open circles) and mean (shaded circle).
-\end{frame}
-
-\begin{frame}
-  \frametitle{Training 1 parameter with grid search reduces test error}
-
-  ...except for macs, good defaults for 3/4 H3K4me3 data sets.
-
-  \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots-grid}
-
-  Six train/test splits (open circles) and mean (shaded circle).
-\end{frame}
-
-\begin{frame}
-  \frametitle{Training several parameters with interval regression 
-    further reduces test error}
-
-  ...except when there are few train data (H3K36me3\_TDH).
-
-  \includegraphics[width=\textwidth]{figure-dp-peaks-regression-dots}
-
-  Six train/test splits (open circles) and mean (shaded circle).
-\end{frame}
-
-\begin{frame}
-  \frametitle{Conclusions and future work}
-  PeakSeg: \textbf{Peak} detection via constrained optimal
-  \textbf{Seg}mentation.
-  \begin{itemize}
-  \item First peak detector with efficient multi-parameter supervised
-    learning algorithm.
-  \item State-of-the-art peak detection for both H3K4me3 and H3K36me3
-    profiles.
-  \end{itemize}
-  Future work:
-  \begin{itemize}
-  \item Apply to whole genome (not just annotated windows).
-  \item Detecting the same peaks across several profiles?
-  \item Constrained version of Pruned Dynamic Programming (Rigaill
-    arXiv:1004.0887) to compute in $O(d\log d)$ time.
-  \item Efficient algorithm which provably computes PeakSeg model?
-  %\item Better test error using other features $\mathbf x$?
-  \end{itemize}
-\end{frame}
-
-\section{Google Summer of Code}
-
-\begin{frame}
-  \frametitle{Google Summer of Code (GSOC)}
-Student gets \$5000 for writing open source code for
-    3 months.
-    \begin{description}
-    \item[Feb] \textbf{Admins} for open source organizations
-      e.g. R, Bioconductor apply to Google.
-    \item[Mar] \textbf{Mentors} suggest projects for each org.\\
-      \textbf{Students} submit project proposals to Google.\\
-      Google gives funding for $n$ students to an org.
-    \item[April] The top $n$ students get \$500 and begin coding.
-    \item[July] Midterm evaluation, pass = \$2250.
-    \item[Aug] Final evaluation, pass = \$2250.
-    \item[November] Orgs get \$500/student mentored.
-    \end{description}
-
-  I have participated as an \textbf{admin} and \textbf{mentor} for the
-  R project.
-\end{frame}
-
-\begin{frame}
-  \frametitle{What makes a good GSOC project?}
-  Coding projects should:
-  \begin{itemize}
-  \item Result in free/open-source software.
-  \item Be 3 months of full time work for a student.
-  \item Include writing documentation and tests.
-  \item Not include original research.
-  \end{itemize}
-  Examples: 
-  \begin{itemize}
-  \item Louis/Mathieu can be \textbf{admins} for MUGQIC org\\
-    \alert{\url{https://bitbucket.org/mugqic/gsoc2015/wiki}}
-  \item Warren/Stephan can be \textbf{mentors} for a project to write
-    a new R package for methylation analysis.
-  \item Robert/Dan can be \textbf{mentors} for a project to implement
-    new features in Gemini.
-  \item Any undergrad/master/PhD candidates (at McGill or not)
-    can be \textbf{students}.
-  \end{itemize}
-  
-\end{frame}
-
-\begin{frame}
-  \frametitle{Thanks for your attention!}
-  Write me at \alert{\texttt{toby.hocking@mail.mcgill.ca}} to collaborate!
-
-  \vskip 1cm
-
-  Source code for slides, figures, paper online!\\
-  \small
-  \url{https://github.com/tdhock/PeakSeg-paper}
-  \vskip 1cm
-
-  Supplementary slides appear after this one.
 
 \end{frame}
 
@@ -694,6 +588,59 @@ Student gets \$5000 for writing open source code for
       \right]}(\mathbf y)$.
   %\item Optional post-processing: mean of overlapping peaks.
   \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Penalty functions learned in this paper}
+
+Predicted number of segments for profile $i\in\{1, \dots, n\}$:
+
+\begin{equation*}
+  \hat s_i = 
+  \argmin_{s\in\{1,3,\dots, s_{\text{max}}=19\}}
+  \overbrace{\rho\left[
+    \mathbf{\tilde m}^s(\mathbf y_i),
+    \mathbf y_i
+  \right]}^{\text{Poisson loss}}
+  + 
+  \overbrace{
+    \alert<1>{h(s, d_i)}
+    \alert<2>{\lambda_i}
+  }^{\text{penalty}},
+\end{equation*}
+
+  Names: (model complexity).(number of parameters learned):
+
+  \begin{center}
+  \begin{tabular}{ll}
+    \textbf{name} & \textbf{model complexity} \alert<1>{$h(s, d_i)$} \\
+    \hline
+    AIC/BIC.* & \alert<1>{$s$}\\
+    oracle.* & \alert<1>{$s\left(1 + 4\sqrt{1.1 + \log(d_i/s)}\right)^2$}
+  \end{tabular}
+\end{center}
+
+  \begin{center}
+  \begin{tabular}{lllll}
+    \textbf{name} & \textbf{smoothing} \alert<2>{$\lambda_i$} & 
+    \textbf{parameters} & \textbf{learning algorithm} \\
+    \hline
+    *.0 & AIC=\alert<2>{2}, BIC=\alert<2>{$\log d_i$} & none & unsupervised \\
+    *.1 & 
+    \alert<2>{$\beta$} & 
+    $\beta\in\RR_+$ & grid search \\
+    *.3 & 
+    \alert<2>{$e^\beta d_i^{w_1} (\max \mathbf y_i)^{w_{2}}$} & 
+    $\beta, w_1, w_{2}\in\RR$ & interval regression \\
+    *.41 & 
+    \alert<2>{$\exp(\beta + \mathbf w^\intercal \mathbf x_i)$} & 
+    $\beta\in\RR, \mathbf w\in\RR^{40}$ & 
+    interval regression \\
+  \end{tabular}
+\end{center}
+
+($d_i$ = number of data for profile $i$)
+
 \end{frame}
 
 \end{document}
