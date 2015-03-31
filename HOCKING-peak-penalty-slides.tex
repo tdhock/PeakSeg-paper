@@ -337,6 +337,29 @@ Wait for jobs to finish:
 \end{frame}
 
 \begin{frame}
+  \frametitle{Best resolution depends on data type}
+  Frequency of selecting each resolution over 6 random half train,
+  half test splits.
+
+  \vskip 0.5cm
+
+  \scriptsize
+  \begin{tabular}{rlllllllll}
+    \hline
+    resolution (bases/bin)& 8 & 10 & 20 & 40 & 80 & 400 & 800 & 1000 & 2000 \\ 
+    \hline
+    H3K36me3\_AM\_immune &  &  &  &  &  & 1 & 4 &  & 1 \\ 
+    H3K36me3\_TDH\_immune &  &  &  &  &  & 1 & 2 & 2 & 1 \\ 
+    H3K36me3\_TDH\_other &  &  &  &  &  &  & 3 & 3 &  \\ 
+    H3K4me3\_PGP\_immune & 1 & 3 & 1 & 1 &  &  &  &  &  \\ 
+    H3K4me3\_TDH\_immune &  &  & 4 & 2 &  &  &  &  &  \\ 
+    H3K4me3\_TDH\_other &  &  &  & 2 & 4 &  &  &  &  \\ 
+    H3K4me3\_XJ\_immune & 1 & 4 & 1 &  &  &  &  &  &  \\ 
+    \hline
+  \end{tabular}
+\end{frame}
+
+\begin{frame}
   \frametitle{hmcan.broad better for H3K36me3, macs better for
     H3K4me3}
 
