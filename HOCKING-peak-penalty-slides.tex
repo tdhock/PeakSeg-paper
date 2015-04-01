@@ -252,25 +252,22 @@ chr11:117,190,651-117,196,415 noPeaks
 chr11:117,149,810-117,152,933 peaks tcell 
 \end{verbatim}
 \begin{itemize}
-\item Used UCSC genome browser or IGV.
-\item Two newlines separate groups of nearby regions.
-\item Write only cell types with peaks.
+\item Used UCSC genome browser or IGV to get positions.
 \item Labels: peaks, peakStart, peakEnd, noPeaks.
+\item Write only cell types with peaks.
+\item Two newlines separate groups of nearby regions.
 \end{itemize}
 
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Input: project organized by cell type}
+  \frametitle{Input files organized by cell type}
 \begin{verbatim}
-exampleData/
 exampleData/manually_annotated_region_labels.txt
-exampleData/bcell/
+exampleData/monocyte/McGill0002.bedGraph
+exampleData/tcell/McGill0004.bedGraph  
 exampleData/bcell/McGill0091.bedGraph  
 exampleData/bcell/McGill0322.bedGraph
-exampleData/tcell/
-exampleData/tcell/McGill0095.bedGraph  
-exampleData/tcell/McGill0107.bedGraph
 \end{verbatim}
 
 \end{frame}
@@ -279,7 +276,7 @@ exampleData/tcell/McGill0107.bedGraph
   \frametitle{qsub pipeline steps}
   For $n$ samples, \texttt{00\_AllSteps\_qsub.R} launches
   \begin{tabular}{cll}
-    jobs & time per job & script \\
+    qsub jobs & time per job & script \\
     \hline
     0 & seconds & Step0-convert-labels.R\\
     $n$ & 5--60 minutes* & Step1-segment-labeled-regions.R\\
@@ -300,8 +297,12 @@ Wait for jobs to finish:
 \end{frame}
 
 \begin{frame}
-  \frametitle{TODO: demo and example output}
-  
+  \frametitle{Demo and example output}
+  \begin{itemize}
+  \item \texttt{ssh guillimin}, execute \texttt{00\_AllSteps\_qsub.R}
+  \item H3K36me3\_TDH\_other\_train\_figures
+  \item H3K36me3\_TDH\_other\_predicted\_figures
+  \end{itemize}
 \end{frame}
 
 \section{Results on the McGill benchmark data set, conclusions}
