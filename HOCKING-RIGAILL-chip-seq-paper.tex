@@ -310,7 +310,7 @@ for peak detection.
 
 \subsection{Unconstrained maximum likelihood segmentation}
 
-For a sequence of $d$ data points $\mathbf y\in\RR^d$ to segment, we
+For a sequence of $d$ data points $\mathbf y\in\ZZ_+^d$ to segment, we
 fix a maximum number of segments $1 \leq s_{\text{\text{max}}}\leq d$,
 and define the unconstrained maximum likelihood segmentation problem
 for any $s\in\{1, 2, \dots, s_{\max}\}$ as
@@ -522,7 +522,7 @@ In the end we get the following algorithm:\footnote{Implemented as C
 
 \begin{algorithm}[H]
 \begin{algorithmic}[1]
-\REQUIRE $\mathbf y\in\RR^d$, $s_{\text{max}}\in\{2, \dots, d\}$.
+\REQUIRE $\mathbf y\in\ZZ_+^d$, $s_{\text{max}}\in\{2, \dots, d\}$.
 %\STATE \textbf{TODO:} initialize ${\mathcal L}_1, t$ ?
 \FORFOR{($s=2$ to $s_{\text{max}}$)}{($t=s$ to $d$)}
 \SWITCH{$s$}
@@ -639,7 +639,7 @@ $, we would recover the best solution $[13][14][10, 1]$.
 \section{Penalty function learning methods}
 \label{sec:penalty-learning}
 
-For a profile $\mathbf y\in\RR^d$ and a penalty constant $\lambda\in\RR_+$, the
+For a profile $\mathbf y\in\ZZ_+^d$ and a penalty constant $\lambda\in\RR_+$, the
 optimal number of segments is
 \begin{equation}
   \label{eq:optimal_segments}
@@ -728,7 +728,7 @@ models with 3 and 41 parameters:
 \item \textbf{3}: we used an $m=2$-dimensional feature
   vector $\mathbf x_i = \left[\begin{array}{cc} \log\max \mathbf y_i &
       \log d_i
-\end{array}\right]$ where $\mathbf y_i\in\RR^{d_i}$ 
+\end{array}\right]$ where $\mathbf y_i\in\ZZ_+^{d_i}$ 
 is one sample $i$ of count data to segment.
 This corresponds to a penalty $\lambda_i = e^\beta (\max\mathbf
 y_i)^{w_1} d_i^{w_2}$. We fit the model by solving the un-regularized
@@ -774,7 +774,7 @@ interval regression problem of \citet{HOCKING-penalties}.
   \caption{Penalties for model selection (\ref{eq:optimal_segments}) 
     are of the form
     $h(s, d_i) \lambda_i $ 
-    for data to segment $\mathbf y_i\in\RR^{d_i}$ 
+    for data to segment $\mathbf y_i\in\ZZ_+^{d_i}$ 
     and models with $s$ segments. 
     Names show model complexity
     $h(s, d_i)$ (left) and number of parameters to learn in $\lambda_i$ (right).
