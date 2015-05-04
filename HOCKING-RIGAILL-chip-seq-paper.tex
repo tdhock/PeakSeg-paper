@@ -30,7 +30,7 @@
 \definecolor{peakEnd}{HTML}{FF4C4C}
 \definecolor{peaks}{HTML}{A445EE}
 
-\usepackage{icml2015}
+\usepackage[accepted]{icml2015}
 
 \icmltitlerunning{PeakSeg: constrained optimal segmentation and
   supervised penalty learning for peak detection in count data}
@@ -45,11 +45,11 @@
 % submissions: the style file will automatically remove it for you
 % unless you've provided the [accepted] option to the icml2015
 % package.
-\icmlauthor{Guillem Rigaill}{rigaill@evry.inra.fr}
-\icmladdress{INRA, Evry, France}
 \icmlauthor{Toby Dylan Hocking}{toby.hocking@mail.mcgill.ca}
+\icmlauthor{Guillem Rigaill}{rigaill@evry.inra.fr}
 \icmlauthor{Guillaume Bourque}{guil.bourque@mcgill.ca}
-\icmladdress{McGill genome center, Montreal, Quebec, Canada}
+\icmladdress{Department of Human Genetics, McGill University, Montr\'eal, Qu\'ebec, Canada; INRA,
+  Versailles, France.}
 
 % You may provide any keywords that you 
 % find helpful for describing your paper; these are used to populate 
@@ -83,8 +83,9 @@ transcription factor binding sites, with many experimental and
 computational steps \citep{practical}. Briefly, each experiment yields
 a set of sequence reads which are aligned to a reference genome, and
 then the number of aligned reads are counted at each genomic position
-(Figure~\ref{fig:good-bad}). These data can be interpreted using
-one of the many available peak detection algorithms
+(Figure~\ref{fig:good-bad}). Although these read counts can be
+interpreted as quantitative data, they are most often interpreted
+using one of the many available peak detection algorithms
 \citep{evaluation2010, rye2010manually, chip-seq-bench}, which each
 essentially work as a binary classifier for each genomic position. The
 positive class is enriched (peaks) and the negative class is
@@ -160,7 +161,9 @@ More specifically, we suppose that the training data and the test data
 exhibit the same pattern type.
 
 
-\subsection{Contributions and organization}
+\subsection{Contributions 
+%and organization
+}
 
 The main contribution of this paper is \ref{PeakSeg}, a peak detection
 model that can be trained using supervised learning, and is effective
@@ -181,16 +184,16 @@ penalty of \citet{cleynen2013segmentation} is more accurate than
 asymptotic penalties like the AIC/BIC, and that supervised penalty
 learning can be used to further increase peak detection accuracy.
 
-The rest of this paper is organized as follows. In
-Section~\ref{sec:related} we discuss related work and in
-Section~\ref{sec:model} we propose the constrained \ref{PeakSeg}
-model. Sections~\ref{sec:algorithms} and \ref{sec:penalty-learning}
-present dynamic programming and penalty learning algorithms, which
-achieve state-of-the-art peak detection accuracy in a large benchmark
-database of ChIP-seq profiles (Section~\ref{sec:results}). We discuss
-the significance of these results in Section~\ref{sec:discussion} and
-propose some directions for future work in
-Section~\ref{sec:conclusions}.
+% The paper is organized as follows. In
+% Section~\ref{sec:related} we discuss related work and in
+% Section~\ref{sec:model} we propose the constrained \ref{PeakSeg}
+% model. Sections~\ref{sec:algorithms} and \ref{sec:penalty-learning}
+% present dynamic programming and penalty learning algorithms, which
+% achieve state-of-the-art peak detection accuracy in a large benchmark
+% database of ChIP-seq profiles (Section~\ref{sec:results}). We discuss
+% the significance of these results in Section~\ref{sec:discussion} and
+% propose some directions for future work in
+% Section~\ref{sec:conclusions}.
 
 \section{Related work}
 \label{sec:related}
@@ -226,19 +229,19 @@ and criteria for model selection.
 There are literally dozens of unsupervised algorithms for peak
 detection in ChIP-seq data sets, and the bioinformatics literature
 contains several published comparison studies \citep{evaluation2010,
-  rye2010manually, chip-seq-bench}. \citet{hocking2014visual}
-proposed a benchmark of labeled ChIP-seq data sets, with two different
-histone mark types: H3K4me3 (sharp peak pattern) and H3K36me3 (broad
-peak pattern). The best peak detection algorithm in these H3K4me3 data
-was macs \citep{MACS}, and the best for H3K36me3 was HMCan
+  rye2010manually, chip-seq-bench}. \citet{hocking2014visual} proposed
+a benchmark of labeled ChIP-seq data sets, with two different histone
+mark types: H3K4me3 (sharp peak pattern) and H3K36me3 (broad peak
+pattern). The best peak detection algorithm in these H3K4me3 data was
+macs \citep{MACS}, and the best for H3K36me3 was HMCan
 \citep{HMCan}. Both of these algorithms are unsupervised, but were
-calibrated using the annotated region labels to choose the best scalar
-significance threshold hyperparameter via grid search.
-\citet{DFilter} also attempted to train hyperparameters of
-unsupervised peak detectors, and \citet{picking2012} found that
-optimal values do not generalize between data sets. In contrast, we
-show that our supervised \ref{PeakSeg} model can be trained for
-accurate peak detection on test data that has the same type of peak
+calibrated via grid search using the annotated region labels to choose
+the best scalar significance threshold hyperparameter.
+\citet{DFilter} proposed to train the DFilter algorithm using a
+database of regions with peaks, and \citet{picking2012} found that
+optimal algorithm parameters do not generalize between data sets. In
+contrast, we propose the supervised \ref{PeakSeg} model which can be
+trained for accurate peak detection on data with the same type of peak
 pattern.
 
 \subsection{Maximum likelihood segmentation models}
@@ -279,14 +282,15 @@ segments $s$ that maximizes the number of true positive peak
 detections while minimizing the number of false positives. For
 example, in Figure~\ref{fig:Segmentor-PeakSeg}, an ideal model
 selection procedure would choose $s\in\{3, 5\}$ segments, since those
-models have zero errors (\ref{eq:error}).
+models have zero errors with respect to the labels (\ref{eq:error}).
 
-There are many unsupervised penalty functions for model selection. For
-example, the classical AIC \citep{Akaike73} and BIC \citep{Schwarz78} are based
-on theoretical asymptotic arguments. Several attempts have been made
-to adapt the BIC for segmentation problems \citep{Yao88,
-  mBIC}, and the non-asymptotic model selection theory of
-\citet{cleynen2013segmentation} suggests another penalty function.
+There are many unsupervised penalty functions that select the number
+of segments without using the labels. For example, the classical AIC
+\citep{Akaike73} and BIC \citep{Schwarz78} are based on theoretical
+asymptotic arguments. Several attempts have been made to adapt the BIC
+for segmentation problems \citep{Yao88, mBIC}, and the non-asymptotic
+model selection theory of \citet{cleynen2013segmentation} suggests
+another penalty function.
 
 In the supervised setting of this paper, there is a training data set
 of segmentation problems $i\in\{1, \dots, n\}$, with labeled regions
@@ -310,10 +314,11 @@ for peak detection.
 
 \subsection{Unconstrained maximum likelihood segmentation}
 
-For a sequence of $d$ data points $\mathbf y\in\RR^d$ to segment, we
-fix a maximum number of segments $1 \leq s_{\text{\text{max}}}\leq d$,
-and define the unconstrained maximum likelihood segmentation problem
-for any $s\in\{1, 2, \dots, s_{\max}\}$ as
+For a sequence of $d$ data points $\mathbf y\in\ZZ_+^d$ to segment, we
+fix a maximum number of segments $ s_{\text{\text{max}}}\leq d$. The
+unconstrained maximum likelihood segmentation model is defined as the
+most likely mean vector $\mathbf m\in\RR^d$ with $s\in\{1, 2, \dots,
+s_{\max}\}$ piecewise constant segments:
 \begin{align}
   \label{unconstrained}
   \mathbf{\hat m}^s(\mathbf y)  =\ 
@@ -512,7 +517,7 @@ consider only $t'$ such that
 In the end we get the following algorithm:\footnote{Implemented as C
   code in the R package\\ \url{https://github.com/tdhock/PeakSegDP}}
 \newcommand{\SWITCH}[1]{\STATE \textbf{switch} (#1)\begin{ALC@g}}
-\newcommand{\ENDSWITCH}{\end{ALC@g}\STATE \textbf{end switch}}
+\newcommand{\ENDSWITCH}{\end{ALC@g}}
 \newcommand{\CASE}[2]{\STATE \textbf{case} #1\textbf{: } #2}%\begin{ALC@g}}
 \newcommand{\ENDCASE}{}%\end{ALC@g}}
 \newcommand{\DEFAULT}[1]{\STATE \textbf{default: } \begin{ALC@g}}
@@ -522,7 +527,7 @@ In the end we get the following algorithm:\footnote{Implemented as C
 
 \begin{algorithm}[H]
 \begin{algorithmic}[1]
-\REQUIRE $\mathbf y\in\RR^d$, $s_{\text{max}}\in\{2, \dots, d\}$.
+\REQUIRE $\mathbf y\in\ZZ_+^d$, $s_{\text{max}}\in\{2, \dots, d\}$.
 %\STATE \textbf{TODO:} initialize ${\mathcal L}_1, t$ ?
 \FORFOR{($s=2$ to $s_{\text{max}}$)}{($t=s$ to $d$)}
 \SWITCH{$s$}
@@ -532,17 +537,15 @@ In the end we get the following algorithm:\footnote{Implemented as C
 \ENDCASE
 \ENDSWITCH
 
-\SWITCH{$T$}
-\CASE{$\emptyset$}{${ \mathcal L}_{s,t} \gets \infty$}
-\ENDCASE
-\DEFAULT{}
-\STATE $ \mathcal T_{s, t}\gets t^* \gets
-\underset{ t'\in T}{\arg \min}\  {\mathcal{L}}_{s-1,t'} + c_{(t',t]}$
-\STATE $ {\mathcal{L}}_{s,t} \gets 
-{\mathcal{L}}_{s-1,t^*} + c_{(t^*,t]} $
-\STATE $\mathcal{E}_{s,t} \gets M_{(t^*, t]}$
-\ENDDEFAULT
-\ENDSWITCH
+\IF{ $T == \emptyset$}
+  \STATE ${ \mathcal L}_{s,t} \gets \infty$
+\ELSE
+  \STATE $ \mathcal T_{s, t}\gets t^* \gets
+  \underset{ t'\in T}{\arg \min}\  {\mathcal{L}}_{s-1,t'} + c_{(t',t]}$
+  \STATE $ {\mathcal{L}}_{s,t} \gets 
+  {\mathcal{L}}_{s-1,t^*} + c_{(t^*,t]} $
+  \STATE $\mathcal{E}_{s,t} \gets M_{(t^*, t]}$
+\ENDIF
 \ENDFORFOR
 \RETURN $s_{\text{max}}\times d$ matrix $\mathcal T_{s, t}$ of optimal change points.
 \caption{Constrained dynamic programming (cDPA) 
@@ -639,7 +642,7 @@ $, we would recover the best solution $[13][14][10, 1]$.
 \section{Penalty function learning methods}
 \label{sec:penalty-learning}
 
-For a profile $\mathbf y\in\RR^d$ and a penalty constant $\lambda\in\RR_+$, the
+For a profile $\mathbf y\in\ZZ_+^d$ and a penalty constant $\lambda\in\RR_+$, the
 optimal number of segments is
 \begin{equation}
   \label{eq:optimal_segments}
@@ -728,7 +731,7 @@ models with 3 and 41 parameters:
 \item \textbf{3}: we used an $m=2$-dimensional feature
   vector $\mathbf x_i = \left[\begin{array}{cc} \log\max \mathbf y_i &
       \log d_i
-\end{array}\right]$ where $\mathbf y_i\in\RR^{d_i}$ 
+\end{array}\right]$ where $\mathbf y_i\in\ZZ_+^{d_i}$ 
 is one sample $i$ of count data to segment.
 This corresponds to a penalty $\lambda_i = e^\beta (\max\mathbf
 y_i)^{w_1} d_i^{w_2}$. We fit the model by solving the un-regularized
@@ -774,7 +777,7 @@ interval regression problem of \citet{HOCKING-penalties}.
   \caption{Penalties for model selection (\ref{eq:optimal_segments}) 
     are of the form
     $h(s, d_i) \lambda_i $ 
-    for data to segment $\mathbf y_i\in\RR^{d_i}$ 
+    for data to segment $\mathbf y_i\in\ZZ_+^{d_i}$ 
     and models with $s$ segments. 
     Names show model complexity
     $h(s, d_i)$ (left) and number of parameters to learn in $\lambda_i$ (right).
@@ -810,7 +813,9 @@ manually annotated regions across 2,752 separate segmentation
 problems.\footnote{\url{http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/}}
 Data sets span two different data/pattern types (sharp H3K4me3, broad
 H3K36me3), four annotators (AM, TDH, PGP, XJ), and two cell type
-groups (immune, other). Each data set contains labels grouped into
+groups (immune, other). 
+Annotators are the PhD students and post-docs who created the labels via visual inspection of genome browser plots such as Figure~1.
+Each data set contains labels grouped into
 windows of nearby regions (from 4 to 30 windows per data set). For
 each data set, we performed 6 random splits of windows into half
 train, half test.  We
@@ -822,7 +827,7 @@ considered 3 kinds of model training:\footnote{Source code for computing models 
 \item \textbf{Grid search} learns a scalar parameter with minimal
   annotation error on the train set.
 \item \textbf{Interval regression} is the multi-parameter
-  penalty learning model of \citet{HOCKING-penalties}.
+  penalty learning algorithm of \citet{HOCKING-penalties}.
 \end{itemize}
 
 \subsection{Effectiveness of heuristic cDPA}
@@ -831,10 +836,11 @@ considered 3 kinds of model training:\footnote{Source code for computing models 
 To run the cDPA on the benchmark data set, we first set the maximum
 number of segments $s_{\text{\text{max}}}=19$, meaning a maximum of $9$
 peaks. 
-% Running the cDPA on all of the data sets in the benchmark took
-% a total of about 6.5 days. For the largest profile we considered
-% ($d=263,169$ data points), the cDPA took
-% about 155 minutes. 
+Running the cDPA on all of the data sets in the benchmark took
+a total of about 6.5 days. For the largest segmentation problem we considered
+($d=263,169$ data points), the cDPA took
+about 155 minutes. 
+
 As discussed in Section~\ref{sec:dp-fails}, the cDPA is a heuristic
 for computing the \ref{PeakSeg} model. To assess whether or not this
 is a problem in real data sets, we checked for how many segmentation
@@ -874,8 +880,9 @@ hmcan.broad.0.
 
 Finally, the unsupervised AIC/BIC.0 method is clearly the least
 accurate of all methods, since it always picks the model with the most
-peaks (same as no penalty). We also tried the modified BIC of
-\citet{mBIC}, but obtained the same high false positive rates.
+peaks (same as no penalty, for both AIC and BIC). We also tried the
+modified BIC of \citet{mBIC}, but obtained the same high false
+positive rates.
 
 \subsection{Supervised learning of 1 parameter increases peak
   detection accuracy}
@@ -984,15 +991,19 @@ approach yields state-of-the-art peak detection in a benchmark that
 includes both sharp H3K4me3 and broad H3K36me3 data/pattern types.
 
 There are several modeling choices that could be explored to increase
-peak detection accuracy. First, we could replace the Poisson
-assumption of the \ref{PeakSeg} model with a negative binomial
-distribution \citep{cleynen2013segmentation}, which has an additional
-variance parameter. Also, a more accurate model could possibly be
-obtained by engineering better features $\mathbf x_i$, and learning a
-non-linear smoothing function $f$. Finally, one could imagine 
-learning model complexity functions $h$. For example the oracle
-penalty of \citet{cleynen2013segmentation} has an assumed constant of
-1.1 (Table~\ref{tab:penalties}), which could be learned instead.
+peak detection accuracy. First, we could replace the Poisson loss of
+the \ref{PeakSeg} model with a negative binomial loss
+\citep{cleynen2013segmentation}, which has an additional variance
+parameter. Also, a more accurate model could possibly be obtained by
+engineering better features $\mathbf x_i$, learning a non-linear
+smoothing function $f$, or learning model complexity functions
+$h$. For example the oracle penalty of \citet{cleynen2013segmentation}
+has an assumed constant of 1.1 (Table~\ref{tab:penalties}), which
+could be learned instead. Finally, we could explore convex relaxations
+similar to the Fused Lasso \citep{fused-lasso-path}, by replacing the
+sign function with the positive part function in 
+%the \ref{PeakSeg} constraint
+ (\ref{eq:peaks}).
 
 The current implementation of \ref{PeakSeg} using the cDPA has several
 limitations. First, the $O(d^2)$ time complexity for $d$ data points
@@ -1004,11 +1015,12 @@ what optimization problem the cDPA solves. On the other hand, we would
 like an efficient algorithm that exactly computes the \ref{PeakSeg}
 model.
 
-Finally, we are interested in segmenting multiple samples $i$ at the
-same time, since peaks are often observed in the same genomic location
-across several samples of the same cell type. This joint peak
-detection problem may lead to more accurate peak calls, but it is a
-considerably more difficult segmentation problem.
+Finally, we are interested in jointly segmenting multiple samples at
+the same time, since peaks are often observed in the same genomic
+location across several samples of the same cell type.
+%This joint peak
+%detection problem may lead to more accurate peak calls, but it is a
+%considerably more difficult segmentation problem.
 
 % \begin{table*}[b!]
 %   \centering
@@ -1030,8 +1042,7 @@ considerably more difficult segmentation problem.
 %   \label{tab:supervised-maxlik}
 % \end{table*}
 
-\newpage
-
+\newpage 
 
 \bibliographystyle{abbrvnat}
 

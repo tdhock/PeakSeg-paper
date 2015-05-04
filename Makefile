@@ -1,14 +1,14 @@
-HOCKING-RIGAILL-chip-seq-paper.pdf: HOCKING-RIGAILL-chip-seq-paper.tex refs.bib figure-Segmentor-PeakSeg.png figure-dp-peaks-regression-dots.pdf figure-good-bad.png 
+HOCKING-RIGAILL-chip-seq-paper.pdf: HOCKING-RIGAILL-chip-seq-paper.tex refs.bib figure-Segmentor-PeakSeg.png figure-dp-peaks-regression-dots.pdf figure-good-bad.png  
 	rm -f *.aux *.bbl
 	pdflatex HOCKING-RIGAILL-chip-seq-paper
 	bibtex HOCKING-RIGAILL-chip-seq-paper
 	pdflatex HOCKING-RIGAILL-chip-seq-paper
 	pdflatex HOCKING-RIGAILL-chip-seq-paper
-
 HOCKING-peak-penalty-slides.pdf: HOCKING-peak-penalty-slides.tex figure-dp-peaks-regression-dots.pdf figure-dp.tex figure-dp-short.tex figure-dp-first.tex  figure-dp-third.tex figure-good-bad.png figure-dp-peaks-train-2.png figure-Segmentor-PeakSeg.png
 	rm -f *.aux *.bbl
 	pdflatex HOCKING-peak-penalty-slides
 	pdflatex HOCKING-peak-penalty-slides
+
 figure-dp.tex: figure-dp.R 
 	R --no-save < $<
 figure-dp-short.tex: figure-dp-short.R 
@@ -19,7 +19,7 @@ figure-dp-third.tex: figure-dp-third.R
 	R --no-save < $<
 figure-Segmentor-PeakSeg.png: figure-Segmentor-PeakSeg.R
 	R --no-save < $<
-figure-dp-peaks-regression-dots.pdf: figure-dp-peaks-regression-dots.R dp.peaks.regression.RData dp.peaks.baseline.RData regularized.all.RData unsupervised.error.RData oracle.regularized.RData
+figure-dp-peaks-regression-dots.pdf: figure-dp-peaks-regression-dots.R dp.peaks.regression.RData dp.peaks.baseline.RData regularized.all.RData unsupervised.error.RData oracle.regularized.RData 
 	R --no-save < $<
 figure-dp-timings.pdf: figure-dp-timings.R dp.timings.RData
 	R --no-save < $<
@@ -89,7 +89,10 @@ oracle.intervals.RData: oracle.intervals.R oracle.optimal.RData
 	R --no-save < $<
 oracle.regularized.RData: oracle.regularized.R oracle.intervals.RData dp.peaks.sets.RData
 	R --no-save < $<
-oracle.learning.RData: oracle.learning.R oracle.intervals.RData dp.peaks.sets.RData
+## regularized model with multi-resolution bins.
+multires.bins.RData: multires.bins.R
 	R --no-save < $<
-figure-oracle-learning.pdf: figure-oracle-learning.R oracle.learning.RData
+multires.bins.joint.RData: multires.bins.joint.R
+	R --no-save < $<
+figure-overlapping-peaks.tex: figure-overlapping-peaks.R
 	R --no-save < $<
