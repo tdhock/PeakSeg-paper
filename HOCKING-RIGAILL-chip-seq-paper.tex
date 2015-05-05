@@ -48,8 +48,10 @@
 \icmlauthor{Toby Dylan Hocking}{toby.hocking@mail.mcgill.ca}
 \icmlauthor{Guillem Rigaill}{rigaill@evry.inra.fr}
 \icmlauthor{Guillaume Bourque}{guil.bourque@mcgill.ca}
-\icmladdress{Department of Human Genetics, McGill University, Montr\'eal, Qu\'ebec, Canada; INRA,
-  Versailles, France.}
+\icmladdress{Department of Human Genetics, McGill University, Montr\'eal, Qu\'ebec, Canada.\\
+Institute of Plant Sciences Paris-Saclay, UMR 9213/UMR1403, CNRS, 
+INRA, Universit\'e Paris-Sud, Universit\'e d'Evry, 
+Universit\'e Paris-Diderot, Sorbonne Paris-Cit\'e, Orsay, France.}
 
 % You may provide any keywords that you 
 % find helpful for describing your paper; these are used to populate 
@@ -205,25 +207,6 @@ unsupervised ChIP-seq peak detectors from the bioinformatics
 literature, maximum likelihood segmentation models, 
 and criteria for model selection.
 
-\begin{figure*}[b!]
-  \centering
-  \includegraphics[width=\textwidth]{figure-Segmentor-PeakSeg}
-  %\input{figure-Segmentor-PeakSeg}
-  \vskip -0.5cm
-  \caption{Example profile $\mathbf y$ (grey), with green horizontal
-    lines for the segmentation mean $\mathbf m$, and green vertical
-    lines to emphasize change-points. For this particular profile
-    $\mathbf y$, the unconstrained and contrained models are
-    equivalent $\mathbf{\hat m}^s(\mathbf y) = \mathbf{\tilde
-      m}^s(\mathbf y)$ for $s\in\{1, 3\}$ segments but not for
-    $s\in\{5, 7\}$. For the constrained models, the even-numbered
-    segments are interpreted as peaks, whose accuracy can be
-    quantified using the annotated region labels
-    (\textcolor{peaks}{peaks} means there should be at least 1
-    overlapping peak).}
-  \label{fig:Segmentor-PeakSeg}
-\end{figure*}
-
 \subsection{Unsupervised ChIP-seq peak detectors}
 
 There are literally dozens of unsupervised algorithms for peak
@@ -262,7 +245,8 @@ our proposed \ref{PeakSeg} model has an additional constraint. Rather
 than searching all possible change-points to find the most likely
 model with $s$ segments, we propose to constrain the possible
 change-points to the subset of models that can be interpreted as peaks
-(Section~\ref{sec:constrained}).
+(with segment means that change up, down, up, etc, see
+Section~\ref{sec:constrained}).
 
 Due to the simplicity of its implementation, we propose a constrained
 dynamic programming algorithm (cDPA) that requires a small
@@ -274,6 +258,25 @@ still very useful and accurate in practice on real data
 (Section~\ref{sec:results}).
 
 \subsection{Model selection criteria}
+
+\begin{figure*}[b!]
+  \centering
+  \includegraphics[width=\textwidth]{figure-Segmentor-PeakSeg}
+  %\input{figure-Segmentor-PeakSeg}
+  \vskip -0.5cm
+  \caption{Example profile $\mathbf y$ (grey), with green horizontal
+    lines for the segmentation mean $\mathbf m$, and green vertical
+    lines to emphasize change-points. For this particular profile
+    $\mathbf y$, the unconstrained and contrained models are
+    equivalent $\mathbf{\hat m}^s(\mathbf y) = \mathbf{\tilde
+      m}^s(\mathbf y)$ for $s\in\{1, 3\}$ segments but not for
+    $s\in\{5, 7\}$. For the constrained models, the even-numbered
+    segments are interpreted as peaks, whose accuracy can be
+    quantified using the annotated region labels
+    (\textcolor{peaks}{peaks} means there should be at least 1
+    overlapping peak).}
+  \label{fig:Segmentor-PeakSeg}
+\end{figure*}
 
 For each segmentation problem, the proposed cDPA returns a sequence of
 models with $s\in\{1, 3, \dots, s_{\text{\text{max}}}\}$ segments. The
@@ -673,7 +676,7 @@ predicted number of segments $\hat s = s^*(\hat \lambda, \mathbf y)$,
 and the predicted peaks $\mathbf P\left[ \mathbf{\tilde
     m}^{\hat s}(\mathbf y) \right]$.
 
-\subsection{Unsupervised penalty learning}
+\subsection{Unsupervised penalty functions}
 \label{sec:unsupervised}
 
 % After computing the constrained maximum likelihood segmentations for
