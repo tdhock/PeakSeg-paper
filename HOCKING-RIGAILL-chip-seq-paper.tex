@@ -88,11 +88,11 @@ then the number of aligned reads are counted at each genomic position
 (Figure~\ref{fig:good-bad}). Although these read counts can be
 interpreted as quantitative data, they are most often interpreted
 using one of the many available peak detection algorithms
-\citep{evaluation2010, rye2010manually, chip-seq-bench}, which each
-essentially work as a binary classifier for each genomic position. The
-positive class is enriched (peaks) and the negative class is
-background noise. Importantly, peaks and background occur in long
-contiguous segments across the genome.
+\citep{evaluation2010, rye2010manually, chip-seq-bench}. A peak
+detection algorithm is a binary classifier for each genomic
+position. The positive class is enriched (peaks) and the negative
+class is background noise. Importantly, peaks and background occur in
+long contiguous segments across the genome.
 
 \begin{figure*}[b!]
   \centering
@@ -117,7 +117,7 @@ $d$ base pairs can be represented as a vector $\mathbf y= \left[
     y_1 & \cdots & y_d
   \end{array}
 \right]\in\ZZ_+^d$ of counts of aligned sequence reads. A peak
-detection algorithm can be described as a function $c:\ZZ_+^d
+detection algorithm is a function $c:\ZZ_+^d
 \rightarrow \{0, 1\}^d$ which returns 0 for background noise and 1 for
 a peak. 
 
@@ -129,7 +129,7 @@ Figure~\ref{fig:good-bad} shows H3K4me3 data with a sharp peak
 pattern, and H3K36me3 data with a broad peak pattern. Current
 state-of-the-art peak detectors from the bioinformatics literature are
 unsupervised learning algorithms that are designed for specific
-patterns. For example, the MACS algorithm was designed for the sharp
+patterns. For example, the MACS algorithm was initially designed for the sharp
 pattern in H3K4me3 data \citep{MACS}. Another example is HMCan
 \citep{HMCan}, whose authors suggest fixed pattern-specific
 mergeDistance parameters: H3K4me3 $\Rightarrow 200$, H3K36me3
@@ -219,13 +219,12 @@ pattern). The best peak detection algorithm in these H3K4me3 data was
 macs \citep{MACS}, and the best for H3K36me3 was HMCan
 \citep{HMCan}. Both of these algorithms are unsupervised, but were
 calibrated via grid search using the annotated region labels to choose
-the best scalar significance threshold hyperparameter.
-\citet{DFilter} proposed to train the DFilter algorithm using a
-database of regions with peaks, and \citet{picking2012} found that
-optimal algorithm parameters do not generalize between data sets. In
-contrast, we propose the supervised \ref{PeakSeg} model which can be
-trained for accurate peak detection on data with the same type of peak
-pattern.
+the best scalar significance threshold hyperparameter.  Others have
+proposed to train the hyperparameters of unsupervised peak detectors
+\citep{picking2012, DFilter}. In contrast, we propose the supervised
+\ref{PeakSeg} model which can be efficiently trained using discrete
+and convex optimization algorithms (Sections~\ref{sec:algorithms} and
+\ref{sec:penalty-learning}).
 
 \subsection{Maximum likelihood segmentation models}
 

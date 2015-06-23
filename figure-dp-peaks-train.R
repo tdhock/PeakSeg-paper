@@ -99,7 +99,8 @@ for(experiment.i in 1:nrow(biggest)){
   sample.counts <- counts %>%
     filter(sample.id %in% sample.ids)
   tit <- with(chunk.info, paste({
-    ifelse(experiment=="H3K4me3", "sharp peaks,", "broadly enriched regions,")
+    ifelse(experiment=="H3K4me3",
+           "sharp peak pattern,", "broad peak pattern,")
   }, cell.type, chunk.name))
   sample.max.df <- sample.counts %>%
     group_by(sample.id) %>%

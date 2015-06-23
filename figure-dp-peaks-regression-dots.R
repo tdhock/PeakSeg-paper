@@ -339,6 +339,14 @@ best.percent <- mean.both %>%
             algo=algo[which.min(mean)],
             learning=learning[which.min(mean)])
 
+output <- both %>%
+  mutate(split.i=set.i,
+         algorithm=algo) %>%
+  select(set.name, split.i, algorithm, errors, regions, percent,
+         algo.type, learning)
+write.csv(output, "figure-dp-peaks-regression-dots.csv",
+          row.names=FALSE, quote=TRUE)
+
 dots <-  #with 1 set of facets.
 ggplot()+
   geom_vline(aes(xintercept=min), data=best.percent)+
