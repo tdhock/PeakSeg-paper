@@ -160,10 +160,42 @@ computes $s_{\text{max}}$ models in $O(s_{\text{max}} d^2)$ time.
 \end{frame}
 
 \begin{frame}
-  \frametitle{AIC/BIC and oracle penalty function learning}
+  \frametitle{Supervised learning of a penalty for choosing a
+    profile-specific number of segments}
 
-Supervised learning method of Hocking, Rigaill, et al (ICML 2013).\\
-Oracle model complexity of Cleynen and Lebarbier (2014).\\
+Supervised learning method of Hocking, Rigaill, et al (ICML 2013).
+
+\vskip 1cm
+
+We have labeled profiles $\mathbf y_1, \dots, \mathbf y_n$ and\\
+features $\mathbf x_1, \dots, \mathbf x_n$ (number of data points,
+mean, quantiles, etc).
+
+\vskip 1cm
+
+Predicted number of segments for each profile $i$:
+
+\begin{equation*}
+  \hat s_i = 
+  \argmin_{s}
+  \text{PoissonLoss}\left[
+    \mathbf{\tilde m}^s(\mathbf y_i),
+    \mathbf y_i
+  \right]
+  + 
+  \overbrace{
+    \underbrace{h(p, d_i)}_{\text{given}}
+    \underbrace{\alert<1>{\lambda_i}}_{\text{learned}}
+  }^{\text{penalty}},
+\end{equation*}
+
+Main idea: learn $\alert{f(\mathbf x_i) = \log \lambda_i}$ with minimal error
+on train set.
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{AIC/BIC and oracle model complexity criteria}
 
 Predicted number of segments for each profile $i$:
 
@@ -177,11 +209,9 @@ Predicted number of segments for each profile $i$:
   + 
   \overbrace{
     \underbrace{\alert<1>{h(p, d_i)}}_{\text{given}}
-    \underbrace{\alert<2>{\lambda_i}}_{\text{learned}}
+    \underbrace{\lambda_i}_{\text{learned}}
   }^{\text{penalty}},
 \end{equation*}
-
-  Names: (model complexity).(number of parameters learned):
 
   \begin{center}
   \begin{tabular}{ll}
@@ -192,26 +222,49 @@ Predicted number of segments for each profile $i$:
   \end{tabular}
 \end{center}
 
+Oracle model complexity of Cleynen and Lebarbier (2014).\\
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Penalty function parameterizations}
+
+Predicted number of segments for each profile $i$:
+
+\begin{equation*}
+  \hat s_i = 
+  \argmin_{s}
+  \text{PoissonLoss}\left[
+    \mathbf{\tilde m}^s(\mathbf y_i),
+    \mathbf y_i
+  \right]
+  + 
+  \overbrace{
+    \underbrace{h(p, d_i)}_{\text{given}}
+    \underbrace{\alert<1>{\lambda_i}}_{\text{learned}}
+  }^{\text{penalty}},
+\end{equation*}
+
+
   \begin{center}
     \small
   \begin{tabular}{lllll}
-    \textbf{name} & \textbf{learned} \alert<2>{$\lambda_i$} & 
+    \textbf{name} & \textbf{learned} \alert<1>{$\lambda_i$} & 
     \textbf{parameters} & \textbf{learning algorithm} \\
     \hline
-    *.0 & AIC=\alert<2>{2}, BIC=\alert<2>{$\log d_i$} & none & unsupervised \\
+    *.0 & AIC=\alert<1>{2}, BIC=\alert<1>{$\log d_i$} & none & unsupervised \\
     *.1 & 
-    \alert<2>{$\beta$} & 
+    \alert<1>{$\beta$} & 
     $\beta\in\RR_+$ & grid search \\
     *.3 & 
-    \alert<2>{$e^\beta d_i^{w_1} (\max \mathbf y_i)^{w_{2}}$} & 
+    \alert<1>{$e^\beta d_i^{w_1} (\max \mathbf y_i)^{w_{2}}$} & 
     $\beta, w_1, w_{2}\in\RR$ & interval regression \\
     *.41 & 
-    \alert<2>{$\exp(\beta + \mathbf w^\intercal \mathbf x_i)$} & 
+    \alert<1>{$\exp(\beta + \mathbf w^\intercal \mathbf x_i)$} & 
     $\beta\in\RR, \mathbf w\in\RR^{40}$ & 
     regularized int. reg. \\
   \end{tabular}
 \end{center}
-
 
 \end{frame}
 
