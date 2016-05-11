@@ -1,3 +1,6 @@
+library(data.table)
+library(dplyr)
+
 load("dp.peaks.matrices.RData")
 
 model.info <- list()
@@ -21,8 +24,6 @@ models.tall %>%
             models=sum(models),
             problems=n(),
             all10=sum(models == 0))
-models.tall %>%
-  filter(models != 0)
 ## 14 problems with less than 10 models... there are 3 for which there
 ## is some error.
 models.tall %>%
@@ -44,3 +45,8 @@ dp.timings %>%
   mutate(minutes=seconds/60,
          hours=minutes/60,
          days=hours/24)
+
+dp.peaks.NA <- models.tall %>%
+  filter(models != 0) %>%
+  data.frame
+save(dp.peaks.NA, file="dp.peaks.NA.RData")

@@ -8,7 +8,8 @@ HOCKING-peak-penalty-slides.pdf: HOCKING-peak-penalty-slides.tex figure-dp-peaks
 	rm -f *.aux *.bbl
 	pdflatex HOCKING-peak-penalty-slides
 	pdflatex HOCKING-peak-penalty-slides
-
+dp.peaks.NA.RData: dp.peaks.NA.R
+	R --no-save < $<
 figure-dp.tex: figure-dp.R 
 	R --no-save < $<
 figure-dp-short.tex: figure-dp-short.R 
