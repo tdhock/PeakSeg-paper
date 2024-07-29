@@ -14,7 +14,7 @@ session.
 Then type "make" to run the code. There are two big steps:
 
 1. Download the ChIP-seq benchmark data set from
-   http://cbio.ensmp.fr/~thocking/chip-seq-chunk-db/
+   https://rcdata.nau.edu/genomic-ml/chip-seq-chunk-db
 
 2. Run the https://github.com/tdhock/PeakSegDP algorithm on each
    profile in the benchmark.
